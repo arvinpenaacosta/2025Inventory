@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reusable SVG Circle with Superscript</title>
+  <style>
+    .circle-svg {
+      width: 90px; /* Reduced width to 50% */
+      height: 90px; /* Reduced height to 50% */
+      margin: 2px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Reusable SVG Circle with Superscript</h1>
+
+  <!-- Container for SVG Instances -->
+  <div id="svg-container"></div>
+
+  <script>
+    // Function to create an SVG Circle with values
+    function createCircle(centerValue, supValue, fillColor, strokeColor) {
+      return `
+        <svg class="circle-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <!-- Smaller Circle -->
+          <circle cx="60" cy="60" r="20" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2" />
+          
+          <!-- Smaller Main Number at the Center -->
+          <text x="60" y="63" font-size="24" font-family="Arial" fill="black" text-anchor="middle" dominant-baseline="middle">
+            ${centerValue}
+          </text>
+          
+          <!-- Smaller Superscript Number at the Top-Right -->
+          <text x="90" y="45" font-size="22" font-family="Arial" fill="red" text-anchor="middle" dominant-baseline="middle">
+            ${supValue}
+          </text>
+        </svg>
+      `;
+    }
+
+    // Container where SVG instances will be added
+    const container = document.getElementById('svg-container');
+
+    // Create 10 SVG instances with different values
+    const instances = [
+      { centerValue: 7, supValue: 12, fillColor: 'lightblue', strokeColor: 'blue' },
+      { centerValue: 9, supValue: 3, fillColor: 'lightgreen', strokeColor: 'darkgreen' },
+      { centerValue: 5, supValue: 1, fillColor: 'lightcoral', strokeColor: 'darkred' },
+      { centerValue: 8, supValue: 4, fillColor: 'lightyellow', strokeColor: 'gold' },
+      { centerValue: 96, supValue: 0, fillColor: 'lightgray', strokeColor: 'black' },
+      { centerValue: 1, supValue: 6, fillColor: 'lightpink', strokeColor: 'purple' },
+      { centerValue: 3, supValue: 8, fillColor: 'lightcyan', strokeColor: 'teal' },
+      { centerValue: 4, supValue: 9, fillColor: 'peachpuff', strokeColor: 'orange' },
+      { centerValue: 2, supValue: 5, fillColor: 'lavender', strokeColor: 'violet' },
+      { centerValue: 11, supValue: 7, fillColor: 'beige', strokeColor: 'brown' }
+    ];
+
+    // Append each SVG instance to the container
+    instances.forEach(instance => {
+      container.innerHTML += createCircle(instance.centerValue, instance.supValue, instance.fillColor, instance.strokeColor);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .canvas-container {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        canvas {
+            border: 2px solid #333;
+            background-color: white;
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        #coordinates {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="coordinates">X: 0, Y: 0</div>
+    <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        // Canvas size constants - MODIFY THESE TO CHANGE CANVAS SIZE
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 500;
+        
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const coordsDisplay = document.getElementById('coordinates');
+        const ASPECT_RATIO = CANVAS_WIDTH / CANVAS_HEIGHT;
+
+        let mouseX = 0;
+        let mouseY = 0;
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const containerWidth = Math.min(container.clientWidth, CANVAS_WIDTH);
+            
+            // Set canvas size maintaining aspect ratio
+            canvas.width = containerWidth;
+            canvas.height = containerWidth / ASPECT_RATIO;
+            
+            // Update container max-width
+            container.style.maxWidth = `${CANVAS_WIDTH}px`;
+            
+            // Redraw crosshair if mouse is on canvas
+            if (mouseX !== 0 || mouseY !== 0) {
+                drawCrosshair();
+            }
+        }
+
+        function drawCrosshair() {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw horizontal line
+            ctx.beginPath();
+            ctx.moveTo(0, mouseY);
+            ctx.lineTo(canvas.width, mouseY);
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Draw vertical line
+            ctx.beginPath();
+            ctx.moveTo(mouseX, 0);
+            ctx.lineTo(mouseX, canvas.height);
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+            ctx.stroke();
+
+            // Update coordinates display
+            coordsDisplay.textContent = `X: ${mouseX}, Y: ${mouseY}`;
+        }
+
+        canvas.addEventListener('mousemove', (event) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = Math.round(event.clientX - rect.left);
+            mouseY = Math.round(event.clientY - rect.top);
+            drawCrosshair();
+        });
+
+        canvas.addEventListener('mouseout', () => {
+            mouseX = 0;
+            mouseY = 0;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            coordsDisplay.textContent = 'X: 0, Y: 0';
+        });
+
+        // Initial resize
+        resizeCanvas();
+
+        // Handle window resize
+        window.addEventListener('resize', resizeCanvas);
+    </script>
+</body>
+</html>

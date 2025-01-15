@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Circles on Canvas</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      max-width: 100%;
+    }
+    #canvasContainer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    #coordinates {
+      font-family: monospace;
+      margin: 10px 0;
+      padding: 5px 10px;
+      background: #333;
+      color: white;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Responsive Circles on Canvas</h1>
+  <div id="coordinates">Pixels: X: 0, Y: 0 | Percent: X: 0%, Y: 0%</div>
+  <div id="canvasContainer">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+  <script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const coordsDisplay = document.getElementById('coordinates');
+    
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 600;
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let isMouseOnCanvas = false;
+
+    // Circle data as arrays (values in order: xPercent, yPercent, centerValue, supValue, fillColor, strokeColor)
+    const instances = [
+      [0.035, 0.050, 7, 12, 'lightblue', 'blue'],
+      [0.035, 0.130, 9, 6, 'lightgreen', 'darkgreen'],
+      [0.110, 0.050, 5, 1, 'lightcoral', 'darkred'],
+      [0.25, 0.625, 8, 4, 'lightyellow', 'gold'],
+      [0.5, 0.75, 96, 0, 'lightgray', 'black']
+    ];
+
+    function resizeCanvas() {
+      const container = document.getElementById('canvasContainer');
+      const containerWidth = container.clientWidth;
+      const newWidth = Math.min(containerWidth - 40, CANVAS_WIDTH);
+      const newHeight = (newWidth * CANVAS_HEIGHT) / CANVAS_WIDTH;
+      canvas.style.width = `${newWidth}px`;
+      canvas.style.height = `${newHeight}px`;
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      drawCanvas();
+    }
+
+    function drawCircle(x, y, centerValue, supValue, fillColor, strokeColor) {
+      const scale = canvas.width / CANVAS_WIDTH;
+      const radius = 14 * scale;
+      const fontSize = 18 * scale;
+      const supFontSize = 18 * scale;
+      const supOffset = 23 * scale;
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2 * scale;
+      ctx.stroke();
+
+      ctx.fillStyle = 'black';
+      ctx.font = `${fontSize}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(centerValue.toString(), x, y + (3 * scale));
+
+      ctx.fillStyle = 'red';
+      ctx.font = `${supFontSize}px Arial`;
+      ctx.fillText(supValue.toString(), x + supOffset, y - (10 * scale));
+    }
+
+    function drawCrosshair() {
+      if (!isMouseOnCanvas) return;
+      ctx.beginPath();
+      ctx.moveTo(0, mouseY);
+      ctx.lineTo(canvas.width, mouseY);
+      ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(mouseX, 0);
+      ctx.lineTo(mouseX, canvas.height);
+      ctx.stroke();
+    }
+
+    function drawCanvas() {
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      instances.forEach(([xPercent, yPercent, centerValue, supValue, fillColor, strokeColor]) => {
+        const x = xPercent * canvas.width;
+        const y = yPercent * canvas.height;
+        drawCircle(x, y, centerValue, supValue, fillColor, strokeColor);
+      });
+
+      drawCrosshair();
+    }
+
+    canvas.addEventListener('mousemove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = Math.round(event.clientX - rect.left);
+      mouseY = Math.round(event.clientY - rect.top);
+      const xPercent = (mouseX / canvas.width * 100).toFixed(1);
+      const yPercent = (mouseY / canvas.height * 100).toFixed(1);
+      coordsDisplay.textContent = `Pixels: X: ${mouseX}, Y: ${mouseY} | Percent: X: ${(xPercent / 100).to

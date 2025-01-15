@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Circles on Canvas</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    canvas {
+      border: 1px solid #ddd;
+      max-width: 100%;
+    }
+
+    #canvasContainer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Responsive Circles on Canvas</h1>
+  <div id="canvasContainer">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Original canvas dimensions
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 600;
+
+    // Circle positions as percentages of canvas size
+    const instances = [
+      { xPercent: 0.125, yPercent: 0.25, centerValue: 7, supValue: 12, fillColor: 'lightblue', strokeColor: 'blue' },
+      { xPercent: 0.375, yPercent: 0.375, centerValue: 9, supValue: 3, fillColor: 'lightgreen', strokeColor: 'darkgreen' },
+      { xPercent: 0.625, yPercent: 0.5, centerValue: 5, supValue: 1, fillColor: 'lightcoral', strokeColor: 'darkred' },
+      { xPercent: 0.25, yPercent: 0.625, centerValue: 8, supValue: 4, fillColor: 'lightyellow', strokeColor: 'gold' },
+      { xPercent: 0.5, yPercent: 0.75, centerValue: 96, supValue: 0, fillColor: 'lightgray', strokeColor: 'black' }
+    ];
+
+    function resizeCanvas() {
+      // Get container width
+      const container = document.getElementById('canvasContainer');
+      const containerWidth = container.clientWidth;
+      
+      // Calculate new canvas size while maintaining aspect ratio
+      let newWidth = Math.min(containerWidth - 40, CANVAS_WIDTH);
+      let newHeight = (newWidth * CANVAS_HEIGHT) / CANVAS_WIDTH;
+
+      // Set canvas display size
+      canvas.style.width = `${newWidth}px`;
+      canvas.style.height = `${newHeight}px`;
+
+      // Set canvas drawing buffer size
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+
+      // Draw everything
+      drawCanvas();
+    }
+
+    function drawCircle(x, y, centerValue, supValue, fillColor, strokeColor) {
+      // Scale circle and font size based on canvas width
+      const scale = canvas.width / CANVAS_WIDTH;
+      const radius = 14 * scale;
+      const fontSize = 18 * scale;
+      const supFontSize = 18 * scale;
+      const supOffset = 25 * scale;
+
+      // Draw circle
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2 * scale;
+      ctx.stroke();
+
+      // Draw center number
+      ctx.fillStyle = 'black';
+      ctx.font = `${fontSize}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(centerValue.toString(), x, y + (3 * scale));
+
+      // Draw superscript number
+      ctx.fillStyle = 'red';
+      ctx.font = `${supFontSize}px Arial`;
+      ctx.fillText(supValue.toString(), x + supOffset, y - (10 * scale));
+    }
+
+    function drawCanvas() {
+      // Clear canvas
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw circles at percentage positions
+      instances.forEach(instance => {
+        const x = instance.xPercent * canvas.width;
+        const y = instance.yPercent * canvas.height;
+        drawCircle(x, y, instance.centerValue, instance.supValue, 
+                  instance.fillColor, instance.strokeColor);
+      });
+    }
+
+    // Initial draw
+    resizeCanvas();
+
+    // Handle window resize
+    window.addEventListener('resize', resizeCanvas);
+  </script>
+</body>
+</html>

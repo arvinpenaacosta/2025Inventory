@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Circles on Canvas</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      border: 1px solid #ddd;
+      max-width: 100%;
+    }
+    #canvasContainer {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    #coordinates {
+      font-family: monospace;
+      margin: 10px 0;
+      padding: 5px 10px;
+      background: #333;
+      color: white;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Responsive Circles on Canvas</h1>
+  <div id="coordinates">Pixels: X: 0, Y: 0 | Percent: X: 0%, Y: 0%</div>
+  <div id="canvasContainer">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+  <script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const coordsDisplay = document.getElementById('coordinates');
+    
+    // Original canvas dimensions
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 600;
+    
+    // Mouse position
+    let mouseX = 0;
+    let mouseY = 0;
+    let isMouseOnCanvas = false;
+
+    // Circle positions as percentages of canvas size
+    const instances = [
+      { xPercent: 0.035, yPercent: 0.050, centerValue: 7, supValue: 12, fillColor: 'lightblue', strokeColor: 'blue' },
+      { xPercent: 0.035, yPercent: 0.130, centerValue: 9, supValue: 6, fillColor: 'lightgreen', strokeColor: 'darkgreen' },
+      { xPercent: 0.110, yPercent: 0.050, centerValue: 5, supValue: 1, fillColor: 'lightcoral', strokeColor: 'darkred' },
+      { xPercent: 0.25, yPercent: 0.625, centerValue: 8, supValue: 4, fillColor: 'lightyellow', strokeColor: 'gold' },
+      { xPercent: 0.5, yPercent: 0.75, centerValue: 96, supValue: 0, fillColor: 'lightgray', strokeColor: 'black' }
+    ];
+
+    function resizeCanvas() {
+      // Get container width
+      const container = document.getElementById('canvasContainer');
+      const containerWidth = container.clientWidth;
+      
+      // Calculate new canvas size while maintaining aspect ratio
+      let newWidth = Math.min(containerWidth - 40, CANVAS_WIDTH);
+      let newHeight = (newWidth * CANVAS_HEIGHT) / CANVAS_WIDTH;
+      
+      // Set canvas display size
+      canvas.style.width = `${newWidth}px`;
+      canvas.style.height = `${newHeight}px`;
+      
+      // Set canvas drawing buffer size
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      
+      // Draw everything
+      drawCanvas();
+    }
+
+    function drawCircle(x, y, centerValue, supValue, fillColor, strokeColor) {
+      // Scale circle and font size based on canvas width
+      const scale = canvas.width / CANVAS_WIDTH;
+      const radius = 14 * scale;
+      const fontSize = 18 * scale;
+      const supFontSize = 18 * scale;
+      const supOffset = 23 * scale;
+      
+      // Draw circle
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2 * scale;
+      ctx.stroke();
+      
+      // Draw center number
+      ctx.fillStyle = 'black';
+      ctx.font = `${fontSize}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(centerValue.toString(), x, y + (3 * scale));
+      
+      // Draw superscript number
+      ctx.fillStyle = 'red';
+      ctx.font = `${supFontSize}px Arial`;
+      ctx.fillText(supValue.toString(), x + supOffset, y - (10 * scale));
+    }
+
+
+
+    function drawCanvas() {
+      // Clear canvas
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw circles at percentage positions
+      instances.forEach(instance => {
+        const x = instance.xPercent * canvas.width;
+        const y = instance.yPercent * canvas.height;
+        drawCircle(x, y, instance.centerValue, instance.supValue, 
+                  instance.fillColor, instance.strokeColor);
+      });
+
+      // Draw crosshair
+      drawCrosshair();
+    }
+
+
+    function drawCrosshair() {
+      if (!isMouseOnCanvas) return;
+
+      // Draw horizontal line
+      ctx.beginPath();
+      ctx.moveTo(0, mouseY);
+      ctx.lineTo(canvas.width, mouseY);
+      ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Draw vertical line
+      ctx.beginPath();
+      ctx.moveTo(mouseX, 0);
+      ctx.lineTo(mouseX, canvas.height);
+      ctx.stroke();
+    }
+
+    
+
+    // Mouse event handlers
+    canvas.addEventListener('mousemove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = Math.round(event.clientX - rect.left);
+      mouseY = Math.round(event.clientY - rect.top);
+      
+      // Calculate percentages
+      const xPercent = (mouseX / canvas.width * 100).toFixed(1);
+      const yPercent = (mouseY / canvas.height * 100).toFixed(1);
+      
+      coordsDisplay.textContent = `Pixels: X: ${mouseX}, Y: ${mouseY} | Percent: X: ${(xPercent / 100).toFixed(3)}, Y: ${(yPercent / 100).toFixed(3)}`;
+      drawCanvas();
+    });
+
+    canvas.addEventListener('mouseenter', () => {
+      isMouseOnCanvas = true;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      isMouseOnCanvas = false;
+      coordsDisplay.textContent = 'Pixels: X: 0, Y: 0 | Percent: X: 0%, Y: 0%';
+      drawCanvas();
+    });
+
+    // Initial draw
+    resizeCanvas();
+    
+    // Handle window resize
+    window.addEventListener('resize', resizeCanvas);
+  </script>
+</body>
+</html>
