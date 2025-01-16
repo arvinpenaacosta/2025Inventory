@@ -5,44 +5,58 @@
 ============================================
 [.env]
 
-ENABLE_SQL = true   --> Enable Saving to SQLite Database. Server must be Started. If not Available then, false.
-ENABLE_CSV = true   --> Enable Saving to CSV File. If not Available then, false.
 
-# For SQLITE Database Saving
-INVENTORY_SVR_HOST = 192.168.1.18   --> Specify Server Host IP
-INVENTORY_SVR_PORT = 8892           --> Specify Server Port
+ENABLE_CSV = true   --> Enable Saving to CSV File. If not Available then, false.
+ENABLE_SQL = true   --> Enable Saving to SQLite Database. Server must be Started. If not Available then, false.
 
 # For CSV File Saving
 CSV_FOLDER = TMOB_CSV               --> specify CSV folder name
 CSV_FILE = TMOB_inv1.csv            --> specify CSV filename
-NET_CONN = ETHERNET                 --> specify NIC (Ethernet for LAN)
+NET_CONN = ETHERNET                 --> specify NIC (ETHERNET for LAN / WIFI* for Wifi)
+
+# For SQLITE Database Connection and Saving
+INVENTORY_SVR_HOST = 192.168.1.18   --> Specify Server Host IP
+INVENTORY_SVR_PORT = 8892           --> Specify Server Port
 
 
+NOTES:
 ============================================
 # Add below line ## to running batch file to run
 
 @echo off
 net use X: /delete /y
-net use X: \\LTOP8672\devshared\Inventory /PERSISTENT:NO
+net use X: <path where the running app is located> /PERSISTENT:NO
 X:
 
+sample:
+X		is the specified Drive Letter to Map
+net use		Command for mapping drive folder
+net use X: \\ltop8672\devshared\REMOTE /PERSISTENT:NO
 
-ENABLE_SQL = true
-ENABLE_CSV = true
+
+if any of ENABLE_SQL and ENABLE_CSV is missing. Default is False
+	ENABLE_SQL = true
+	ENABLE_CSV = true
+
+
+
 
 @echo off
 net use V: /delete /y 
 net use V: \\LTOP8672\devshared\INVENTORY /PERSISTENT:NO
 V:
 
+@echo off
 --> remove existing mapped drive
 --> Mapped the network drive to X: with no Persistent (\\LTOP8672\devshared\Inventory --> Specify the correct shared folder location
 --> go to mapped drive letter (Where X is the assigned Drive Letter to Map)
 
 
+SOURCE CODE
 ============================================
 [source code] Note: Batch File should be =< 32KB when converted
 
+# THIS IS WORKING 2025
 function Show-InventoryBanner {
 cls
 Write-Host ""
@@ -117,13 +131,14 @@ $currentDirectory = Get-Location
 $envFilePath = Join-Path -Path $currentDirectory -ChildPath ".env"
 $envVariables = Read-EnvFile -FilePath $envFilePath
 
-$env_enaSQL = $envVariables["ENABLE_SQL"]
-$env_enaCSV = $envVariables["ENABLE_CSV"]
+$env_enaSQL = [bool]($envVariables["ENABLE_SQL"])
+$env_enaCSV = [bool]($envVariables["ENABLE_CSV"])
 $env_HOST = $envVariables["INVENTORY_SVR_HOST"]
 $env_PORT = $envVariables["INVENTORY_SVR_PORT"]
 $env_CSVFolder = $envVariables["CSV_FOLDER"]
 $env_CSVFile = $envVariables["CSV_FILE"]
 $env_Net = $envVariables["NET_CONN"]
+
 # Check if the folder exists
 if (-not (Test-Path -Path $env_CSVFolder)) {
     # Create the folder if it doesn't exist
@@ -149,8 +164,6 @@ Write-Host "Enter you Selection  " -NoNewline
 $selectedLocation = Prompt-ValidInput " " @('P', 'A', 'C', 'B', 'E', 'T', 'O', '~')
 Write-Host "======================================"
 # Based on selected environment, prompt for additional information
-$LANPort = "N_A"
-$CiscoExt = "N_A"
 switch ($selectedLocation) {
     'P' {        Write-Host "** PRODUCTION POD **"
         $location1 = Read-Host "Enter Pod Number"
@@ -196,17 +209,16 @@ switch ($selectedLocation) {
     '~' {
         $location1 = "N_A"
         $location2 = "N_A"
-        $LANPort  = ""
-        $CiscoExt  = ""
+        $CiscoExt  = "N_A"
     }
 }
-if ($LANPort -eq "N_A") { $LANPort = Read-Host "Station LAN Port" }
-if ($CiscoExt -eq "N_A") { $CiscoExt = Read-Host "Cisco Ext."  }
+$CiscoExt = if ($CiscoExt -ne "N_A") { Read-Host "Cisco Ext." } else { $CiscoExt }
+
 if ([string]::IsNullOrWhiteSpace($Floor)) { $Floor = "N/A"}
-if ([string]::IsNullOrWhiteSpace($LANPort)) { $LANPort = "N/A"}
 if ([string]::IsNullOrWhiteSpace($CiscoExt)) { $CiscoExt = "N/A"}
 if ([string]::IsNullOrWhiteSpace($Updateby)) { $Updateby = "NOC"}
-#============
+#===========================
+# Get system information
 $Computer = hostname
 $RecordedDT = Get-Date -UFormat "%Y%m%d_%H%M%S"
 $date = [DateTime]::ParseExact($RecordedDT, "yyyyMMdd_HHmmss", $null)
@@ -216,7 +228,8 @@ $PC = Get-WmiObject Win32_ComputerSystem -Computer $Computer
 $CPU = Get-WmiObject Win32_Processor -Computer $Computer
 $DateInstalled = (Get-WmiObject Win32_OperatingSystem).InstallDate
 $BIOS = Get-WmiObject Win32_BIOS -Computer $Computer
-#============
+#===========================
+# Retrieve information about RAM modules
 $ramModules = Get-CimInstance -ClassName Win32_PhysicalMemory
 $RAMSlot = ($ramModules | ForEach-Object { $_.BankLabel }) -join ', '
 $CapGB = ($ramModules | ForEach-Object { [math]::Round($_.Capacity / 1GB, 2) }) -join ', '  # Convert capacity to GB
@@ -233,7 +246,7 @@ $MemType = ($ramModules | ForEach-Object {
 $Speedz = ($ramModules | ForEach-Object { $_.Speed }) -join ', '
 $Mfr = ($ramModules | ForEach-Object { $_.Manufacturer }) -join ', '
 $RAMSerNum = ($ramModules | ForEach-Object { $_.SerialNumber }) -join ', '
-#============
+#===========================
 $adapterName = $env_Net
 $macVal = (Get-NetAdapter -Name $adapterName).MacAddress -replace "-", "" | ForEach-Object { $_.Insert(4, ".").Insert(9, ".") }
 $ipAddress = (Get-NetIPAddress -InterfaceAlias $adapterName -AddressFamily IPv4).IPAddress
@@ -241,18 +254,17 @@ $OS = Get-WmiObject Win32_OperatingSystem -Computer $Computer
 $displayVersion = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion').DisplayVersion
 $OSVer = (Get-ComputerInfo).OsVersion 
 $WinEdition = (Get-CimInstance -class Win32_OperatingSystem).Caption
-#============
+#===========================
 $installed_citrix = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | 
                     Where-Object { $_.DisplayName -like "Citrix Workspace 2*" } |
                     Select-Object DisplayName, DisplayVersion
 $CitrixDisplayName = if ($installed_citrix) { $installed_citrix.DisplayName } else { "Citrix N/A" }
 $CitrixDisplayVersion = if ($installed_citrix) { $installed_citrix.DisplayVersion } else { "Citrix N/A" }
-#++++++++++++
+#+++++++++++++++++++++++++++++++
 $DataObject = [PSCustomObject]@{
    Floor            = $Floor.ToUpper()
     Location1        = $Location1.ToUpper()
     Location2        = $Location2.ToUpper()
-    LANPort          = $LANPort
     CiscoExt         = $CiscoExt
    Updateby         = $UpdateBy.ToUpper()
     ComputerName     = $PC.Name
@@ -280,8 +292,10 @@ Show-InventoryBanner
 Write-Host "======================================"
 $DataObject
 Write-Host "======================================"
-if ($env_enaCSV  -eq 'true') { # SAVE to CSV
+# SAVE to CSV
+if ($env_enaCSV) { 
     $csvPath = "$PSScriptRoot\$env_CSVFolder\$env_CSVFile"  # Specify the desired file path
+    #$DataObject | Export-Csv -Path $csvPath -NoTypeInformation -Append
     try {
         $DataObject | Export-Csv -Path $csvPath -NoTypeInformation -Append
         Write-Host "CSV Data appended successfully to $csvPath"
@@ -289,7 +303,8 @@ if ($env_enaCSV  -eq 'true') { # SAVE to CSV
         Write-Host "Failed to append data to $csvPath. Error: $($_.Exception.Message)" -ForegroundColor Red
     }
  }
-if ($env_enaSQL -eq 'true') { # SAVE to SQLITE
+# SAVE to SQLITE
+if ($env_enaSQL) { 
     $Data = $DataObject | ConvertTo-Json -Depth 2
     $tcpClient = New-Object System.Net.Sockets.TcpClient
     try {
@@ -305,6 +320,8 @@ if ($env_enaSQL -eq 'true') { # SAVE to SQLITE
     $Url = "https://$($env_HOST):$($env_PORT)/api_save_data/"
     # Disable SSL certificate validation (for self-signed certificates)
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+
+    # Send the POST request
     try {
         $response = Invoke-RestMethod -Uri $Url -Method POST -Body $Data -ContentType "application/json"
         Write-Host "Response from server:" $response
