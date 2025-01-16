@@ -193,7 +193,7 @@
     // Load data and initialize canvas
     window.addEventListener('load', async () => {
       try {
-        const response = await fetch('instances.json');
+        const response = await fetch('localhost_svg.json');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
