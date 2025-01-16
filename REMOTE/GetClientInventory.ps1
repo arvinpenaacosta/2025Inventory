@@ -244,28 +244,23 @@ if ($env_enaCSV  -eq 'true') { # SAVE to CSV
         Write-Host "Failed to append data to $csvPath. Error: $($_.Exception.Message)" -ForegroundColor Red
     }
  }
-if ($env_enaSQL -eq 'true') { # SAVE to SQLITE
+ if ($env_enaSQL -eq 'true') { # SAVE to SQLITE
     $Data = $DataObject | ConvertTo-Json -Depth 2
     $tcpClient = New-Object System.Net.Sockets.TcpClient
-    try {
-        # Attempt to connect to the server
-        $tcpClient.Connect($env_HOST, $env_PORT)
-        $connected = $true
-        Write-Host "Connected to server: $env_HOST on port $env_PORT"
-    } catch {
-        # Handle connection failure
-        Write-Host "Sorry... Information Not Saved. Could not connect to Server"
-        return  # Exit the script
-    }
     $Url = "https://$($env_HOST):$($env_PORT)/api_save_data/"
-    # Disable SSL certificate validation (for self-signed certificates)
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
     try {
+        $tcpClient.Connect($env_HOST, $env_PORT)
+        Write-Host "Connected to server: $env_HOST on port $env_PORT"
         $response = Invoke-RestMethod -Uri $Url -Method POST -Body $Data -ContentType "application/json"
         Write-Host "Response from server:" $response
-        #$DataObject
     } catch {
-        Write-Host "An error occurred while sending data: $_"
+        Write-Host "An error occurred: $_"
+    } finally {
+        if ($tcpClient.Connected) {
+            $tcpClient.Close()
+            Write-Host "TCP connection closed."
+        }
     }
 }
 Show-RebootPrompt
