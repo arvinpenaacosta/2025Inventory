@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/DevApps/pyProj/LIVE/NetscoutMate/db/epmap.db" readonly="0" foreign_keys="" case_sensitive_like="" temp_store="" wal_autocheckpoint="" synchronous=""/><attached/><window><main_tabs open="structure browser pragmas query" current="1"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1043"/><column_width id="4" width="0"/></tab_structure><tab_browse><current_table name="0,0:"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1">SELECT fl.*, 
+               COUNT(e.Location1) AS Location2_Count
+        FROM floorloc fl 
+        LEFT JOIN entries e ON fl.Floor = e.Floor 
+                            AND fl.Location = e.Location1 
+                            AND e.Floor = 11 
+                            AND e.Updateby LIKE 'Patch%'
+        WHERE fl.Floor = 11 
+        GROUP BY fl.id;</sql><sql name="SQL 1 (1)">        SELECT Updateby, Location1, Location2, ComputerName, SerialNumber, IPAddress, MACAddress, WindowsEdition, DisplayVersion, CitrixVersion, RecordedDateTime
+        FROM entries
+        WHERE Floor = '11' AND Location1 = 'POD11' AND Updateby like 'Patch%'
+        Order by Location2 Asc, RecordedDateTime Desc
+ </sql><sql name="SQL 1 (2)">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+	ORDER BY LatestRecordedDateTime
+) AS latest_records
+ON e.SerialNumber = latest_records.SerialNumber 
+AND e.RecordedDateTime = latest_records.LatestRecordedDateTime
+ORDER BY e.Floor, e.Location1, e.Location2;</sql><sql name="SQL 1 (3)">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS latest_records
+ON e.SerialNumber = latest_records.SerialNumber 
+AND e.RecordedDateTime = latest_records.LatestRecordedDateTime
+WHERE e.Floor = '11' and e.Location1 = 'POD07'
+ORDER BY e.Floor, e.Location1 , e.Location2;</sql><sql name="SQL 1 (4)">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+ORDER BY Floor, Location1, Location2;</sql><sql name="SQL 1 (5)">    SELECT DISTINCT SerialNumber
+    FROM entries</sql><sql name="SQL 1 (7)">SELECT fl.id, fl.Floor, fl.Location, fl.xis, fl.yis, 
+               COALESCE(e.Location2_Count, 0) AS Location2_Count
+        FROM (
+            SELECT *
+            FROM floorloc
+            WHERE Floor = '10'
+        ) AS fl
+        LEFT JOIN (
+            SELECT e.Floor, e.Location1, COUNT(e.Location2) AS Location2_Count
+            FROM (
+                SELECT DISTINCT SerialNumber
+                FROM entries
+            ) AS ref
+            JOIN (
+                SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+                FROM entries
+                GROUP BY SerialNumber
+            ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+            JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+            WHERE e.Floor = '10' 
+            GROUP BY e.Floor, e.Location1
+        ) AS e ON fl.Floor = e.Floor AND fl.Location = e.Location1;</sql><sql name="SQL 1 (8)">        SELECT ref.SerialNumber, e.*
+        FROM (
+            SELECT DISTINCT SerialNumber
+            FROM entries
+        ) AS ref
+        JOIN (
+            SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+            FROM entries
+            GROUP BY SerialNumber
+        ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+        JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+        WHERE Floor = '10'  AND Updateby LIKE 'PATCH%'
+        ORDER BY Floor, Location1, Location2;
+		
+		
+	</sql><sql name="ALL 10F">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+WHERE Floor = '10' AND Updateby LIKE 'Patch%'
+ORDER BY Floor, Location1, Location2;</sql><sql name="ALL 11F">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+WHERE Floor = '11' AND Updateby LIKE 'Patch%'
+ORDER BY Floor, Location1, Location2;</sql><sql name="ALL 11F POD">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+WHERE Floor = '10' AND Location1 = 'POD18' AND Updateby LIKE 'Patch%'
+ORDER BY Floor, Location1, Location2;</sql><sql name="CREATE HOSTNAME">CREATE TABLE IF NOT EXISTS dns_hostnames (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hostname TEXT NOT NULL
+)
+
+CREATE TABLE IF NOT EXISTS serialnum (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    serialnum TEXT NOT NULL
+)</sql><sql name="INSERT">INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001401');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001011');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001102');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000035');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob100069');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob100038');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001051');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001330');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001413');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob100107');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000490');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob0625');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001299');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001182');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000068');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000326');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001158');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001150');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000023');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000962x');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000964');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000961');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001078');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000963');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001070');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000528');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000954');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001387');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001339');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001408');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001187');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001123');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000527');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000810');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001230');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001388');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000756');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob0437');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob0440');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001196');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001418');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001329');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001068');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000777');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000943x');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001235');
+INSERT INTO dns_hostnames (hostname) VALUES ('T-Mob1000011');
+
+
+</sql><sql name="INSERT (1)">INSERT INTO serialnum (serialnum) VALUES ('8V3JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('5F4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('454JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('8CC0250F97');
+INSERT INTO serialnum (serialnum) VALUES ('8CC91752GR');
+INSERT INTO serialnum (serialnum) VALUES ('435JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('8V4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('8CC9220JHB');
+INSERT INTO serialnum (serialnum) VALUES ('G64JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('8CC1112GSG');
+INSERT INTO serialnum (serialnum) VALUES ('8CC9220JHN');
+INSERT INTO serialnum (serialnum) VALUES ('8CC0250FJM');
+INSERT INTO serialnum (serialnum) VALUES ('8CC0250FBX');
+INSERT INTO serialnum (serialnum) VALUES ('448BZR3');
+INSERT INTO serialnum (serialnum) VALUES ('8CC91752GV');
+INSERT INTO serialnum (serialnum) VALUES ('1W3JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('B15JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('HR4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('8CC0250FDQ');
+INSERT INTO serialnum (serialnum) VALUES ('8CC9325F56');
+INSERT INTO serialnum (serialnum) VALUES ('8CC9220JHG');
+INSERT INTO serialnum (serialnum) VALUES ('8CC9220JJB');
+INSERT INTO serialnum (serialnum) VALUES ('2N4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('BH4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('8CC0250FBD');
+INSERT INTO serialnum (serialnum) VALUES ('8CC91752FS');
+INSERT INTO serialnum (serialnum) VALUES ('8CC0460661');
+INSERT INTO serialnum (serialnum) VALUES ('8CC0250FH6');
+INSERT INTO serialnum (serialnum) VALUES ('6CR4160WQ9');
+INSERT INTO serialnum (serialnum) VALUES ('FNK2SF3');
+INSERT INTO serialnum (serialnum) VALUES ('4CE1290Y18');
+INSERT INTO serialnum (serialnum) VALUES ('8CC9220JH0');
+INSERT INTO serialnum (serialnum) VALUES ('2UA71224YW');
+INSERT INTO serialnum (serialnum) VALUES ('CG4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('FP4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('FC4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('FZ4JMJ3');
+INSERT INTO serialnum (serialnum) VALUES ('CQS3LP3');
+INSERT INTO serialnum (serialnum) VALUES ('FHK2SF3');
+INSERT INTO serialnum (serialnum) VALUES ('FHK2SF3');
+</sql><sql name="VIEW">SELECT e.*
+FROM entries e
+JOIN dns_hostnames d
+ON e.ComputerName = d.hostname;
+
+SELECT e.*
+FROM entries e
+JOIN dns_hostnames d
+ON TRIM(e.ComputerName) = TRIM(d.hostname);
+
+SELECT e.*
+FROM entries e
+JOIN serialnum d
+ON e.SerialNumber = d.serialnum
+ORDER BY e.ComputerName;
+
+SELECT e.Location1, e.ComputerName, e.SerialNumber,
+FROM entries e
+JOIN serialnum d
+ON e.SerialNumber = d.serialnum
+ORDER BY e.ComputerName;</sql><sql name="Citrix2405 Good">WITH LatestEntries AS (
+    SELECT 
+        SerialNumber,
+        MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM 
+        entries
+    GROUP BY 
+        SerialNumber
+)
+
+SELECT 
+    e.Floor,
+    e.Location1,
+    e.Location2,
+    e.SerialNumber,
+    e.ComputerName,
+    e.RecordedDateTime,
+    c.Hostname,
+    c.DateLastUpdated
+FROM 
+    entries e
+INNER JOIN 
+    LatestEntries le
+ON 
+    e.SerialNumber = le.SerialNumber
+    AND e.RecordedDateTime = le.LatestRecordedDateTime
+LEFT JOIN 
+    citrix2405 c
+ON 
+    c.Hostname = e.ComputerName
+ORDER BY 
+    e.Floor,
+    e.Location1,
+    e.Location2;
+</sql><sql name="Citrix2405 Request2">WITH LatestEntries AS (
+    SELECT 
+        SerialNumber,
+        MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM 
+        entries
+    GROUP BY 
+        SerialNumber
+)
+
+SELECT 
+    e.Floor,
+    e.Location1,
+    e.Location2,
+    e.SerialNumber,
+    e.ComputerName,
+    e.RecordedDateTime,
+    c.Hostname,
+    c.DateLastUpdated
+FROM 
+    entries e
+INNER JOIN 
+    LatestEntries le
+ON 
+    e.SerialNumber = le.SerialNumber
+    AND e.RecordedDateTime = le.LatestRecordedDateTime
+LEFT JOIN 
+    Request2 c
+ON 
+    upper(c.Hostname) = e.ComputerName
+ORDER BY 
+    e.Floor,
+    e.Location1,
+    e.Location2;
+</sql><sql name="Citrix2405 (1)">SELECT 
+    e.Floor,
+    e.Location1,
+    e.Location2,
+    e.SerialNumber,
+    e.RecordedDateTime,
+    c.DateLastUpdated
+FROM 
+    entries e
+LEFT JOIN 
+    citrix2405 c
+ON 
+    c.Hostname = e.ComputerName
+WHERE 
+    e.Location1 = 'POD55' or 
+	e.Location1 = 'POD56' or 
+	e.Location1 = 'POD57'
+	
+ORDER by location1, location2	;
+
+
+
+SELECT 
+    e.Floor,
+    e.Location1,
+    e.Location2,
+    e.SerialNumber,
+    e.RecordedDateTime,
+    c.DateLastUpdated
+FROM 
+    entries e
+LEFT JOIN 
+    citrix2405 c
+ON 
+    c.Hostname = e.ComputerName
+WHERE 
+    e.Location1 = 'POD55' or 
+	e.Location1 = 'POD56' or 
+	e.Location1 = 'POD57'
+AND 
+    e.RecordedDateTime = (
+        SELECT MAX(sub_e.RecordedDateTime)
+        FROM entries sub_e
+        WHERE sub_e.SerialNumber = e.SerialNumber
+    );</sql><sql name="Request2">WITH LatestEntries AS (
+    SELECT 
+        SerialNumber,
+        MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM 
+        entries
+    GROUP BY 
+        SerialNumber
+)
+
+SELECT 
+    e.Floor,
+    e.Location1,
+    e.Location2,
+    e.SerialNumber,
+    e.ComputerName,
+    e.RecordedDateTime,
+    c.Hostname,
+    c.DateLastUpdated
+FROM 
+    entries e
+INNER JOIN 
+    LatestEntries le
+ON 
+    e.SerialNumber = le.SerialNumber
+    AND e.RecordedDateTime = le.LatestRecordedDateTime
+LEFT JOIN 
+    citrix2405 c
+ON 
+    c.Hostname = e.ComputerName
+ORDER BY 
+    e.Floor,
+    e.Location1,
+    e.Location2;
+</sql><sql name="Citrix2405 Request2 (1)">WITH LatestEntries AS (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY SerialNumber ORDER BY RecordedDateTime DESC) AS rn
+    FROM entries
+)
+SELECT l.hostname, e.Floor, e.Location1, e.Location2, e.CiscoExt, e.Updateby, e.ComputerName, e.SerialNumber, e.PCModel, e.CPU, e.RAM, e.IPAddress, e.MACAddress, e.WindowsEdition, e.DisplayVersion, e.OSVersion, e.CitrixName, e.CitrixVersion, e.RecordedDateTime, e.NOCItem
+FROM Request2 l
+LEFT JOIN LatestEntries e ON upper(l.hostname) = e.ComputerName AND e.rn = 1
+ORDER BY e.Location1 ASC, e.Location2 ASC;</sql><current_tab id="18"/></tab_sql></sqlb_project>

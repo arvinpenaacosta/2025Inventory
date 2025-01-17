@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/DevApps/pyProj/LIVE/InventoryServer/db/ScapeInv2024.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="2277"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,7:mainentries"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="entries" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="4" mode="0"/></sort><column_widths><column index="1" value="40"/><column index="2" value="63"/><column index="3" value="102"/><column index="4" value="88"/><column index="5" value="61"/><column index="6" value="167"/><column index="7" value="164"/><column index="8" value="93"/><column index="9" value="250"/><column index="10" value="265"/><column index="11" value="40"/><column index="12" value="89"/><column index="13" value="104"/><column index="14" value="195"/><column index="15" value="103"/><column index="16" value="74"/><column index="17" value="135"/><column index="18" value="90"/><column index="19" value="130"/><column index="20" value="63"/></column_widths><filter_values><column index="2" value="11"/><column index="3" value="33"/><column index="6" value="P"/><column index="7" value="T"/></filter_values><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1"> SELECT fl.id, fl.Floor, fl.Location, fl.xis, fl.yis, 
+               COALESCE(e.Location2_Count, 0) AS Location2_Count
+        FROM (
+            SELECT *
+            FROM floorloc
+            WHERE Floor = '11'
+        ) AS fl
+        LEFT JOIN (
+            SELECT e.Floor, e.Location1, COUNT(e.Location2) AS Location2_Count
+            FROM (
+                SELECT DISTINCT SerialNumber
+                FROM entries
+            ) AS ref
+            JOIN (
+                SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+                FROM entries
+                GROUP BY SerialNumber
+            ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+            JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+            WHERE e.Floor = '11' AND e.Updateby LIKE 'Patch%'
+            GROUP BY e.Floor, e.Location1
+        ) AS e ON fl.Floor = e.Floor AND fl.Location = e.Location1;</sql><sql name="SQL 1 (1)"> SELECT fl.id, fl.Floor, fl.Location, fl.xis, fl.yis, 
+               COALESCE(e.Location2_Count, 0) AS Location2_Count
+        FROM (
+            SELECT *
+            FROM floorloc
+            WHERE Floor = '11'
+        ) AS fl
+        LEFT JOIN (
+            SELECT e.Floor, e.Location1, COUNT(e.Location2) AS Location2_Count
+            FROM (
+                SELECT DISTINCT SerialNumber
+                FROM entries
+            ) AS ref
+            JOIN (
+                SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+                FROM entries
+                GROUP BY SerialNumber
+            ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+            JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+            WHERE e.Floor = '11' AND e.Updateby LIKE 'Patch%'
+            GROUP BY e.Floor, e.Location1
+        ) AS e ON fl.Floor = e.Floor AND fl.Location = e.Location1;</sql><sql name="SQL 1 (2)">SELECT ref.SerialNumber, e.*
+        FROM (
+            SELECT DISTINCT SerialNumber
+            FROM entries
+        ) AS ref
+        JOIN (
+            SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+            FROM entries
+            GROUP BY SerialNumber
+        ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+        JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+        WHERE Floor = '11' AND Updateby LIKE 'Patch%'
+        ORDER BY Floor, Location1, Location2;</sql><sql name="SQL 1 (3)">SELECT ref.SerialNumber, e.*
+        FROM (
+            SELECT DISTINCT SerialNumber
+            FROM entries
+        ) AS ref
+        JOIN (
+            SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+            FROM entries
+            GROUP BY SerialNumber
+        ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+        JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+        WHERE Floor = '10' AND Updateby LIKE 'Patch%'
+        ORDER BY Floor, Location1, Location2;</sql><current_tab id="3"/></tab_sql></sqlb_project>

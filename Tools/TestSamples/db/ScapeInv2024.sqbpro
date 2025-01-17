@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/DevApps/pyProj/LIVE/InventoryServer/db/ScapeInv2024.db" readonly="0" foreign_keys="" case_sensitive_like="" temp_store="" wal_autocheckpoint="" synchronous=""/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="2183"/><column_width id="4" width="0"/></tab_structure><tab_browse><current_table name="0,0:"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT Location2, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    WHERE Floor = '11' AND Location1 = 'POD01'
+    GROUP BY Location2
+) subquery
+ON e.Location2 = subquery.Location2
+   AND e.RecordedDateTime = subquery.LatestRecordedDateTime
+WHERE e.Floor = '11' AND e.Location1 = 'POD01'
+ORDER By Location2 ASC;
+
+</sql><sql name="SQL 1 (1)">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT Location2, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    WHERE Floor = '11' AND Location1 = 'POD01'
+    GROUP BY Location2
+) subquery
+ON e.Location2 = subquery.Location2
+   AND e.RecordedDateTime = subquery.LatestRecordedDateTime
+WHERE e.Floor = '11' AND e.Location1 = 'POD01'
+ORDER By Location2 ASC;
+
+</sql><sql name="SQL 1 (2)">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT Location2, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    WHERE Floor = '11'
+    GROUP BY Location2
+) subquery
+ON e.Location2 = subquery.Location2
+   AND e.RecordedDateTime = subquery.LatestRecordedDateTime
+WHERE e.Floor = '11' 
+ORDER By Location1, Location2 ASC;
+
+</sql><sql name="SQL 1 (3)">UPDATE entries
+SET RecordedDateTime = '2024-03-01 18:00:00'
+WHERE RecordedDateTime = '3/1/2024 18:00';
+
+</sql><sql name="SQL 1 (4)">UPDATE entries
+SET RecordedDateTime = REPLACE(RecordedDateTime, '3/12/2024', '2024-03-12')
+WHERE RecordedDateTime LIKE '3/12/2024%';
+
+</sql><sql name="SQL 1 (5)">    SELECT ComputerName, SerialNumber,PCModel, Location2, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    WHERE Floor = '11' AND Location1 = 'POD26'
+    GROUP BY Location2
+</sql><sql name="SQL 1 (6)">    SELECT ComputerName, SerialNumber,PCModel, Location2, RecordedDateTime
+    FROM entries
+    WHERE Floor = '11' AND Location1 = 'POD26'
+    Order by Location2 Asc, RecordedDateTime Desc
+</sql><current_tab id="0"/></tab_sql></sqlb_project>

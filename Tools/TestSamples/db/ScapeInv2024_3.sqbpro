@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/DevApps/pyProj/LIVE/NetscoutMate/db/epmap.db" readonly="0" foreign_keys="" case_sensitive_like="" temp_store="" wal_autocheckpoint="" synchronous=""/><attached/><window><main_tabs open="structure browser pragmas query" current="1"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1043"/><column_width id="4" width="0"/></tab_structure><tab_browse><current_table name="0,0:"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1">SELECT fl.*, 
+               COUNT(e.Location1) AS Location2_Count
+        FROM floorloc fl 
+        LEFT JOIN entries e ON fl.Floor = e.Floor 
+                            AND fl.Location = e.Location1 
+                            AND e.Floor = 11 
+                            AND e.Updateby LIKE 'Patch%'
+        WHERE fl.Floor = 11 
+        GROUP BY fl.id;</sql><sql name="SQL 1 (1)">        SELECT Updateby, Location1, Location2, ComputerName, SerialNumber, IPAddress, MACAddress, WindowsEdition, DisplayVersion, CitrixVersion, RecordedDateTime
+        FROM entries
+        WHERE Floor = '11' AND Location1 = 'POD11' AND Updateby like 'Patch%'
+        Order by Location2 Asc, RecordedDateTime Desc
+ </sql><sql name="SQL 1 (2)">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+	ORDER BY LatestRecordedDateTime
+) AS latest_records
+ON e.SerialNumber = latest_records.SerialNumber 
+AND e.RecordedDateTime = latest_records.LatestRecordedDateTime
+ORDER BY e.Floor, e.Location1, e.Location2;</sql><sql name="SQL 1 (3)">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS latest_records
+ON e.SerialNumber = latest_records.SerialNumber 
+AND e.RecordedDateTime = latest_records.LatestRecordedDateTime
+WHERE e.Floor = '11' and e.Location1 = 'POD07'
+ORDER BY e.Floor, e.Location1 , e.Location2;</sql><sql name="SQL 1 (4)">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+ORDER BY Floor, Location1, Location2;</sql><sql name="SQL 1 (5)">    SELECT DISTINCT SerialNumber
+    FROM entries</sql><sql name="SQL 1 (6)">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+WHERE Floor = '10' AND Updateby LIKE 'Patch%'
+ORDER BY Floor, Location1, Location2;</sql><sql name="SQL 1 (7)">SELECT fl.id, fl.Floor, fl.Location, fl.xis, fl.yis, 
+               COALESCE(e.Location2_Count, 0) AS Location2_Count
+        FROM (
+            SELECT *
+            FROM floorloc
+            WHERE Floor = '10'
+        ) AS fl
+        LEFT JOIN (
+            SELECT e.Floor, e.Location1, COUNT(e.Location2) AS Location2_Count
+            FROM (
+                SELECT DISTINCT SerialNumber
+                FROM entries
+            ) AS ref
+            JOIN (
+                SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+                FROM entries
+                GROUP BY SerialNumber
+            ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+            JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+            WHERE e.Floor = '10' 
+            GROUP BY e.Floor, e.Location1
+        ) AS e ON fl.Floor = e.Floor AND fl.Location = e.Location1;</sql><sql name="SQL 1 (8)">        SELECT ref.SerialNumber, e.*
+        FROM (
+            SELECT DISTINCT SerialNumber
+            FROM entries
+        ) AS ref
+        JOIN (
+            SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+            FROM entries
+            GROUP BY SerialNumber
+        ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+        JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+        WHERE Floor = '10'  AND Updateby LIKE 'PATCH%'
+        ORDER BY Floor, Location1, Location2;
+		
+		
+	</sql><current_tab id="7"/></tab_sql></sqlb_project>

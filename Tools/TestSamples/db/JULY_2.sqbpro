@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/DevApps/pyProj/LIVE/InventoryServer/db/ScapeInv2024.db" readonly="0" foreign_keys="0" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="0" synchronous="1"/><attached/><window><main_tabs open="structure browser pragmas query" current="1"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="2277"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><current_table name="4,7:mainentries"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="dns_hostnames" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths/><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="entries" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort><column index="18" mode="0"/></sort><column_widths><column index="1" value="40"/><column index="2" value="40"/><column index="3" value="102"/><column index="4" value="88"/><column index="5" value="61"/><column index="6" value="167"/><column index="7" value="268"/><column index="8" value="93"/><column index="9" value="250"/><column index="10" value="265"/><column index="11" value="40"/><column index="12" value="89"/><column index="13" value="104"/><column index="14" value="195"/><column index="15" value="103"/><column index="16" value="74"/><column index="17" value="135"/><column index="18" value="90"/><column index="19" value="130"/></column_widths><filter_values><column index="2" value="10"/></filter_values><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="floorloc" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_"><sort/><column_widths><column index="1" value="40"/><column index="2" value="40"/><column index="3" value="113"/><column index="4" value="40"/><column index="5" value="40"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">SELECT fl.*, 
+               COUNT(e.Location1) AS Location2_Count
+        FROM floorloc fl 
+        LEFT JOIN entries e ON fl.Floor = e.Floor 
+                            AND fl.Location = e.Location1 
+                            AND e.Floor = 11 
+                            AND e.Updateby LIKE 'Patch%'
+        WHERE fl.Floor = 11 
+        GROUP BY fl.id;</sql><sql name="SQL 1 (1)">        SELECT Updateby, Location1, Location2, ComputerName, SerialNumber, IPAddress, MACAddress, WindowsEdition, DisplayVersion, CitrixVersion, RecordedDateTime
+        FROM entries
+        WHERE Floor = '11' AND Location1 = 'POD11' AND Updateby like 'Patch%'
+        Order by Location2 Asc, RecordedDateTime Desc
+ </sql><sql name="SQL 1 (2)">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+	ORDER BY LatestRecordedDateTime
+) AS latest_records
+ON e.SerialNumber = latest_records.SerialNumber 
+AND e.RecordedDateTime = latest_records.LatestRecordedDateTime
+ORDER BY e.Floor, e.Location1, e.Location2;</sql><sql name="SQL 1 (3)">SELECT e.*
+FROM entries e
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS latest_records
+ON e.SerialNumber = latest_records.SerialNumber 
+AND e.RecordedDateTime = latest_records.LatestRecordedDateTime
+WHERE e.Floor = '11' and e.Location1 = 'POD07'
+ORDER BY e.Floor, e.Location1 , e.Location2;</sql><sql name="SQL 1 (4)">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+ORDER BY Floor, Location1, Location2;</sql><sql name="SQL 1 (5)">    SELECT DISTINCT SerialNumber
+    FROM entries</sql><sql name="SQL 1 (7)">SELECT fl.id, fl.Floor, fl.Location, fl.xis, fl.yis, 
+               COALESCE(e.Location2_Count, 0) AS Location2_Count
+        FROM (
+            SELECT *
+            FROM floorloc
+            WHERE Floor = '10'
+        ) AS fl
+        LEFT JOIN (
+            SELECT e.Floor, e.Location1, COUNT(e.Location2) AS Location2_Count
+            FROM (
+                SELECT DISTINCT SerialNumber
+                FROM entries
+            ) AS ref
+            JOIN (
+                SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+                FROM entries
+                GROUP BY SerialNumber
+            ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+            JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+            WHERE e.Floor = '10' 
+            GROUP BY e.Floor, e.Location1
+        ) AS e ON fl.Floor = e.Floor AND fl.Location = e.Location1;</sql><sql name="SQL 1 (8)">        SELECT ref.SerialNumber, e.*
+        FROM (
+            SELECT DISTINCT SerialNumber
+            FROM entries
+        ) AS ref
+        JOIN (
+            SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+            FROM entries
+            GROUP BY SerialNumber
+        ) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+        JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+        WHERE Floor = '10'  AND Updateby LIKE 'PATCH%'
+        ORDER BY Floor, Location1, Location2;
+		
+		
+	</sql><sql name="ALL 10F">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+WHERE Floor = '10' AND Updateby LIKE 'Patch%'
+ORDER BY Floor, Location1, Location2;</sql><sql name="ALL 11F">SELECT ref.SerialNumber, e.*
+FROM (
+    SELECT DISTINCT SerialNumber
+    FROM entries
+) AS ref
+JOIN (
+    SELECT SerialNumber, MAX(RecordedDateTime) AS LatestRecordedDateTime
+    FROM entries
+    GROUP BY SerialNumber
+) AS e_latest ON ref.SerialNumber = e_latest.SerialNumber
+JOIN entries AS e ON e.SerialNumber = ref.SerialNumber AND e.RecordedDateTime = e_latest.LatestRecordedDateTime
+WHERE Floor = '11' AND Updateby LIKE 'Patch%'
+ORDER BY Floor, Location1, Location2;</sql><sql name="Hostname">CREATE TABLE IF NOT EXISTS dns_hostnames (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hostname TEXT NOT NULL
+)</sql><sql name="Hostname (1)">INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001401');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001011');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001102');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000035');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob100069');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob100038');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001051');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001330');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001413');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob100107');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000490');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob0625');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001299');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001182');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000068');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000326');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001158');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001150');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000023');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000962x');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000964');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000961');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001078');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000963');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001070');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000528');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000954');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001387');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001339');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001408');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001187');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001123');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000527');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000810');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001230');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001388');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000756');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob0437');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob0440');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001196');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001418');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001329');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001068');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000777');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1000943x');
+INSERT INTO dns_hostnames (hostname) VALUES ('t-mob1001235');
+INSERT INTO dns_hostnames (hostname) VALUES ('T-Mob1000011');
+
+
+</sql><sql name="Hostname (2)">SELECT e.*
+FROM entries e
+JOIN dns_hostnames d
+ON e.ComputerName = d.hostname;
+
+SELECT e.*
+FROM entries e
+JOIN dns_hostnames d
+ON TRIM(e.ComputerName) = TRIM(d.hostname);</sql><current_tab id="12"/></tab_sql></sqlb_project>
