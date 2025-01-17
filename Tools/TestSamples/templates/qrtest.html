@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            flex: 1;
+            margin-top: 60px;
+            margin-bottom: 60px;
+            width: 100%;
+            max-width: 900px;
+        }
+        .header, .footer {
+            position: fixed;
+            width: 100%;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            z-index: 10;
+        }
+        .header {
+            top: 0;
+        }
+        .footer {
+            bottom: 0;
+        }
+        .qrcode-container {
+            display: flex;
+            justify-content: space-around; /* Distribute space between the QR codes */
+            margin-top: 20px;
+            width: 100%; /* Increase width to fit the QR codes */
+        }
+        .qrcode1, .qrcode2 {
+            padding: 20px;
+        }
+        h1, h3, h4 {
+            margin: 0;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        h3 {
+            font-size: 20px;
+            color: #333;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #555;
+        }
+
+        .api-status {
+            margin-top: 10px;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">NOC DataNexus QR</div>
+    
+    <div class="container">
+        <h1>NOC Data Collector</h1>
+
+        
+        <hr style="border: 1px solid #ddd; margin: 20px 0;">
+        
+        <div class="qrcode-container">
+            <div class="qrcode1">
+                <h4>LOCATION</h4>
+                <h4>Floor : {Floor}</h4>
+                <h4>{Location1}-{Location2}</h4>
+            </div>
+        </div>
+
+        <hr style="border: 1px solid #ddd; margin: 20px 0;">
+
+            <h4>Process By: {Updateby}</h4>
+        <!-- Submit Button -->
+        <button id="submitButton" type="submit" disabled>Submit</button>
+        <div id="apiStatus" class="api-status">API Server is Unreachable</div>
+
+        <!-- Result Divs -->
+        <div class="result" id="qrcode1Text"></div>
+
+
+        
+    </div>
+    
+    <div class="footer"> &copy; 2024 VinTools. All rights reserved.</div>
+
+    <script src="./qrcode.min.js"></script>
+
+    <script>
+        // create a new QRCode instance with custom size for qrcode1
+        let qrcode1Text = "{combinedText1}"
+
+
+        let qrcode1 = new QRCode(document.querySelector(".qrcode1"), {
+            text: qrcode1Text,
+            width: 300, // Adjust width as needed
+            height: 300 // Adjust height as needed
+        });
+
+
+
+
+        // Display qrcode1Text and qrcode2Text in div elements
+        document.getElementById("qrcode1Text").textContent = qrcode1Text;
+
+        
+        window.alert(qrcode1Text);
+
+
+
+    </script>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check API status when the DOM content is loaded
+            checkApiStatus();
+        });
+
+        window.addEventListener('load', () => {
+            // Check API status when all resources (including images and scripts) have finished loading
+            checkApiStatus();
+        });
+
+        function checkApiStatus() {
+            const apiUrl = 'https://10.16.67.27:8856/scanqr';
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    console.log('API is online');
+                    enableSubmitButton(); // Enable submit button if API is online
+                })
+                .catch(error => {
+                    console.error('Error checking API status:', error);
+                    console.log('API is offline');
+                    disableSubmitButton(); // Disable submit button if API is offline
+                });
+        }
+
+        function enableSubmitButton() {
+            // Enable submit button
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
+        }
+
+        function disableSubmitButton() {
+            // Disable submit button
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+        }
+
+    </script>
+
+
+
+
+
+</body>
+</html>

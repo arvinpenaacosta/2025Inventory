@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.2/css/dataTables.dataTables.css">
+
+
+    <title>Show Records</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px; /* Adjust padding */
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            font-size: 12px; /* Adjust font size */
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f5f5f5;
+        }
+        tr:hover {
+            background-color: #e6e6e6;
+        }
+
+        tfoot input {
+            width: 100%;
+            padding: 3px;
+            box-sizing: border-box;
+        }
+
+
+        /* Sticky footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+
+    <div id="data-container">
+        <h1>IT-NOC Inventory Records</h1>    
+    <table id="vintools" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Floor</th>
+                <th>Location</th>
+                <th>Location</th>
+                <th>Cisco Ext</th>
+                <th>Process By</th>
+                <th>Computer Name</th>
+                <th>Serial Number</th>
+                <th>Computer Model</th>
+                <th>Processor</th>
+                <th>RAM</th>
+                <th>IP Address</th>
+                <th>MAC Address</th>
+
+
+                <th>Windows Edition</th>
+                <th>Windows Version</th>
+                <th>Windows OS Num</th>
+                
+
+
+                <th>Citrix Name</th>
+                <th>Citrix Version</th>
+                <th>Recorded Date Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in entries %}
+            <tr>
+                <td>{{ entry[0] }}</td>
+                <td>{{ entry[1] }}</td>
+                <td>{{ entry[2] }}</td>
+                <td>{{ entry[3] }}</td>
+                <td>{{ entry[4] }}</td>
+                <td>{{ entry[5] }}</td>
+                <td>{{ entry[6] }}</td>
+                <td>{{ entry[7] }}</td>
+                <td>{{ entry[8] }}</td>
+                <td>{{ entry[9] }}</td>
+                <td>{{ entry[10] }}</td>
+                <td>{{ entry[11] }}</td>
+                <td>{{ entry[12] }}</td>
+                <td>{{ entry[13] }}</td>
+                <td>{{ entry[14] }}</td>
+                <td>{{ entry[15] }}</td>
+                <td>{{ entry[16] }}</td>
+                <td>{{ entry[17] }}</td>
+                <td>{{ entry[18] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>ID</th>
+                <th>Floor</th>
+                <th>Location</th>
+                <th>Location</th>
+                <th>Cisco Ext</th>
+                <th>Process By</th>
+                <th>Computer Name</th>
+                <th>Serial Number</th>
+                <th>Computer Model</th>
+                <th>Processor</th>
+                <th>RAM</th>
+                <th>IP Address</th>
+                <th>MAC Address</th>
+
+
+                <th>Windows Edition</th>
+                <th>Windows Version</th>
+                <th>Windows OS Num</th>
+                
+
+
+                <th>Citrix Name</th>
+                <th>Citrix Version</th>
+                <th>Recorded Date Time</th>
+            </tr>
+        </tfoot>
+    </table>
+    </div>
+
+    <!-- Link to jQuery library -->
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <!-- Link to DataTables JavaScript file -->
+    <script src="https://cdn.datatables.net/2.0.0/js/dataTables.js"></script>
+
+    <!-- Your custom JavaScript code here -->
+    <script>
+        new DataTable('#vintools', {
+            initComplete: function () {
+                this.api()
+                    .columns()
+                    .every(function () {
+                        let column = this;
+                        let title = column.footer().textContent;
+         
+                        // Create input element
+                        let input = document.createElement('input');
+                        input.placeholder = title;
+                        column.footer().replaceChildren(input);
+         
+                        // Event listener for user input
+                        input.addEventListener('keyup', () => {
+                            if (column.search() !== this.value) {
+                                column.search(input.value).draw();
+                            }
+                        });
+                    });
+            }
+        });
+    </script>
+
+<div style="margin-top: 20px; "></div>
+
+<div class="footer">
+    &copy; 2024 VinTools. All rights reserved.
+</div>
+
+</body>
+</html>

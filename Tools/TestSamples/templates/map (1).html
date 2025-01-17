@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<title>Canvas with Circles and Labels</title>
+
+<style>
+    #canvas-container {
+        float: left;
+    }
+    
+    #data-container {
+        margin-left: 20px; /* Adjust margin as needed */
+    }
+
+    canvas {
+        border: 1px solid black;
+    }
+
+    .flex-container {
+        display: flex;
+    }
+</style>
+</head>
+<body>
+<div class="flex-container">
+    <div id="canvas-container">
+        <canvas id="myCanvas" width="600" height="700"></canvas>
+    </div>
+    <div id="data-container">
+        <h1>IT-NOC Inventory Records</h1>  
+
+        <form id="floorForm" action="/show7/" method="post" class="mb-4">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="form-group mb-0">
+                        <label for="selectFloor" class="mb-0">Select Floor:</label>
+                          <select class="form-control" id="selectFloor" name="selectedFloor" style="width: 200px;">
+                                {% if selected_floor in distinct_floors %}
+                                    {% for floor in distinct_floors %}
+                                        {% if floor[0] == selected_floor %}
+                                            <option selected>{{ floor[0] }}</option>
+                                        {% else %}
+                                            <option>{{ floor[0] }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <!-- Handle the case where selected_floor is not in distinct_floors -->
+                                    <option selected>Please Select Floor</option>
+                                    {% for floor in distinct_floors %}
+                                        {% if floor[0] == selected_floor %}
+                                            <option selected>{{ floor[0] }}</option>
+                                        {% else %}
+                                            <option>{{ floor[0] }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                          </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+
+    </div>
+</div>
+
+<script>
+    // Get canvas element
+    var canvas = document.getElementById('myCanvas');
+    var ctx = canvas.getContext('2d');
+
+    // Define circle properties
+    var radius = 8; // Radius of the circle
+    var circleColor = "blue"; // Color of the circle
+    var labelColor = "red"; // Color of the additional label
+
+    // Define an array of points where circles will be drawn
+    var points = [
+        { x: 50, y: 50, label: "5", link: "https://example.com/page1", topLabel: "5" },
+        { x: 400, y: 650, label: "34", link: "https://example.com/page2", topLabel: "5" },
+        { x: 450, y: 650, label: "3", link: "https://example.com/page2", topLabel: "5" },
+        { x: 500, y: 650, label: "2", link: "https://example.com/page2", topLabel: "" },
+        { x: 550, y: 650, label: "1", link: "https://example.com/page3", topLabel: "6" },
+        // Add more points as needed
+    ];
+
+    // Loop through the points array and draw circles at each point
+    points.forEach(function(point) {
+        // Draw circle
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = point.topLabel ? circleColor : 'transparent';
+        ctx.fill();
+        ctx.strokeStyle = point.topLabel ? 'transparent' : circleColor;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw label
+        ctx.fillStyle = 'black';
+        ctx.font = '12px Arial';
+        ctx.fillText(point.label, point.x + 12, point.y + 5);
+
+        // Add another label on top of the circle
+        if (point.topLabel) {
+            ctx.fillStyle = labelColor;
+            ctx.fillText(point.topLabel, point.x - 0, point.y - radius - 5);
+        }
+    });
+
+    // Handle click events on canvas
+    canvas.addEventListener('mouseup', function(event) {
+        var mouseX = event.offsetX;
+        var mouseY = event.offsetY;
+
+        points.forEach(function(point) {
+            if (mouseX >= point.x - radius && mouseX <= point.x + radius &&
+                mouseY >= point.y - radius && mouseY <= point.y + radius) {
+                window.location.href = point.link;
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,664 @@
+<!--May 17, 2024 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHOW9 May17</title>
+
+    <!-- Additional stylesheets and scripts -->
+
+
+
+    <link rel="stylesheet" type="text/css" href="/static/assets/css/bootstrap.min.css">
+  
+    <script src="/static/assets/js/popper.min.js"></script>
+    <script src="/static/assets/js/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="/static/assets/css/w3.css">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+
+    <script src="/static/assets/js/jquery.min.js"></script>
+
+
+
+
+<style>
+    .container {
+        display: flex;
+        padding: 0;
+    }
+
+    .column1 {
+        margin-left: -100px;
+    }
+
+    .column2 {
+        flex-grow: 1;
+
+        padding: 20px;
+    }
+
+    /* Set table width to 100% of its container */
+    #vintools {
+        width: 120%;
+    }
+</style>
+
+
+    <style>
+        #canvas-container {
+            float: left;
+            position: relative;
+
+            /* background-image: url('/static/img/svg/11F.png'); /* Set the direct link to the image here */
+            
+            background-size: contain;
+            background-repeat: no-repeat;
+            width: 600px; /* Adjust the width and height of the canvas container */
+            height: 700px;
+
+        }
+        
+        canvas {
+            border: 1px solid black;
+            position: relative;
+            top: 0;
+            left: 0;
+            z-index: 1; /* Ensure canvas is on top */
+        }
+
+
+    </style>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+
+            background-image: url('');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+
+
+        }
+
+        tfoot input {
+            width: 100%;
+            padding: 3px;
+            box-sizing: border-box;
+        }
+
+        .btn-col {
+            flex: 0 0 calc(20% - 10px); /* Adjust width of each button column */
+            margin-bottom: 20px; /* Adjust space between buttons */
+        }
+
+        /* Sticky footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+
+    <style>
+    .container {
+        display: flex;
+
+        padding: 0;
+    }
+
+    .column1 {
+        width: 550px;
+
+    }
+
+    .column2 {
+        flex-grow: 1;
+        /*min-width: 0;  Ensure column2 can shrink if necessary */
+        margin-bottom: 0;
+        padding: 20px; 
+    }
+
+    @media (max-width: 1300px) {
+        .container {
+            flex-direction: column;
+        }
+
+        .column1 {
+            width: 100%;
+        }
+    }
+</style>
+</head>
+<body>
+
+
+
+
+
+
+<div class="container">
+    <div class="column1">
+        
+
+        <div id="canvas-container">
+            <canvas id="myCanvas" width="550" height="700"></canvas>
+        </div>
+
+        <script>
+            // Get canvas element
+            var canvas = document.getElementById('myCanvas');
+            var ctx = canvas.getContext('2d');
+
+            var labelColor = "red"; // Color of the additional label
+
+            // Define circle properties
+            var radius = 6; // Radius of the circle
+            var circleColor = "blue"; // Color of the circle
+
+            // Define square properties
+            var squareSize = 16; // Size of the square
+            var squareColor = "green"; // Color of the square
+
+            // Define hexagon properties
+            var hexagonSize = 10; // Size of the hexagon (distance from center to vertex)
+            var hexagonColor = "orange"; // Color of the hexagon
+
+            // Define rectangle properties
+            var rectangleWidth = 32; // Width of the rectangle
+            var rectangleHeight = 16; // Height of the rectangle
+            var rectangleColor = "magenta"; // Color of the rectangle
+
+            // Define square properties
+            var quarterSize = 24; // Size of the square
+            var quarterColor = "purple"; // Color of the square
+
+
+
+            // Define arrays for points of each shape
+            var circlePoints = [
+                {% for point in circle_points %}
+                    { x: {{ point.x }}, y: {{ point.y }}, label: "{{ point.label }}", link: "{{ point.link }}", topLabel: "{{ point.topLabel }}" },
+                    {% if not loop.last %}{% endif %}
+                {% endfor %}
+            ];
+
+            var squarePoints = [
+                {% for point in square_points %}
+                    { x: {{ point.x }}, y: {{ point.y }}, label: "{{ point.label }}", link: "{{ point.link }}", topLabel: "{{ point.topLabel }}" },
+                    {% if not loop.last %}{% endif %}
+                {% endfor %}
+            ];
+
+            var hexagonPoints = [
+                {% for point in hexagon_points %}
+                    { x: {{ point.x }}, y: {{ point.y }}, label: "{{ point.label }}", link: "{{ point.link }}", topLabel: "{{ point.topLabel }}" },
+                    {% if not loop.last %}{% endif %}
+                {% endfor %}
+            ];
+
+         
+            var rectanglePoints = [
+                {% for point in rectangle_points %}
+                    { x: {{ point.x }}, y: {{ point.y }}, label: "{{ point.label }}", link: "{{ point.link }}", topLabel: "{{ point.topLabel }}" },
+                    {% if not loop.last %}{% endif %}
+                {% endfor %}
+            ];
+
+            var quarterPoints = [
+                {% for point in quarter_points %}
+                    { x: {{ point.x }}, y: {{ point.y }}, label: "{{ point.label }}", link: "{{ point.link }}", topLabel: "{{ point.topLabel }}" },
+                    {% if not loop.last %}{% endif %}
+                {% endfor %}
+            ];
+
+
+            // Function to draw points of a specific shape
+            function drawPoints(points, shape) {
+                
+
+                points.forEach(function(point) {
+                switch (shape) {
+                    case "circle":
+                        // Draw circle
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+                        
+                        //ctx.fillStyle = point.topLabel && point.topLabel !== "0" ? circleColor : 'transparent';// Fill only if topLabel is not zero or empty
+                        if (point.topLabel !== undefined && point.topLabel !== null && parseInt(point.topLabel) > 7) {
+                            ctx.fillStyle = "yellow"; // Set to blue if topLabel is greater than or equal to 7
+                            circleColor = 'black'
+                        } else if (point.topLabel !== undefined && point.topLabel !== null && parseInt(point.topLabel) >= 7) {
+                            ctx.fillStyle = "blue"; // Set to blue if topLabel is greater than or equal to 7
+                            circleColor = 'blue'
+                        } else if (point.topLabel !== undefined && point.topLabel !== null && parseInt(point.topLabel) < 7 && parseInt(point.topLabel) !== 0) {
+                            ctx.fillStyle = 'red'; // Set to red if topLabel is less than 7 and not equal to 0
+                            circleColor = 'red'
+                        } else {
+                            ctx.fillStyle = 'transparent'; // Set to transparent if topLabel is undefined, null, or 0
+                            circleColor = 'gray'
+                        }
+
+                        ctx.fill();
+
+                        ctx.strokeStyle = circleColor;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        // Draw label
+                        ctx.fillStyle = 'black';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(point.label, point.x + 12, point.y + 5);
+
+  
+
+
+
+                        break;
+
+                    case "square":
+                        // Draw square
+                        ctx.beginPath();
+                        ctx.rect(point.x - squareSize / 2, point.y - squareSize / 2, squareSize, squareSize);
+                        
+                        ctx.fillStyle = point.topLabel && point.topLabel !== "0" ? squareColor : 'transparent'; // Fill only if topLabel is not zero or empty
+                        ctx.fill();
+
+                        ctx.strokeStyle = squareColor;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        // Draw label
+                        ctx.fillStyle = 'black';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(point.label, point.x + 14, point.y + 5);
+
+
+                        break;
+
+
+
+                    case "rectangle":
+                        // Draw square
+                        ctx.beginPath();
+                        ctx.rect(point.x - (rectangleWidth / 2), point.y - (rectangleHeight / 2), rectangleWidth, rectangleHeight);
+
+                        ctx.fillStyle = point.topLabel && point.topLabel !== "0" ? rectangleColor : 'transparent'; // Fill only if topLabel is not zero or empty
+                        ctx.fill();
+
+                        ctx.strokeStyle = rectangleColor;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        // Draw label
+                        ctx.fillStyle = 'black';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(point.label, point.x + 20, point.y + 5);
+
+                        // Add another label on top of the shape
+
+
+
+                        break;
+
+
+
+                    case "hexagon":
+                        // Draw hexagon
+                        ctx.beginPath();
+                        ctx.moveTo(point.x + hexagonSize * Math.cos(0), point.y + hexagonSize * Math.sin(0));
+                        for (var i = 1; i <= 6; i++) {
+                            ctx.lineTo(point.x + hexagonSize * Math.cos(i * 2 * Math.PI / 6), point.y + hexagonSize * Math.sin(i * 2 * Math.PI / 6));
+                        }
+                        ctx.closePath();
+
+                        ctx.fillStyle = point.topLabel && point.topLabel !== "0" ? hexagonColor : 'transparent'; // Fill only if topLabel is not zero or empty
+                        ctx.fill();
+
+                        ctx.strokeStyle = hexagonColor;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+
+                        // Draw label
+                        ctx.fillStyle = 'black';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(point.label, point.x + 12, point.y + 5);
+
+
+
+                        break;
+
+                    case "quarter":
+                        // Draw square
+                        ctx.beginPath();
+                        ctx.arc(point.x-4, point.y-4, quarterSize / 2, 0, Math.PI / 2); // Drawing a quarter of a circle
+                        ctx.lineTo(point.x-4, point.y-4); // Connecting the arc to the center to close the shape
+                        ctx.closePath();
+                        
+                        ctx.fillStyle = point.topLabel && point.topLabel !== "0" ? quarterColor : 'transparent'; // Fill only if topLabel is not zero or empty
+                        ctx.fill();
+
+                        ctx.strokeStyle = quarterColor;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        // Draw label
+                        ctx.fillStyle = 'black';
+                        ctx.font = '12px Arial';
+                        ctx.fillText(point.label, point.x + 14, point.y + 5);
+
+
+                        break;
+                    default:
+                        break;
+
+                }
+
+
+                if (point.topLabel && point.topLabel !== "0") {
+                    if (parseInt(point.topLabel) >= 7) {
+                        labelColor = "black";
+                    } else {
+                        labelColor = "red";
+                    }
+                } else {
+                    labelColor = ""; // Blank if topLabel is 0 or empty
+                }
+
+
+                      // Add another label on top of the shape
+                        if (point.topLabel && point.topLabel !== "0") {
+                            ctx.fillStyle = labelColor;
+                            ctx.fillText(point.topLabel, point.x - 0, point.y - radius - 5);
+                        }
+
+
+
+
+                });
+            }
+
+            // Draw points of each shape
+            drawPoints(circlePoints, "circle");
+            drawPoints(squarePoints, "square");
+            drawPoints(hexagonPoints, "hexagon");
+            drawPoints(rectanglePoints, "rectangle");
+            drawPoints(quarterPoints, "quarter");
+
+            //var baseURL = "http://192.168.1.3:8856/show9/";
+            var baseURL =  '{{ baseURLs | safe }}'
+
+
+
+            // Handle click events on canvas
+            canvas.addEventListener('mouseup', function(event) {
+                var mouseX = event.offsetX;
+                var mouseY = event.offsetY;
+
+                // Check for click on circle points
+                circlePoints.forEach(function(point) {
+                    if (mouseX >= point.x - squareSize / 2 && mouseX <= point.x + (squareSize / 2) * 5 &&
+                        mouseY >= point.y - squareSize / 2 && mouseY <= point.y + squareSize / 2) {
+
+                        if (point.topLabel) {
+                            window.location.href = baseURL + point.link;
+                        }
+                    }
+                });
+
+                // Check for click on square points
+                squarePoints.forEach(function(point) {
+                    if (mouseX >= point.x - squareSize / 2 && mouseX <= point.x + (squareSize / 2) * 10 &&
+                        mouseY >= point.y - squareSize / 2 && mouseY <= point.y + squareSize / 2) {
+
+                        if (point.topLabel) {
+                            window.location.href = baseURL + point.link;
+                        }
+                    }
+                });
+
+                // Check for click on hexagon points
+                hexagonPoints.forEach(function(point) {
+                    if (mouseX >= point.x - squareSize / 2 && mouseX <= point.x + (squareSize / 2) * 3 &&
+                        mouseY >= point.y - squareSize / 2 && mouseY <= point.y + squareSize / 2) {
+
+                        if (point.topLabel) {
+                            window.location.href = baseURL + point.link;
+                        }
+                    }
+                });
+
+                // Check for click on hexagon points
+                rectanglePoints.forEach(function(point) {
+                    if (mouseX >= point.x - squareSize / 2 && mouseX <= point.x + (squareSize / 2) * 10 &&
+                        mouseY >= point.y - squareSize / 2 && mouseY <= point.y + squareSize / 2) {
+
+                        if (point.topLabel) {
+                            window.location.href = baseURL + point.link;
+                        }
+                    }
+                });
+
+                // Check for click on hexagon points
+                quarterPoints.forEach(function(point) {
+                    if (mouseX >= point.x - squareSize / 2 && mouseX <= point.x + (squareSize / 2) * 10 &&
+                        mouseY >= point.y - squareSize / 2 && mouseY <= point.y + squareSize / 2) {
+
+                        if (point.topLabel) {
+                            window.location.href = baseURL + point.link;
+                        }
+                    }
+                });
+
+
+            });
+        </script>   
+       
+
+           
+    </div>    
+
+    <div class="column2">
+ 
+                <h1>IT-NOC Inventory Records</h1>
+                    <!-- Form for selecting distinct floors -->
+                    <form id="floorForm" action="/show9/" method="post" class="mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                                <div class="form-group mb-0">
+                                    <label for="selectFloor" class="mb-0">Select Floor:</label>
+
+                                    <div class="input-group">
+                                    <select class="form-control" id="selectFloor" name="selectedFloor" style="width: 200px;">
+                                        {% if selected_floor in distinct_floors %}
+                                            {% for floor in distinct_floors %}
+                                                {% if floor[0] == selected_floor %}
+                                                    <option selected>{{ floor[0] }}</option>
+                                                {% else %}
+                                                    <option>{{ floor[0] }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <!-- Handle the case where selected_floor is not in distinct_floors -->
+                                            <option selected>Please Select Floor</option>
+                                            {% for floor in distinct_floors %}
+                                                {% if floor[0] == selected_floor %}
+                                                    <option selected>{{ floor[0] }}</option>
+                                                {% else %}
+                                                    <option>{{ floor[0] }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
+                    <!-- Use a spacer to push the h3 element to the right -->
+                                    <div class="input-group-append">
+                                        <!-- Empty div to create space -->
+                                        
+                                    </div>
+
+                                    <h3 class="mb-0" style="padding-left: 10px;margin-top: 0px;">{{ loc1 }}</h3>
+
+
+
+                                    </div>
+
+                     
+ 
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+            
+
+            
+                <div class="col">
+
+                    <table id="vintools" class="w3-table-all" >
+                        <thead>
+                            <tr class="w3-red">
+                                <th class="w3-center">Sta</th>
+                                <th style="width: 150px;">Hostname</th>
+                                <th>Serial Number</th>
+                                <th style="width: 300px;">Model</th>
+                                <th>IP Address</th>
+                                <th>MAC Address</th>
+                                <th>Win Edi</th>
+                                <th>Citrix Version</th>
+                                
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ientry in invRec %}
+                            <tr {% if ientry[6][:6] == "PATCHX" %} style="color: red;" {% endif %}>
+
+                                <td>{{ ientry[4] }}</td>
+                                <td>{{ ientry[7] }}</td>
+
+                                <td><a href="{{ baseURLs | safe }}{{ selected_floor }}/{{ loc1 }}/{{ ientry[8] }}/">{{ ientry[8] }}</a></td>
+                                <td>{{ ientry[9] }}</td>
+                                <td>{{ ientry[12] }}</td>
+                                <td>{{ ientry[13] }}</td>
+
+
+                                <td>{{ ientry[15] }}</td>
+                                <td>{{ ientry[18] }}</td>
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+
+
+                </div>
+            
+        
+
+        
+    </div>
+
+</div>
+
+
+
+
+{% if movements %}
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        $('#movementTrackerModal').modal('show');
+    });
+  </script>
+{% endif %}
+
+<!-- Modal -->
+<div class="modal fade" id="movementTrackerModal" tabindex="-1" role="dialog" aria-labelledby="movementTrackerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document"> <!-- Add the modal-lg class for a larger modal -->
+    <div class="modal-content">
+      <div class="modal-header">
+
+        <h5 class="modal-title" id="movementTrackerModalLabel">Serial Number Movement History Tracker : <span style="color: red; font-weight: bold;">{{ sernum }}</span></h5>
+
+      </div>
+      <div class="modal-body">
+        <table class="table">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Floor</th>
+              <th scope="col">Location1</th>
+              <th scope="col">Location2</th>
+              <th scope="col">ComputerName</th>
+              <th scope="col">Citrix Version</th>
+              <th scope="col">Date</th>
+              <th scope="col">Updated BY</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for move in movements %}
+              <tr>
+                <td>{{ move[0] }}</td>
+                <td>{{ move[1] }}</td>
+                <td>{{ move[2] }}</td>
+                <td>{{ move[3] }}</td>
+                <td>{{ move[7] }}</td>
+                <td>{{ move[4] }}</td>
+                <td>{{ move[5] }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+
+        <h5 class="modal-title" id="movementTrackerModalLabel" style="font-style: italic;">Click Outside the Modal to Close</h5>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+    // Automatically submit form when a value is selected from the dropdown
+    document.getElementById("selectFloor").addEventListener("change", function() {
+        // Update the selected option's text to match the selected value
+        var selectedOption = this.options[this.selectedIndex];
+        selectedOption.text = selectedOption.value;
+        // Submit the form
+        document.getElementById("floorForm").submit();
+        // Restore the selected option's text to its original value after submission
+        selectedOption.text = "{{ selected_floor }}"; // Replace "{{ selected_floor }}" with the appropriate value from the backend
+    });
+</script>
+
+
+<!-- Add space between the table and the footer -->
+<div style="margin-top: 80px;"></div>
+
+<div class="footer">
+    &copy; 2024 VinTools. All rights reserved.
+</div>
+
+<!-- Scripts -->
+<script src="/static/assets/js/popper.min.js"></script>
+<script src="/static/assets/js/bootstrap.min.js"></script>
+<script src="/static/assets/js/jquery.min.js"></script>
+<script>
+    // JavaScript code for drawing shapes and handling click events
+</script>
+</body>
+</html>

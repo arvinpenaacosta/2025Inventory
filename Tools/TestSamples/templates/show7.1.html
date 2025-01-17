@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Inventory Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+
+  <!--   
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+-->
+
+
+
+    <link rel="stylesheet" type="text/css" href="/static/assets/css/bootstrap.min.css">
+  
+    <script src="/static/assets/js/popper.min.js"></script>
+    <script src="/static/assets/js/bootstrap.min.js"></script>
+
+
+    <link rel="stylesheet" href="/static/assets/css/w3.css">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+
+    <script src="/static/assets/js/jquery.min.js"></script>
+
+<!-- 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+-->
+
+    <title>Show Records</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        tfoot input {
+            width: 100%;
+            padding: 3px;
+            box-sizing: border-box;
+        }
+
+        .btn-col {
+            flex: 0 0 calc(20% - 10px); /* Adjust width of each button column */
+            margin-bottom: 20px; /* Adjust space between buttons */
+        }
+
+        /* Sticky footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+ <div id="data-container">
+    <h1>IT-NOC Inventory Records</h1>  
+
+
+<!-- Form for selecting distinct floors -->
+<form id="floorForm" action="/show7/" method="post" class="mb-4">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="form-group mb-0">
+                <label for="selectFloor" class="mb-0">Select Floor:</label>
+                  <select class="form-control" id="selectFloor" name="selectedFloor" style="width: 200px;">
+
+                        {% if selected_floor in distinct_floors %}
+                            {% for floor in distinct_floors %}
+                                {% if floor[0] == selected_floor %}
+                                    <option selected>{{ floor[0] }}</option>
+                                {% else %}
+                                    <option>{{ floor[0] }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <!-- Handle the case where selected_floor is not in distinct_floors -->
+                            <option selected>Please Select Floor</option>
+                            {% for floor in distinct_floors %}
+                                {% if floor[0] == selected_floor %}
+                                    <option selected>{{ floor[0] }}</option>
+                                {% else %}
+                                    <option>{{ floor[0] }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+
+                  </select>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card card-body" class="mb-4">
+    <div class="row row-cols-10">
+        {% for entry in entries %}
+        <div class="col">
+            <button id="submitBtn_{{ entry[1] }}" type="submit" class="btn btn-primary position-relative mb-4" formaction="/show7/{{selected_floor}}/{{ entry[1] }}/" formmethod="post">
+                {{ entry[1] }}
+                {% if entry[2] > 7 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning">
+                    {{ entry[2] }}
+                    <span class="visually-hidden">unread messages</span>
+                </span>
+                {% elif entry[2] < 7 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ entry[2] }}
+                    <span class="visually-hidden">unread messages</span>
+                </span>
+                {% elif entry[2] == 7 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
+                    {{ entry[2] }}
+                    <span class="visually-hidden">unread messages</span>
+                </span>
+                {% endif %}
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% for entry in entries %}
+<script>    // Function to handle button click
+    function selectFunc_{{ entry[1] }}(event) {
+        // Prevent the default form submission behavior
+        event.preventDefault();
+
+        var apiEndpoint = document.getElementById("submitBtn_{{ entry[1] }}").getAttribute("formaction");
+        window.location.href = apiEndpoint;
+    }
+
+    document.getElementById("submitBtn_{{ entry[1] }}").addEventListener("click", selectFunc_{{ entry[1] }});
+</script>
+{% endfor %}
+
+
+<div class="card card-body">
+    <div class="row row-cols-10">
+
+    <table id="vintools" class="display" style="width:100%">
+        <thead>
+            <tr>
+               
+
+                <th>Location1</th>
+                <th>Location2</th>
+                <th>Computer Name</th>
+                <th>Serial Number</th>
+                <th>IP Address</th>
+                <th>MAC Address</th>
+                <th>Windows Edition</th>
+                <th>Version Number</th>
+                <th>Citrix Version</th>
+                <th>Recorded Date Time</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in invRec %}
+            <tr>
+                <td>{{ entry[0] }}</td>
+                <td>{{ entry[1] }}</td>
+                <td>{{ entry[2] }}</td>
+                <td>{{ entry[3] }}</td>
+                <td>{{ entry[4] }}</td>
+
+                <td>{{ entry[5] }}</td>
+                <td>{{ entry[6] }}</td>
+                <td>{{ entry[7] }}</td>
+                <td>{{ entry[8] }}</td>
+                <td>{{ entry[9] }}</td>
+                
+                <td>{{ entry[10] }}</td>
+                
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+    </div>
+</div>
+
+
+
+<script>
+    // Automatically submit form when a value is selected from the dropdown
+    document.getElementById("selectFloor").addEventListener("change", function() {
+        // Update the selected option's text to match the selected value
+        var selectedOption = this.options[this.selectedIndex];
+        selectedOption.text = selectedOption.value;
+        // Submit the form
+        document.getElementById("floorForm").submit();
+        // Restore the selected option's text to its original value after submission
+        selectedOption.text = "{{ selected_floor }}"; // Replace "{{ selected_floor }}" with the appropriate value from the backend
+    });
+</script>
+
+
+
+    
+
+<div style="margin-top: 20px; "></div>
+
+<div class="footer">
+    &copy; 2024 VinTools. All rights reserved.
+</div>
+
+
+</html>

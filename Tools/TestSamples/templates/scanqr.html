@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Add the Bootstrap CSS and JavaScript links here -->
+
+    <!--
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+
+    -->
+    <link rel="stylesheet" href="static/assets/bootstrap.min.css">
+
+
+
+    <script src="static/assets/bootstrap.min.js"></script>
+
+
+    
+    <title>NOC TOOL</title>
+
+<style>
+    html {
+        
+
+        /*
+        background-image: url('/static/img/dominos.png'); 
+        */
+
+        
+        
+            /* Replace with the URL of your background image */
+        
+        background-size: cover; /* Ensure the background image covers the entire viewport */
+        background-repeat: no-repeat; /* Prevent background image from repeating */
+        background-attachment: fixed; /* Fix the background image in place */
+    }
+
+    body {
+        background: none; /* Remove any additional background set on the body */
+    }
+
+    .container {
+    margin-top: -150px;
+    }
+
+
+        /* Apply a frosted glass effect using a background image */
+    .glass-container {
+        width: 350px; /* Set the width to 350px */
+        background-image: url('static/assets/noc.png');  
+        background-size: cover; /* Adjust background size as needed */
+        border: 2px solid rgba(0, 0, 0, 0.1); /* Border with opacity */
+        border-radius: 10px; /* Rounded corners */
+        padding: 20px; /* Add some padding for spacing */
+        margin-top: 0px; /* Adjust this value as needed */
+        position: relative; /* Position container relative to allow pseudo-element */
+    }
+
+
+    .white-background-button {
+        background-color: white;
+    }
+
+    .rounded-input {
+        border-radius: 20px; /* Set the border radius to 20px */
+        opacity: 0.9;
+    }
+
+    .hover-button {
+        background-color: white;
+        transition: background-color 0.3s; /* Add a smooth transition effect */
+    }
+
+    /* Define the hover effect for the button */
+    .hover-red-button:hover {
+        background-color: red; /* Change the background color to amber on hover */
+    }
+
+    .hover-button:hover {
+        background-color: lime; /* Change the background color to amber on hover */
+    }
+
+    .rounded-button {
+        /* 	border-radius: 20px; */
+
+        border: 2px solid rgba(0, 0, 0, 0.1); /* Border with opacity */
+        border-radius: 0 20px 20px 0; /* top-left top-right bottom-right bottom-left */
+        opacity: 0.8;
+    }
+
+    .container-kbm {
+        height: 45px;
+        background-color: white;
+        background-size: cover; /* Adjust background size as needed */
+        border-radius: 20px; /* top-left top-right bottom-right bottom-left */
+        opacity: 0.8;
+
+        padding: 10px; /* Add some padding for spacing */
+        border: 40px;
+        
+    }
+
+</style>
+<style>
+
+
+
+    #qr-reader {
+        width: 350px; /* Set the desired width */
+        height: 350px;  /*Set the desired height */
+        margin: -10px auto 0 auto; /* Center the div horizontally */
+        /* background-color: #FF5733; /*  Set the background color to amber */
+    }
+
+    /*
+    .form-label {
+    color: white;
+    font-weight: bold;
+    background-color: transparent;
+    text-shadow: 6px 6px 25px teal;
+    -webkit-text-stroke: 0.5px black;
+    }
+    */
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    }
+
+    .modal-content {
+        background-color: white;
+        max-width: 400px;
+        margin: 20% auto;
+        padding: 20px;
+        border-radius: 5px;
+    }
+
+    /* Styles for the modal buttons */
+    .modal-buttons {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .modal-buttons button {
+        margin: 10px;
+    }
+
+    .modal-title {
+        color: red;
+    }
+
+    .modal-label {
+        
+    }
+
+    #revert-scan {
+        margin-top: 30px; /* Adjust the value as needed */
+        /* Position the button 20px lower relative to its original position */
+        top: -50px; /* Adjust the value as needed */
+        position: relative; /* Ensure the button stays within its container */
+        height: 100px;
+        width: 300px;
+    }
+
+    .revert-container {
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: flex-start; /* Align content to the top (vertical position) */
+        border-radius: 45px;
+
+    }
+    .revert-rounded {
+        border-radius: 45px; /* Adjust the value to control the degree of rounding */
+    }
+
+</style>
+
+
+</head>
+<body>
+
+    <!-- SCANNER BOX -->
+    <div>
+
+        <!-- SCANNER BOX -->
+        <div id="qr-reader" style="
+                    display: none;
+                    top: -50px; 
+                    width: 80%; 
+                    max-width: 500px; 
+                    margin-bottom: 5px;
+                    ">
+                        
+        </div> 
+
+        
+        <!-- REVERT CLOSE SCANNER BOX -->
+        <div class="mb-1">
+            <div class="d-flex align-items-center flex-column mt-4">
+                <div class="col-12 form-group">
+            
+                    <div class="revert-container">
+                        <button type="button" class="btn btn-danger revert-rounded" id="revert-scan" style="display: none;">Revert Process</button>
+                    </div>
+
+                </div>
+            </div>
+        </div> 
+
+
+    <div class="container  glass-container">
+        <h4 class="text-center"> </h4>
+
+        
+        <form id="myForm" class="mt-4">
+
+			
+			<div class="input-group modal-label">
+			    <div class="form-floating mb-1">
+			        <input type="text" class="form-control rounded-input" id="scaninput1" name="scaninput1" placeholder="407006 a.acosta" readonly>
+			        <label class="form-label" for="scaninput1"><em style="color: red;">* </em> EID/Username:</label>
+			    </div>
+				<button type="button" class="mb-1 btn btn-seondary btn-sm white-background-button rounded-button hover-red-button" onclick="clearProfileData()">
+				    <img src="static/assets/remove.svg" alt="+" class="bi bi-person-x-fill enlarge-image red-image"/>
+				</button>
+			</div>
+			
+
+			
+			<div class="input-group modal-label">
+                <div class="form-floating mb-1">
+                    <textarea class="form-control rounded-input" id="scaninput2" name="scaninput2" placeholder="Location" readonly style="height: 6rem;"></textarea>
+                    <label class="form-label" for="scaninput2"><em style="color: red;">* </em> Location:</label>
+                </div>
+				<button type="button" class="mb-1 btn btn-seondary btn-sm white-background-button rounded-button hover-button"
+					data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-input-target="scaninput2">
+				    <img src="static/assets/pencil.svg" alt="+" class="bi bi-pencil enlarge-image" />
+				</button>
+			</div>
+			
+
+						
+			<div class="input-group modal-label">
+                <div class="form-floating mb-1">
+                    <textarea class="form-control rounded-input" id="scaninput3" name="scaninput3" placeholder="CPU Serial" readonly style="height: 8rem;"></textarea>
+                    <label class="form-label" for="scaninput3"><em style="color: red;">* </em> CPU Serial:</label>
+                </div>
+				<button type="button" class="mb-1 btn btn-seondary btn-sm white-background-button rounded-button hover-button"
+					data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-input-target="scaninput3">
+				    <img src="static/assets/pencil.svg" alt="+" class="bi bi-pencil enlarge-image" />
+				</button>
+			</div>
+
+
+
+			<div class="input-group modal-label">
+			    <div class="form-floating mb-1">
+			        <input type="text" class="form-control rounded-input" id="scaninput5" name="scaninput5" placeholder="Monitor 1" readonly>
+			        <label class="form-label" for="scaninput5">Monitor 1 Serial:</label>
+			    </div>
+				<button type="button" class="mb-1 btn btn-seondary btn-sm white-background-button rounded-button hover-button"
+					data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-input-target="scaninput5">
+				    <img src="static/assets/pencil.svg" alt="+" class="bi bi-pencil enlarge-image" />
+				</button>
+			</div>
+
+			<div class="input-group modal-label">
+			    <div class="form-floating mb-1">
+			        <input type="text" class="form-control rounded-input" id="scaninput6" name="scaninput6" placeholder="Monitor 2" readonly>
+			        <label class="form-label" for="scaninput6">Monitor 2 Serial:</label>
+			    </div>
+				<button type="button" class="mb-1 btn btn-seondary btn-sm white-background-button rounded-button hover-button"
+					data-bs-toggle="modal" data-bs-target="#staticBackdrop" data-input-target="scaninput6">
+				    <img src="static/assets/pencil.svg" alt="+" class="bi bi-pencil enlarge-image" />
+				</button>
+			</div>
+
+
+
+            <div class="col-12 form-group d-flex justify-content-center align-items-center flex-column mt-2">
+                <button type="button" id="submitButton" class="btn btn-secondary " disabled>Submit</button>
+            </div>   
+
+		</form>
+
+
+
+
+
+	    <div class="col-12 form-group d-flex justify-content-center align-items-center flex-column mt-1">
+	        <div class="row">
+	            <div class="col">
+	                <button id="download-button" class="btn btn-warning mt-1">Download Records</button>
+	            </div>
+	            <div class="col">
+	                <button id="remove-csv-button" class="btn btn-danger mt-1">Remove CSV Data</button>
+	            </div>
+	        </div>
+	    </div>
+
+
+	</div>
+
+	<footer class="footer fixed-bottom bg-dark">
+	    <div class="container_footer text-center">
+	        <p style="color: white;">&copy; 2023 aacosta - ARRIA NOC</p>
+	    </div>
+	</footer>
+
+    <!-- MODALS ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-->
+
+    <!-- MODAL PROFILE ENTRY -->
+    <div class="modal fade" id="savedProfileModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="savedprofileLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="savedprofileLabel">Set Profile Value</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="profileInput" class="form-label">Enter a new value:</label>
+                    <input type="text" id="profileInput" class="form-control" autofocus>
+                </div>
+                <div class="modal-footer">                
+                <div class="col-12 form-group d-flex justify-content-center align-items-center flex-column mt-3">
+                    <button type="button" class="btn btn-primary" id="setProfileValue" data-bs-dismiss="modal">Set Profile</button>
+                </div>
+                <p><em style="color: red;">* Required</em></p>    
+                </div>
+                        
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL SCANINPUT / MANUAL ENRTY -->
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Manual Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="modalInput" class="form-label">Enter value manually:</label>
+                    <input type="text" id="modalInput" class="form-control" autofocus>
+                </div>
+                <div class="modal-footer">
+                <div class="col-12 form-group d-flex justify-content-center align-items-center flex-column mt-3">
+                    <button type="button" class="btn btn-primary" id="setValueButton" data-bs-dismiss="modal">Set Value</button>
+                </div>
+                <p><em style="color: red;">* Required</em></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- MODAL Confirmation to Remove CSV-->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content">
+            <p>Are you sure you want to remove the CSV data? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button id="confirm-remove" class="btn btn-danger">Yes, Remove</button>
+                <button id="cancel-remove" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL Success Notification Modal -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <p>Data saved successfully.</p>
+            <div class="col-12 form-group d-flex justify-content-center align-items-center flex-column mt-3">
+                <button id="close-success-modal" class="btn btn-primary">Close</button>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- MODAL No Scanned Records Modal -->
+    <div id="no-records-modal" class="modal">
+        <div class="modal-content">
+            <p>No scanned records to download.</p>
+
+            <div class="col-12 form-group d-flex justify-content-center align-items-center flex-column mt-3">
+                <button id="close-no-records-modal" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL Delete Profile -->
+    <div id="deleteProfile" class="modal">
+        <div class="modal-content">
+            <p>Profile Record will cleared</p>
+            <div class="modal-buttons">
+                <button id="close-deleteProfile" class="btn btn-primary">OK</button>
+                <button id="cancel-deleteProfile" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+	<!-- =======================================================================================  -->
+
+
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.7/html5-qrcode.min.js"></script>
+
+
+
+
+    -->
+    <script src="static/assets/js/html5-qrcode.min.js"></script>
+
+    <script src="static/assets/js/nocInventory.js"></script>
+
+
+
+
+
+</body>
+</html>
