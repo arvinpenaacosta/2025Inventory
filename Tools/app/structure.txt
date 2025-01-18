@@ -1,0 +1,8 @@
+your_project/
+├── main.py
+├── locations.db
+└── assets/
+    └── svg.js
+
+└── static/
+    └── index.html
