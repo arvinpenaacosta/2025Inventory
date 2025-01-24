@@ -1,0 +1,6 @@
+Install Needed software for Chromadb if chroma is not working
+vs_BuildTools.exe
+
+
+Run the RAG
+Streamlit run app.py
