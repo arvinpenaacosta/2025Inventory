@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI and PDF Processing</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script defer src="/static/scripts.js"></script>
+</head>
+<body>
+    <header>
+        <h1>AI Query and PDF Processing Interface</h1>
+    </header>
+
+    <main>
+        <!-- AI Prompt Section -->
+        <section id="ai-prompt-section">
+            <h2>Query AI</h2>
+            <form id="ai-form">
+                <label for="ai-prompt">Enter your prompt:</label>
+                <textarea id="ai-prompt" name="ai-prompt" rows="4" placeholder="Type your query here..."></textarea>
+                <button type="submit">Submit to AI (/ai)</button>
+            </form>
+            <div id="ai-response" class="response"></div>
+        </section>
+
+        <!-- PDF Query Section -->
+        <section id="ask-pdf-section">
+            <h2>Query PDF</h2>
+            <form id="ask-pdf-form">
+                <label for="ask-pdf">Enter your query:</label>
+                <textarea id="ask-pdf" name="ask-pdf" rows="4" placeholder="Type your query here..."></textarea>
+                <button type="submit">Submit to PDF Vector Store (/ask_pdf)</button>
+            </form>
+            <div id="ask-pdf-response" class="response"></div>
+        </section>
+
+        <!-- PDF Upload Section -->
+        <section id="pdf-upload-section">
+            <h2>Upload PDF</h2>
+            <form id="pdf-upload-form" enctype="multipart/form-data">
+                <label for="pdf-file">Choose a PDF file:</label>
+                <input type="file" id="pdf-file" name="pdf-file" accept="application/pdf">
+                <button type="submit">Upload PDF (/pdf)</button>
+            </form>
+            <div id="pdf-upload-response" class="response"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 AI and PDF Processing</p>
+    </footer>
+
+    <script>
+        document.getElementById('ai-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const prompt = document.getElementById('ai-prompt').value;
+            const responseDiv = document.getElementById('ai-response');
+
+            try {
+                const response = await fetch('/ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: prompt }),
+                });
+
+                const data = await response.json();
+                responseDiv.innerText = `Answer: ${data.answer}`;
+            } catch (error) {
+                responseDiv.innerText = `Error: ${error.message}`;
+            }
+        });
+
+        document.getElementById('ask-pdf-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const prompt = document.getElementById('ask-pdf').value;
+            const responseDiv = document.getElementById('ask-pdf-response');
+
+            try {
+                const response = await fetch('/ask_pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: prompt }),
+                });
+
+                const data = await response.json();
+                responseDiv.innerText = `Answer: ${data.answer}`;
+            } catch (error) {
+                responseDiv.innerText = `Error: ${error.message}`;
+            }
+        });
+
+        document.getElementById('pdf-upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('pdf-file');
+            const responseDiv = document.getElementById('pdf-upload-response');
+
+            if (!fileInput.files[0]) {
+                responseDiv.innerText = 'Please select a PDF file to upload.';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/pdf', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+                responseDiv.innerText = `Upload Successful: ${data.status}\nFilename: ${data.filename}\nChunks: ${data.chunks}`;
+            } catch (error) {
+                responseDiv.innerText = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
