@@ -1,160 +1,203 @@
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-import sqlite3
-from typing import Optional, List
-import uvicorn
+import { serve } from "https://deno.land/std@0.203.0/http/server.ts";
+import { DB } from "https://deno.land/x/sqlite/mod.ts";
 
-# Pydantic model for input validation
-class ProgramCreate(BaseModel):
-    program_name: str = Field(..., min_length=1, description="Name of the program")
+// Type definitions for better type safety
+interface Program {
+  program_id?: number;
+  program_name: string;
+  status?: 'active' | 'inactive';
+}
 
-class ProgramUpdate(BaseModel):
-    program_name: Optional[str] = None
-    status: Optional[str] = Field(None, pattern='^(active|inactive)$')
+// Initialize SQLite database
+const db = new DB("./db/app4.db");
 
-# FastAPI app setup
-app = FastAPI()
+// Create tables with better constraints
+db.query(`
+  CREATE TABLE IF NOT EXISTS programs (
+    program_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    program_name TEXT NOT NULL UNIQUE,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
 
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+// Helper functions
+async function parseJSON(req: Request): Promise<any> {
+  try {
+    const text = await req.text();
+    return JSON.parse(text || "{}");
+  } catch (error) {
+    throw new Error(`Invalid JSON: ${error.message}`);
+  }
+}
 
-# Database connection helper
-def get_db_connection():
-    conn = sqlite3.connect('./db/app4.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+function createResponse(data: any, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
 
-# Initialize database
-def init_db():
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS programs (
-            program_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            program_name TEXT NOT NULL UNIQUE,
-            status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.close()
+// Request handlers
+async function getPrograms(): Promise<Response> {
+  try {
+    const programs = [...db.query("SELECT * FROM programs ")].map(
+      ([program_id, program_name, status]) => ({ program_id, program_name, status })
+    );
+    return createResponse(programs);
+  } catch (error) {
+    return createResponse({ error: "Failed to fetch programs" }, 500);
+  }
+}
 
-# Initialize DB on startup
-init_db()
+async function createProgram(req: Request): Promise<Response> {
+  try {
+    const { program_name } = await parseJSON(req);
+    
+    if (!program_name) {
+      return createResponse({ error: "program_name is required" }, 400);
+    }
 
-# Static HTML route
-@app.get("/apifm_programs", response_class=HTMLResponse)
-async def serve_html():
-    with open('./public/index4.html', 'r') as file:
-        return HTMLResponse(content=file.read())
+    const result = db.query(
+      "INSERT INTO programs (program_name) VALUES (?) RETURNING program_id",
+      [program_name]
+    );
+    
+    const [program_id] = [...result][0];
+    return createResponse({ program_id, message: "Program created successfully" }, 201);
+  } catch (error) {
+    if (error.message.includes("UNIQUE constraint failed")) {
+      return createResponse({ error: "Program name already exists" }, 409);
+    }
+    return createResponse({ error: "Failed to create program" }, 500);
+  }
+}
 
-# Get all programs
-@app.get("/apifm/programs", response_model=List[dict])
-def get_programs():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM programs")
-        programs = [dict(row) for row in cursor.fetchall()]
-        conn.close()
-        return programs
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch programs")
+async function updateProgram(id: number, req: Request): Promise<Response> {
+  try {
+    const { program_name, status } = await parseJSON(req);
+    
+    if (!program_name && !status) {
+      return createResponse({ error: "Nothing to update" }, 400);
+    }
 
-# Create a new program
-@app.post("/apifm/programs", status_code=201)
-def create_program(program: ProgramCreate):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO programs (program_name) VALUES (?)", 
-            (program.program_name,)
-        )
-        conn.commit()
-        program_id = cursor.lastrowid
-        conn.close()
-        return {
-            "program_id": program_id, 
-            "message": "Program created successfully"
-        }
-    except sqlite3.IntegrityError:
-        raise HTTPException(status_code=409, detail="Program name already exists")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to create program")
+    const updateFields = [];
+    const params = [];
+    
+    if (program_name) {
+      updateFields.push("program_name = ?");
+      params.push(program_name);
+    }
+    
+    if (status) {
+      updateFields.push("status = ?");
+      params.push(status);
+    }
+    
+    updateFields.push("updated_at = CURRENT_TIMESTAMP");
+    params.push(id);
 
-# Update a program
-@app.put("/apifm/programs/{program_id}")
-def update_program(program_id: int, program: ProgramUpdate):
-    try:
-        # Validate input
-        if not program.program_name and not program.status:
-            raise HTTPException(status_code=400, detail="Nothing to update")
+    const query = `
+      UPDATE programs 
+      SET ${updateFields.join(", ")} 
+      WHERE program_id = ?
+    `;
+    
+    const result = db.query(query, params);
+    
+    if (result.changes === 0) {
+      return createResponse({ error: "Program not found" }, 404);
+    }
+    
+    return createResponse({ message: "Program updated successfully" });
+  } catch (error) {
+    return createResponse({ error: "Failed to update program" }, 500);
+  }
+}
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
+async function deleteProgram(id: number): Promise<Response> {
+  try {
+    const result = db.query(
+      "UPDATE programs SET status = 'inactive', updated_at = CURRENT_TIMESTAMP WHERE program_id = ?",
+      [id]
+    );
+    
+    if (result.changes === 0) {
+      return createResponse({ error: "Program not found" }, 404);
+    }
+    
+    return createResponse({ message: "Program deleted successfully" });
+  } catch (error) {
+    return createResponse({ error: "Failed to delete program" }, 500);
+  }
+}
 
-        # Prepare update query dynamically
-        update_fields = []
-        params = []
+// Main request handler
+async function handler(req: Request): Promise<Response> {
+  try {
+    const url = new URL(req.url);
+    
+    // Handle CORS preflight requests
+    if (req.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+      });
+    }
 
-        if program.program_name:
-            update_fields.append("program_name = ?")
-            params.append(program.program_name)
+    if (url.pathname === "/apifm_programs" && req.method === "GET") {
+      const file = await Deno.readFile("./public/index4.html");
+      return new Response(file, { 
+        headers: { "Content-Type": "text/html" }
+      });
+    }
 
-        if program.status:
-            update_fields.append("status = ?")
-            params.append(program.status)
+    if (url.pathname === "/apifm/programs") {
+      switch (req.method) {
+        case "GET":
+          return getPrograms();
+        case "POST":
+          return createProgram(req);
+        default:
+          return createResponse({ error: "Method not allowed" }, 405);
+      }
+    }
 
-        update_fields.append("updated_at = CURRENT_TIMESTAMP")
-        params.append(program_id)
+    if (url.pathname.startsWith("/apifm/programs/")) {
+      const id = parseInt(url.pathname.split("/").pop() || "");
+      
+      if (isNaN(id)) {
+        return createResponse({ error: "Invalid program ID" }, 400);
+      }
 
-        # Construct and execute query
-        query = f"UPDATE programs SET {', '.join(update_fields)} WHERE program_id = ?"
-        cursor.execute(query, params)
-        conn.commit()
+      switch (req.method) {
+        case "PUT":
+          return updateProgram(id, req);
+        case "DELETE":
+          return deleteProgram(id);
+        default:
+          return createResponse({ error: "Method not allowed" }, 405);
+      }
+    }
 
-        # Check if any rows were updated
-        if cursor.rowcount == 0:
-            conn.close()
-            raise HTTPException(status_code=404, detail="Program not found")
+    return createResponse({ error: "Not found" }, 404);
+  } catch (error) {
+    return createResponse({ error: "Internal server error" }, 500);
+  }
+}
 
-        conn.close()
-        return {"message": "Program updated successfully"}
+// Start server
+const port = 8000;
+console.log(`Server running on http://localhost:${port}`);
+serve(handler, { port });
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to update program")
 
-# Delete (soft delete) a program
-@app.delete("/apifm/programs/{program_id}")
-def delete_program(program_id: int):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE programs SET status = 'inactive', updated_at = CURRENT_TIMESTAMP WHERE program_id = ?", 
-            (program_id,)
-        )
-        conn.commit()
-
-        # Check if any rows were updated
-        if cursor.rowcount == 0:
-            conn.close()
-            raise HTTPException(status_code=404, detail="Program not found")
-
-        conn.close()
-        return {"message": "Program deleted successfully"}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to delete program")
-
-# Run the server
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+// deno run -RWNE server4.ts
+// http://localhost:8000/apifm_programs
