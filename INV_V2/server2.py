@@ -14,7 +14,8 @@ db_path = "app.db"
 def init_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
+
+    # programs
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS programs (
         program_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +23,7 @@ def init_db():
         status TEXT DEFAULT 'active' CHECK (status IN ('active', 'inactive'))
     );
     ''')
-    
+    # attendees
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS attendees (
         attendee_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,14 +31,14 @@ def init_db():
         full_name TEXT NOT NULL
     );
     ''')
-    
+    # items
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS items (
         item_id INTEGER PRIMARY KEY AUTOINCREMENT,
         item_name TEXT NOT NULL UNIQUE
     );
     ''')
-    
+    # items_log
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS items_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,7 +65,7 @@ init_db()
 def format_timestamp():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
+# Get Programs to Load to Modal
 @app.get("/api/programs")
 def get_programs():
     conn = sqlite3.connect(db_path)
@@ -74,6 +75,7 @@ def get_programs():
     conn.close()
     return programs
 
+# Get attendees to Load to Modal
 @app.get("/api/attendees")
 def get_attendees():
     conn = sqlite3.connect(db_path)
@@ -83,6 +85,7 @@ def get_attendees():
     conn.close()
     return attendees
 
+# Get items to Load to Modal
 @app.get("/api/items")
 def get_items():
     conn = sqlite3.connect(db_path)
@@ -130,42 +133,15 @@ def search_items_log(request: ItemLogSearchRequest):
 @app.get("/items-log")
 def serve_html():
     if os.path.exists("./public/index2.html"):
-        return FileResponse("./public/index2d.html")
+        return FileResponse("./public/index2.html")
     raise HTTPException(status_code=404, detail="File not found")
 
-
-@app.get("/api/items-log/{id}")
-def get_item_log(id: int):
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row  # Enables dictionary-like access to columns
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        SELECT 
-            il.id, il.refnum, p.program_name, i.item_name, il.quantity, il.location, 
-            il.reason, il.timestamp, a.full_name AS attendedby, 
-            il.program_id, il.item_id, il.attendee_id
-        FROM items_log il
-        JOIN programs p ON il.program_id = p.program_id
-        JOIN items i ON il.item_id = i.item_id
-        JOIN attendees a ON il.attendee_id = a.attendee_id
-        WHERE il.id = ?
-    ''', (id,))
-    
-    row = cursor.fetchone()
-    conn.close()
-    
-    if row:
-        return dict(row)  # Converts the single row into a dictionary
-    else:
-        return {"error": "Item not found"}
-
-
-# GET ALL items-log record and populate in the  Table
+# GET ALL items-log record and populate in the Table
 @app.get("/api/items-log2")
 def get_items_log():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+
     cursor.execute('''
         SELECT 
             il.id, il.refnum, p.program_name, i.item_name, il.quantity, il.location, 
@@ -202,9 +178,6 @@ def get_items_log():
     
     return items
 
-
-
-
 class ItemLog(BaseModel):
     refnum: str
     program_id: int
@@ -214,6 +187,7 @@ class ItemLog(BaseModel):
     reason: str
     attendee_id: int
 
+# Save
 @app.post("/api/items-log")
 def add_item_log(item_log: ItemLog):
     conn = sqlite3.connect(db_path)
@@ -227,6 +201,34 @@ def add_item_log(item_log: ItemLog):
     conn.close()
     return {"message": "Item logged"}
 
+# Get Row to Edit
+@app.get("/api/items-log/{id}")
+def get_item_log(id: int):
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row  # Enables dictionary-like access to columns
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT 
+            il.id, il.refnum, p.program_name, i.item_name, il.quantity, il.location, 
+            il.reason, il.timestamp, a.full_name AS attendedby, 
+            il.program_id, il.item_id, il.attendee_id
+        FROM items_log il
+        JOIN programs p ON il.program_id = p.program_id
+        JOIN items i ON il.item_id = i.item_id
+        JOIN attendees a ON il.attendee_id = a.attendee_id
+        WHERE il.id = ?
+    ''', (id,))
+    
+    row = cursor.fetchone()
+    conn.close()
+    
+    if row:
+        return dict(row)  # Converts the single row into a dictionary
+    else:
+        return {"error": "Item not found"}
+
+# Update/Save
 @app.put("/api/items-log/{id}")
 def update_item_log(id: int, item_log: ItemLog):
     conn = sqlite3.connect(db_path)
@@ -240,6 +242,7 @@ def update_item_log(id: int, item_log: ItemLog):
     conn.close()
     return {"message": "Item updated"}
 
+# Delete
 @app.delete("/api/items-log/{id}")
 def delete_item_log(id: int):
     conn = sqlite3.connect(db_path)
@@ -249,4 +252,4 @@ def delete_item_log(id: int):
     conn.close()
     return {"message": "Item deleted"}
 
-# Run the server using: uvicorn filename:app --reload
+# Run the server using: uvicorn server2:app --reload
