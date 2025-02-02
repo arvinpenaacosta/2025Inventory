@@ -280,3 +280,4 @@ if __name__ == "__main__":
 
 
 # uvicorn server3:app --host 0.0.0.0.0 --port 8821 --reload --ssl-keyfile=certs/server_unencrypted.key --ssl-certfile=certs/server.crt 
+# https://127.0.0.1:8821/items-log
