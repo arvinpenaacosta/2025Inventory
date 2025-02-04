@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Layout</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        .header, .footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            position: fixed;
+            width: 100%;
+            left: 0;
+            z-index: 1000;
+        }
+        .header {
+            top: 0;
+        }
+        .footer {
+            bottom: 0;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            margin-top: 60px;
+            margin-bottom: 40px;
+        }
+        .sidenav {
+            width: 250px;
+            background: #444;
+            color: white;
+            padding: 20px;
+            position: fixed;
+            left: 0;
+            top: 100px;
+            height: calc(100% - 100px);
+            transition: transform 0.3s ease;
+        }
+        .sidenav.closed {
+            transform: translateX(-100%);
+        }
+        .content-wrapper {
+            margin-top: 60px;
+            flex: 1;
+            display: flex;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+        }
+        .content.expanded {
+            margin-left: 0;
+        }
+        .toggle-btn {
+            position: fixed;
+            left: 10px;
+            top: 70px;
+            background: #333;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Fixed Header</div>
+    <button class="toggle-btn" onclick="toggleNav()">☰</button>
+    <div class="sidenav" id="sidenav">
+        <ul>
+            <li><a href="#" style="color: white; text-decoration: none;">Home</a></li>
+            <li><a href="#" style="color: white; text-decoration: none;">About</a></li>
+            <li><a href="#" style="color: white; text-decoration: none;">Services</a></li>
+            <li><a href="#" style="color: white; text-decoration: none;">Contact</a></li>
+        </ul>
+    </div>
+    <div class="content-wrapper">
+        <main class="content" id="content">
+            <h1>Welcome to the Page</h1>
+            <p>This is the main content area.</p>
+        </main>
+    </div>
+    <div class="footer">Fixed Footer</div>
+    <script>
+        function toggleNav() {
+            const sidenav = document.getElementById('sidenav');
+            const content = document.getElementById('content');
+            sidenav.classList.toggle('closed');
+            content.classList.toggle('expanded');
+        }
+    </script>
+</body>
+</html>

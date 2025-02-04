@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Russo+One&display=swap");
+
+    svg {
+      font-family: "Russo One", sans-serif;
+      width: 100%;
+      height: 100%;
+    }
+    svg text#time {
+      animation: strokeTime 5s infinite alternate;
+      stroke-width: 2;
+      stroke: #365FA0;
+      font-size: 200px; /* Adjust the font size for the hour */
+      text-anchor: middle;
+    }
+    svg text#date {
+      animation: strokeDate 15s infinite alternate;
+      stroke-width: 2;
+      stroke: #008080;
+      font-size: 100px; /* Adjust the font size for the date */
+      text-anchor: middle;
+    }
+    @keyframes strokeTime {
+      15% {
+        fill: rgba(72, 138, 204, 0);
+        stroke: rgba(54, 95, 160, 1);
+        stroke-dashoffset: 25%;
+        stroke-dasharray: 0 50%;
+        stroke-width: 2;
+      }
+      60% {
+        fill: rgba(72, 138, 204, 0);
+        stroke: rgba(54, 95, 160, 1);
+      }
+      80% {
+        fill: rgba(72, 138, 204, 0);
+        stroke: rgba(54, 95, 160, 1);
+        stroke-width: .5;
+      }
+      100% {
+        fill: rgba(72, 138, 204, 1);
+        stroke: rgba(54, 95, 160, 0);
+        stroke-dashoffset: -25%;
+        stroke-dasharray: 50% 0;
+        stroke-width: 0;
+      }
+    }
+    @keyframes strokeDate {
+      0% {
+        fill: rgba(72, 138, 204, 0);
+        stroke: rgba(0, 128, 128, 1);
+        stroke-dashoffset: 25%;
+        stroke-dasharray: 0 50%;
+        stroke-width: 2;
+      }
+      70% {
+        fill: rgba(72, 138, 204, 0);
+        stroke: rgba(0, 128, 128, 1);
+      }
+      80% {
+        fill: rgba(72, 138, 204, 0);
+        stroke: rgba(0, 128, 128, 1);
+        stroke-width: .5;
+      }
+      100% {
+        fill: rgba(72, 138, 204, 1);
+        stroke: rgba(0, 128, 128, 0);
+        stroke-dashoffset: -25%;
+        stroke-dasharray: 50% 0;
+        stroke-width: 0;
+      }
+    }
+
+    .wrapper {
+        background: linear-gradient(to bottom, rgba(105, 42, 251, 0.71), rgb(4, 4, 4));
+      height: 100vh; /* 100% of the viewport height */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+
+</head>
+<body>
+    <div class="wrapper">
+    <svg>
+      <text x="50%" y="50%" dy=".35em" id="time">
+        00:00:00
+      </text>
+
+      <text x="50%" y="80%" dy=".35em" id="date">
+        January 1, 2023
+      </text>
+    </svg>
+  </div>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const timeString = `${hours}:${minutes}:${seconds}`;
+      
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      const dateString = now.toLocaleDateString('en-US', options);
+
+      document.getElementById('time').textContent = timeString;
+      document.getElementById('date').textContent = dateString;
+    }
+
+    // Update the clock every second
+    setInterval(updateClock, 2000);
+
+    // Initial update
+    updateClock();
+  </script>
+</body>
+</html>

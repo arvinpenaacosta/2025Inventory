@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Scrollable Cards with Drop Areas</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212; /* Dark background */
+      color: #fff;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    /* Scrollable Container */
+    .scroll-container {
+      max-height: 61vh; /* Makes container scrollable */
+      overflow-y: auto;
+      border: 2px solid rgba(50, 205, 50, 0.7);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 0 8px 2px rgba(50, 205, 50, 0.7);
+    }
+
+
+
+    /* Drop Area Container */
+    .drop-area-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    /* Individual Drop Areas */
+    .drop-area {
+      flex: 1;
+      height: 100px;
+      margin: 0 8px;
+      border: 2px dashed rgba(50, 205, 50, 0.7);
+      border-radius: 12px;
+      text-align: center;
+      line-height: 100px;
+      font-size: 1.2rem;
+      color: #fff;
+      background: rgba(0, 255, 0, 0.2);
+      cursor: pointer;
+    }
+
+    .drop-area:hover {
+      background: rgba(50, 205, 50, 0.4);
+    }
+
+    /* Outer Main Card */
+    .main-card {
+      position: relative;
+      border: 2px solid rgba(50, 205, 50, 0.7);
+      border-radius: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 8px 2px rgba(50, 205, 50, 0.7);
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      cursor: move; /* Add move cursor */
+    }
+
+    /* Flex container for cards */
+    .card-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Full-width card */
+    .card-full {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      text-align: center;
+      padding: 16px;
+      color: #fff;
+    }
+
+    /* Two cards in a row */
+    .card-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .card-half {
+      flex: 1;
+      border: 1px solid lime; /* Lime border */
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      text-align: center;
+      padding: 16px;
+      color: lime; /* Lime font color */
+      margin-bottom: 0px; /* Remove margin to avoid extra spacing */
+    }
+
+    /* Bottom Paragraph Styling */
+    .bottom-paragraph {
+      text-align: center;
+      font-size: 1rem;
+      color: #00ff00;
+      margin-top: -8px; /* Move closer to the two cards above */
+      padding-top: 2px; /* Smaller padding for a tighter fit */
+    }
+
+    /* Top Card Styling */
+    .top-card {
+      text-align: center;
+      font-size: 1.5rem;
+      color: #00ff00;
+      font-weight: bold;
+      margin-bottom: 8px; /* Decreased margin for closer alignment */
+    }
+    .amber-text {
+      color: #FFBF00; /* Amber color */
+    }
+    
+  </style>
+</head>
+<body>
+  <!-- Scrollable Container -->
+  <div class="scroll-container" id="cardContainer"></div>
+
+  <!-- Drop Area Container -->
+  <div class="drop-area-container">
+    <div id="ClearPort" class="drop-area">ClearPort</div>
+    <div id="ChangeVLAN" class="drop-area">ChangeVLAN</div>
+    <div id="ClrStick" class="drop-area">ClrStick</div>
+  </div>
+
+  <script>
+    // JSON data for multiple cards
+    const cardsData = [
+      {
+        id: "idx001",
+        top: "P-487",
+        middle: ["80", "G1/0/22"],
+        bottom: "6F Pod43 B"
+      },
+      {
+        id: "idx002",
+        top: "S-123",
+        middle: ["90", "G1/0/21"],
+        bottom: "6F Pod44 A"
+      },
+      {
+        id: "idx003",
+        top: "P-999",
+        middle: ["60", "G1/0/23"],
+        bottom: "6F Pod45 C"
+      },
+      {
+        id: "idx004",
+        top: "S-321",
+        middle: ["70", "G1/0/24"],
+        bottom: "6F Pod46 D"
+      }
+    ];
+
+    // Function to generate card HTML dynamically
+    function generateCardHTML(card) {
+    const topClass = card.top.startsWith("S") ? "amber-text" : ""; // Check if 'top' starts with 'S'
+      return `
+        <div class="main-card" data-value="${card.id}" draggable="true">
+          <div class="card-container">
+            <!-- Top Card using H3 tag -->
+            <h3 class="top-card ${topClass}">${card.top}</h3> 
+            
+            <!-- Second Row with Two Equal Cards -->
+            <div class="card-row">
+              <div class="card-half ${topClass}">${card.middle[0]}</div>
+              <div class="card-half ${topClass}">${card.middle[1]}</div>
+            </div>
+
+            <!-- Bottom Paragraph -->
+            <p class="bottom-paragraph ${topClass}">${card.bottom}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Function to populate all cards dynamically
+    function populateCards() {
+      const cardContainer = document.getElementById("cardContainer");
+      cardContainer.innerHTML = ""; // Clear previous content
+
+      // Loop through JSON data and append each card
+      cardsData.forEach(card => {
+        const cardHTML = generateCardHTML(card);
+        cardContainer.innerHTML += cardHTML;
+      });
+    }
+
+    // Call the function to populate cards
+    populateCards();
+
+    // Enable drag and drop functionality
+    const dropAreas = document.querySelectorAll('.drop-area');
+    dropAreas.forEach(area => {
+      area.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        area.style.background = 'rgba(50, 205, 50, 0.4)';
+      });
+
+      area.addEventListener('dragleave', () => {
+        area.style.background = 'rgba(0, 255, 0, 0.2)';
+      });
+
+      area.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const draggedCard = document.querySelector('.dragging');
+        const cardId = draggedCard ? draggedCard.getAttribute('data-value') : 'Unknown';
+        const dropAreaName = area.id;
+
+        // Prompt with the card id and drop area name
+        alert(`Card ID: ${cardId} was dropped in: ${dropAreaName}`);
+        
+        area.style.background = 'rgba(0, 255, 0, 0.2)';
+      });
+    });
+
+    // Handle drag start event
+    document.addEventListener('dragstart', (event) => {
+      if (event.target.classList.contains('main-card')) {
+        event.target.classList.add('dragging');
+      }
+    });
+
+    // Handle drag end event
+    document.addEventListener('dragend', (event) => {
+      event.target.classList.remove('dragging');
+    });
+  </script>
+</body>
+</html>

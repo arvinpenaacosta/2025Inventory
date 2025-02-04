@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Card Loading Carousel</title>
+    <link rel="stylesheet" href="cards.css">
+    <style>
+        #loadCards, #loadCardsSet2 {
+            margin-bottom: 2px; /* Reduce the space below the buttons */
+            margin-right: 10px; /* Add some spacing between the buttons */
+        }
+
+        #app {
+            margin-top: 0; /* Ensure no extra space above the #app div */
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <button id="loadCards">Load Card Set 1</button>
+    <button id="loadCardsSet2">Load Card Set 2</button>
+
+    <script>
+        // Config object for carousel
+        const carouselData = {
+            config: {
+                buttons: {
+                    prev: "Up",
+                    next: "Down"
+                },
+                dropAreas: [
+                    { id: "drop1", text: "Drop Area 1" },
+                    { id: "drop2", text: "Drop Area 2" },
+                    { id: "drop3", text: "Drop Area 3" }
+                ]
+            }
+        };
+
+        // Card Set 1
+        const cardSet1 = {
+            cards: [
+                { id: "card1", content: "Card 1" },
+                { id: "card2", content: "Card 2" },
+                { id: "card3", content: "Card 3" },
+                { id: "card4", content: "Card 4" },
+                { id: "card5", content: "Card 5" },
+                { id: "card6", content: "Card 6" },
+                { id: "card7", content: "Card 7" }
+            ]
+        };
+
+        // New Card Set 2
+        const cardSet2 = {
+            cards: [
+                { id: "card21", content: "Card 21" },
+                { id: "card22", content: "Card 22" },
+                { id: "card23", content: "Card 23" },
+                { id: "card24", content: "Card 24" },
+                { id: "card25", content: "Card 25" }
+            ]
+        };
+
+        // Simulated API function
+        function fetchCarouselData(cardSetName) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    if (cardSetName === "cardSet1") {
+                        resolve({ cards: cardSet1.cards, config: carouselData.config });
+                    } else if (cardSetName === "cardSet2") {
+                        resolve({ cards: cardSet2.cards, config: carouselData.config });
+                    }
+                }, 500);
+            });
+        }
+
+        class CarouselApp {
+            constructor(containerId) {
+                this.container = document.getElementById(containerId);
+                this.currentAngle = 0;
+                this.currentIndex = 0;
+                this.touchStartY = 0;
+                this.touchEndY = 0;
+                this.config = carouselData.config; // Load config immediately
+                this.createInitialStructure(); // Create structure without cards
+                this.setupInitialEventListeners(); // Setup non-card event listeners
+            }
+
+            createInitialStructure() {
+                const dropAreasHTML = this.config.dropAreas
+                    .map(area => `<div class="drop-area" id="${area.id}">${area.text}</div>`)
+                    .join('');
+
+                this.container.innerHTML = `
+                    <div class="carousel-container">
+                        <div class="carousel">
+                            <div class="carousel-inner">
+                                <!-- Cards will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="drop-areas-container">
+                        ${dropAreasHTML}
+                    </div>
+                    <div class="buttons-container">
+                        <button id="prev">${this.config.buttons.prev}</button>
+                        <button id="next">${this.config.buttons.next}</button>
+                    </div>
+                `;
+
+                this.carousel = this.container.querySelector('.carousel-inner');
+            }
+
+            setupInitialEventListeners() {
+                const dropAreas = this.container.querySelectorAll('.drop-area');
+                dropAreas.forEach(dropArea => {
+                    dropArea.addEventListener('dragover', (e) => e.preventDefault());
+                    dropArea.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        const droppedCardValue = e.dataTransfer.getData('text');
+                        const dropAreaId = dropArea.id;
+                        alert(`Card "${droppedCardValue}" was dropped into ${dropAreaId}`);
+                    });
+                });
+
+                this.container.querySelector('#prev').addEventListener('click', () => this.rotateCarousel('prev'));
+                this.container.querySelector('#next').addEventListener('click', () => this.rotateCarousel('next'));
+
+                this.carousel.addEventListener('touchstart', (e) => {
+                    this.touchStartY = e.changedTouches[0].screenY;
+                });
+
+                this.carousel.addEventListener('touchend', (e) => {
+                    this.touchEndY = e.changedTouches[0].screenY;
+                    this.handleSwipe();
+                });
+
+                this.carousel.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+            }
+
+            async loadCards(cardSetName) {
+                try {
+                    this.carousel.style.transform = ''; // Reset transform style
+
+                    const data = await fetchCarouselData(cardSetName);
+                    this.cardsData = data.cards;
+
+                    // Clear existing cards
+                    this.carousel.innerHTML = '';
+
+                    this.renderCards();
+                    this.initializeCards();
+
+                    // Recalculate angleStep based on the new cardset
+                    this.totalCards = this.cards.length;
+                    this.angleStep = 360 / this.totalCards;
+
+                    // Ensure the first card of the new set has the focus class
+                    if (this.cards.length > 0) {
+                        this.cards.forEach(card => card.classList.remove('focus'));  // Remove focus from all cards
+                        this.cards[0].classList.add('focus');  // Add focus to the first card
+                        this.cards[0].setAttribute('draggable', true);  // Ensure the first card is draggable
+                        console.log("164: ", this.angleStep);
+                    }
+
+
+                } catch (error) {
+                    console.error('Error loading cards:', error);
+                    this.carousel.innerHTML = '<p>Error loading cards</p>';
+                }
+            }
+
+            renderCards() {
+                const cardsHTML = this.cardsData
+                    .map(card => `<div class="card" id="${card.id}" draggable="false">${card.content}</div>`)
+                    .join('');
+                this.carousel.innerHTML = cardsHTML;
+
+                this.cards = this.container.querySelectorAll('.card');
+                this.totalCards = this.cards.length;
+                this.angleStep = 360 / this.totalCards;
+
+
+
+            }
+
+            initializeCards() {
+                this.arrangeCards();
+                this.setupCardEventListeners();
+                this.updateFocus();
+            }
+
+            arrangeCards() {
+                console.log("195: ", this.angleStep);
+                this.cards.forEach((card, index) => {
+                    const angle = index * this.angleStep;
+                    card.style.transform = `rotateX(${angle}deg) translateZ(150px)`;
+
+                });
+            }
+
+            setupCardEventListeners() {
+                this.cards.forEach(card => {
+                    card.addEventListener('dragstart', (e) => {
+                        if (!card.classList.contains('focus')) return;
+                        e.dataTransfer.setData('text', card.innerHTML);
+                        setTimeout(() => {
+                            card.style.visibility = 'hidden';
+                        }, 0);
+                    });
+
+                    card.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            card.style.visibility = 'visible';
+                        }, 0);
+                    });
+                });
+            }
+
+            updateFocus() {
+                this.cards.forEach((card, index) => {
+                    if (index === this.currentIndex) {
+                        card.classList.add('focus');
+                        card.setAttribute('draggable', true);
+                    } else {
+                        card.classList.remove('focus');
+                        card.setAttribute('draggable', false);
+                    }
+                });
+            }
+
+            rotateCarousel(direction) {
+                if (!this.cards || this.cards.length === 0) return;
+                
+                if (direction === 'next') {
+                    this.currentAngle -= this.angleStep;
+                    this.currentIndex = (this.currentIndex + 1) % this.totalCards;
+                } else {
+                    this.currentAngle += this.angleStep;
+                    this.currentIndex = (this.currentIndex - 1 + this.totalCards) % this.totalCards;
+                }
+                
+                                
+                this.carousel.style.transform = `rotateX(${this.currentAngle}deg)`;
+                
+                console.log("247: ", this.carousel.style.transform);
+                
+                this.updateFocus();
+            }
+
+            handleSwipe() {
+                const swipeDistance = this.touchStartY - this.touchEndY;
+                const swipeThreshold = 10;
+                
+                if (Math.abs(swipeDistance) > swipeThreshold) {
+                    swipeDistance > 0 ? this.rotateCarousel('prev') : this.rotateCarousel('next');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const carousel = new CarouselApp('app');
+            
+            const loadButton1 = document.getElementById('loadCards');
+            const loadButton2 = document.getElementById('loadCardsSet2');
+            
+            loadButton1.addEventListener('click', async () => {
+                loadButton1.textContent = 'Loading...';
+                carousel.carousel.innerHTML = ''; // Clear existing cards
+                await carousel.loadCards('cardSet1');
+                loadButton1.textContent = 'Reload Card Set 1';
+            });
+
+            loadButton2.addEventListener('click', async () => {
+                loadButton2.textContent = 'Loading...';
+                carousel.carousel.innerHTML = ''; // Clear existing cards
+                await carousel.loadCards('cardSet2');
+                loadButton2.textContent = 'Reload Card Set 2';
+            });
+        });
+    </script>
+</body>
+</html>

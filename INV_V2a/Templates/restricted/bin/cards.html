@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrollable Cards with JSON</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      width: 320px;
+      height: 500px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+      background-color: #fff;
+      padding: 10px;
+    }
+
+    .card {
+      background-color: #007bff;
+      color: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .card:last-child {
+      margin-bottom: 0;
+    }
+
+    .add-card-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      background-color: #28a745;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .add-card-button:hover {
+      background-color: #218838;
+    }
+
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .card-body h6 {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+
+    .card-body h5 {
+      margin: 5px 0;
+      font-size: 16px;
+    }
+
+    .card-body p {
+      margin: 3px 0;
+      font-size: 12px;
+    }
+
+    .card-body small {
+      font-size: 10px;
+      color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="container" id="cardContainer">
+      <!-- Initially empty -->
+    </div>
+    <button class="add-card-button" onclick="addAllCards()">Add All Cards</button>
+  </div>
+
+  <script>
+    // Predefined JSON data
+    const cardData = [
+      { index: 1, station: "P-222", port: "PORT 1", interface: "INTERFACE 1", location: "Location 1" },
+      { index: 2, station: "S-222", port: "PORT 2", interface: "INTERFACE 2", location: "Location 2" },
+      { index: 3, station: "P-123", port: "PORT 3", interface: "INTERFACE 3", location: "Location 3" },
+      { index: 4, station: "P-432", port: "PORT 4", interface: "INTERFACE 4", location: "Location 4" },
+      { index: 5, station: "S-432", port: "PORT 5", interface: "INTERFACE 5", location: "Location 5" },
+    ];
+
+    // Function to create a card element
+    function createCard(data) {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const cardBody = document.createElement('div');
+      cardBody.className = 'card-body';
+
+      const h6 = document.createElement('h6');
+      h6.className = 'card-title';
+      h6.textContent = `Index: ${data.index}`;
+
+      const h2 = document.createElement('h2');
+      h2.className = 'card-title';
+      h2.textContent = `${data.station}`;
+
+      const p1 = document.createElement('p');
+      p1.className = 'card-text';
+      p1.textContent = `${data.port} | ${data.interface}`;
+
+      const p2 = document.createElement('p');
+      p2.className = 'card-text';
+      const small = document.createElement('small');
+      small.className = 'text-muted';
+      p1.textContent = data.location;
+      p2.appendChild(small);
+
+      cardBody.appendChild(h6);
+      cardBody.appendChild(h2);
+      cardBody.appendChild(p1);
+      cardBody.appendChild(p2);
+
+      card.appendChild(cardBody);
+
+      return card;
+    }
+
+    // Function to add all cards to the container at once
+    function addAllCards() {
+      const container = document.getElementById('cardContainer');
+      cardData.forEach(data => {
+        const newCard = createCard(data);
+        container.appendChild(newCard);
+      });
+    }
+
+    // Ensure the container is empty initially
+    window.onload = () => {
+      const container = document.getElementById('cardContainer');
+      container.innerHTML = ""; // Clear any initial content
+    };
+  </script>
+</body>
+</html>

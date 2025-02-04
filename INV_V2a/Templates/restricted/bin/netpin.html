@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIN Entry with modalPin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+ 
+
+<style>
+body {
+margin: 0;
+font-family: Arial, sans-serif;
+background: black !important;;
+color: lime;
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+height: 100vh;
+}
+
+/* Container and Layout */
+.container-Pin { /* ok */
+width: 260px;
+height: 80px;
+background: rgba(239, 241, 239, 0.1);
+border-radius: 10px;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 0px;
+}
+
+.input-wrapper {
+position: relative;
+width: 180px;
+display: inline-block;
+margin-top: 20px;
+}
+
+/* Input Styles */
+.outside-inputPin {
+width: 100%;
+margin-bottom: 20px;
+font-size: 20px;
+padding: 5px;
+border: 2px solid lime;
+border-radius: 5px;
+background: black;
+color: lime;
+height: 50px;
+box-sizing: border-box;
+text-align: center;
+padding-right: 40px;
+}
+
+.manPin-button {
+position: absolute;
+right: 0;
+top: 25px;
+transform: translateY(-50%);
+font-size: 25px;
+color: lime;
+background: none;
+border: none;
+cursor: pointer;
+padding-right: 15px;
+}
+
+.bi-search {
+width: 50px;
+height: 50px;
+display: flex;
+justify-content: center;
+align-items: center;
+padding: 0;
+border: 2px solid lime;
+border-radius: 5px;
+background: black;
+color: lime;
+cursor: pointer;
+font-size: 25px;
+}
+
+/* Modal Styles */
+.modalPin { /* ok */
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0, 0, 0, 0.8);
+justify-content: center;
+align-items: center;
+z-index: 9999;
+overflow: hidden;
+}
+
+.modalPin.active { /* ok */
+display: flex;
+}
+
+.modalPin-content { /* ok */
+width: 230px; /* 270 */
+height:400px; /* 240 */
+background: rgba(239, 241, 239, 0.1);
+border-radius: 10px;
+padding: 40px;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+z-index: 10000;
+position: relative;
+}
+
+.modalPin-content .container-Pin {
+width: 100%;
+background: none;
+box-shadow: none;
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 15px;
+}
+
+/* Card and Button Styles */
+.card-pin, .action-button {
+width: 60px;
+height: 60px;
+display: flex;
+justify-content: center;
+align-items: center;
+border-radius: 10px;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+background: rgba(226, 237, 227, 0.231);
+border: 2px solid lime;
+color: lime;
+font-size: 20px;
+cursor: pointer;
+transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.card-pin:active, .action-button:active {
+transform: scale(0.95);
+background: #eeff00;
+color: black;
+}
+
+.action-button {
+font-weight: bold;
+font-size: 16px;
+}
+
+/* Output Styles */
+.output {
+height:30px;
+grid-column: span 3;
+text-align: center;
+background: black;
+border: 2px solid lime;
+border-radius: 10px;
+padding: 10px;
+color: lime;
+font-size: 24px;
+}
+
+/* Modal Button Styles */
+.modalPin-button {
+font-size: 16px;
+padding: 10px 20px;
+background: lime;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+color: black;
+}
+
+.modalPin-button:hover {
+background: darkgreen;
+color: white;
+}
+
+#pin-display {
+    font-size: 2em;
+    text-align: center;
+    color: #ff00ff; /* Matches the color in your image */
+    border: 2px solid #00ff00; /* Matches the green border in your image */
+    padding: 0; /* Remove extra padding */
+    line-height: 1.5em; /* Adjust this value to position the text vertically */
+    position: relative;
+    height: 50px; /* Adjust the height as needed */
+    display: flex;
+    align-items: flex-start; /* Align content to the top */
+    justify-content: center; /* Center text horizontally */
+}
+</style>
+
+
+</head>
+<body>
+  
+  <div class="container-Pin">
+    <div class="input-wrapper">
+      <input 
+        type="text" 
+        class="outside-inputPin" 
+        id="pin-input" 
+        placeholder="Enter Port">
+      
+      <button 
+        class="manPin-button" 
+        id="open-modalPin">
+        <i class="bi bi-calculator-fill"></i>
+      </button>
+    </div>
+    <button 
+      class="bi bi-search" 
+      id="search-Pin">
+    </button>
+  </div>
+
+  <div class="modalPin" id="PIN-modal">
+    <div class="modalPin-content">
+      <div class="container-Pin">
+        <div class="output" id="pin-display"></div>
+        <div class="card-pin" data-value="1">1</div>
+        <div class="card-pin" data-value="2">2</div>
+        <div class="card-pin" data-value="3">3</div>
+        <div class="card-pin" data-value="4">4</div>
+        <div class="card-pin" data-value="5">5</div>
+        <div class="card-pin" data-value="6">6</div>
+        <div class="card-pin" data-value="7">7</div>
+        <div class="card-pin" data-value="8">8</div>
+        <div class="card-pin" data-value="9">9</div>
+        <div class="card-pin" data-value="0">0</div>
+
+        <button class="action-button" id="clearPin-button">Clear</button>
+        <button class="action-button" id="submitPin-button">Go</button>
+      </div>
+    </div>
+  </div>
+
+    <script>
+    // Get the search button element
+    const searchPinButton = document.getElementById('search-Pin');
+
+
+    const pinDisplay = document.getElementById('pin-display');
+    const pinInput = document.getElementById('pin-input');
+    const clearPinButton = document.getElementById('clearPin-button');
+    const submitPinButton = document.getElementById('submitPin-button');
+    const openmodalPinButton = document.getElementById('open-modalPin');
+    const modalPin = document.getElementById('PIN-modal');
+    let pin = '';
+
+    // Handle number button clicks
+    document.querySelectorAll('.card-pin').forEach(card => {
+        card.addEventListener('click', () => {
+            const value = card.dataset.value;
+            pin += value;
+            pinDisplay.textContent = pin; // Display the entered value
+            });
+        });
+
+        // Clear button functionality
+        clearPinButton.addEventListener('click', () => {
+        pin = '';
+        pinDisplay.textContent = '';
+    });
+
+    // Submit button functionality
+    submitPinButton.addEventListener('click', () => {
+        //pinInput.value = pin; // Pass value to the input field
+        //pin = '';
+        //pinDisplay.textContent = '';
+        //modalPin.classList.remove('active'); // Close modalPin
+        pinInput.value = pin; // Pass value to the input field
+        pin = '';
+        pinDisplay.textContent = '';
+
+        const focusedCardX = document.querySelector('.card-X.focus-X');
+        const focusedValueX = focusedCardX ? focusedCardX.textContent : 'No card selected';
+
+        // Get the current value in the input field
+        const currentInputValue = pinInput.value;
+
+        modalPin.classList.remove('active'); // Close modalPin
+
+        // Create an alert with the information
+        alert(`Focused Horizontal Carousel Value: ${focusedValueX}\nCurrent Input Value: ${currentInputValue}`);
+    });
+
+    // Open modalPin button
+    openmodalPinButton.addEventListener('click', () => {
+        modalPin.classList.add('active');
+    });
+
+    // Close modalPin on clicking outside
+    modalPin.addEventListener('click', (e) => {
+        if (e.target === modalPin) {
+            modalPin.classList.remove('active');
+        }
+    });
+
+    // Allow manual editing in input field
+    pinInput.addEventListener('input', (e) => {
+    pin = e.target.value;
+    });
+
+    // Add global keydown event listener
+    document.addEventListener('keydown', (e) => {
+    // Check if the Escape key is pressed
+    if (e.key === 'Escape') {
+    // Clear the input field and PIN display
+    pinInput.value = '';
+    pin = '';
+    pinDisplay.textContent = '';
+    }
+
+    // Check if the Enter key is pressed
+    if (e.key === 'Enter') {
+    // Alert the current input value
+    if (pinInput.value) {
+        alert('Entered Value: ' + pinInput.value);
+    }
+    }
+    });
+
+
+    // Add click event listener to the search button
+    searchPinButton.addEventListener('click', () => {
+        // Find the currently focused horizontal carousel card
+        const focusedCardX = document.querySelector('.card-X.focus-X');
+        const focusedValueX = focusedCardX ? focusedCardX.textContent : 'No card selected';
+
+        // Get the current value in the input field
+        const currentInputValue = pinInput.value;
+
+        // Create an alert with the information
+        alert(`Focused Horizontal Carousel Value: ${focusedValueX}\nCurrent Input Value: ${currentInputValue}`);
+    });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Scrollable Cards with Drop Areas</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- floor -->
+<style>
+
+
+    .containerFa {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background-color: #222; /* Slightly lighter background for contrast */
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  max-width: 400px; /* Optional: Set a maximum width */
+  width: 100%; /* Make it responsive */
+}
+    
+    .container-floor {
+      display: flex;
+      flex-direction: row; /* Align label and select horizontally */
+      align-items: center; /* Vertically center the items */
+      gap: 0; /* Remove the gap between label and dropdown */
+      text-align: left;
+      width: 100%; /* Ensures the container-floor takes up full width */
+      max-width: 600px; /* Limiting container-floor width for larger screens */
+    }
+    
+    label {
+      font-size: 18px;
+      white-space: nowrap; /* Prevents label text from wrapping */
+      margin-right: 5px; /* Adds a small space between label and dropdown */
+    }
+    
+    select {
+      background-color: #333;
+      color:Lime;
+      border: 2px solid rgba(50, 205, 50, 0.7); /* Green border */
+      box-shadow: 0 0 8px 2px rgba(50, 205, 50, 0.7); /* Green box shadow */
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      flex-shrink: 0; /* Prevents shrinking */
+      width: 200px; /* Adjust dropdown width */
+      box-sizing: border-box;
+    }
+    
+    @media (max-width: 600px) {
+      label {
+        font-size: 16px;
+      }
+    
+      select {
+        font-size: 14px;
+        width: 100%; /* Make the dropdown take full width on small screens */
+      }
+    }
+    
+        }
+    
+    
+</style>
+
+
+<!-- PIN -->
+  <style>
+    
+    /* Container and Layout */
+    .container-Pin { /* ok */
+        width: 260px;
+        height: 80px;
+        background: rgba(239, 241, 239, 0.1);
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0px;
+    }
+    
+    .input-wrapper {
+        position: relative;
+        width: 180px;
+        display: inline-block;
+        margin-top: 20px;
+    }
+    
+    /* Input Styles */
+    .outside-inputPin {
+        width: 100%;
+        margin-bottom: 20px;
+        font-size: 20px;
+        padding: 5px;
+        border: 2px solid lime;
+        border-radius: 5px;
+        background: black;
+        color: lime;
+        height: 50px;
+        box-sizing: border-box;
+        text-align: center;
+        padding-right: 40px;
+    }
+    
+    .manPin-button {
+        position: absolute;
+        right: 0;
+        top: 25px;
+        transform: translateY(-50%);
+        font-size: 25px;
+        color: lime;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding-right: 15px;
+    }
+    
+    .bi-search {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        border: 2px solid lime;
+        border-radius: 5px;
+        background: black;
+        color: lime;
+        cursor: pointer;
+        font-size: 25px;
+    }
+    
+    /* Modal Styles */
+    .modalPin { /* ok */
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        overflow: hidden;
+    }
+    
+    .modalPin.active { /* ok */
+        display: flex;
+    }
+    
+    .modalPin-content { /* ok */
+        width: 230px; /* 270 */
+        height:400px; /* 240 */
+        background: rgba(239, 241, 239, 0.1);
+        border-radius: 10px;
+        padding: 40px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        position: relative;
+    }
+    
+    .modalPin-content .container-Pin {
+        width: 100%;
+        background: none;
+        box-shadow: none;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+    
+    /* Card and Button Styles */
+    .card-pin, .action-button {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        background: rgba(226, 237, 227, 0.231);
+        border: 2px solid lime;
+        color: lime;
+        font-size: 20px;
+        cursor: pointer;
+        transition: transform 0.2s ease, background 0.2s ease;
+    }
+    
+    .card-pin:active, .action-button:active {
+        transform: scale(0.95);
+        background: #eeff00;
+        color: black;
+    }
+    
+    .action-button {
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    /* Output Styles */
+    .output {
+        height:30px;
+        grid-column: span 3;
+        text-align: center;
+        background: black;
+        border: 2px solid lime;
+        border-radius: 10px;
+        padding: 10px;
+        color: lime;
+        font-size: 24px;
+    }
+    
+    /* Modal Button Styles */
+    .modalPin-button {
+        font-size: 16px;
+        padding: 10px 20px;
+        background: lime;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        color: black;
+    }
+    
+    .modalPin-button:hover {
+        background: darkgreen;
+        color: white;
+    }
+    
+    #pin-display {
+        font-size: 2em;
+        text-align: center;
+        color: #ff00ff; /* Matches the color in your image */
+        border: 2px solid #00ff00; /* Matches the green border in your image */
+        padding: 0; /* Remove extra padding */
+        line-height: 1.5em; /* Adjust this value to position the text vertically */
+        position: relative;
+        height: 50px; /* Adjust the height as needed */
+        display: flex;
+        align-items: flex-start; /* Align content to the top */
+        justify-content: center; /* Center text horizontally */
+    }
+    </style>
+
+<!-- CARDS -->
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212; /* Dark background */
+      color: #fff;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    /* Scrollable Container */
+    .scroll-container {
+      max-height: 40vh; /* Makes container scrollable */
+        /* width:420px; */
+      overflow-y: auto;
+      border: 2px solid rgba(50, 205, 50, 0.7);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 0 8px 2px rgba(50, 205, 50, 0.7);
+    }
+
+    /* Drop Area Container */
+    .drop-area-container {
+      display: flex;
+      width: 100%; /* width:420px; */
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .drop-area {
+      flex: 1;
+      height: 100px;
+      margin: 0 8px;
+      border: 2px dashed rgba(50, 205, 50, 0.7);
+      border-radius: 12px;
+      text-align: center;
+      line-height: 100px;
+      font-size: 1.2rem;
+      color: #fff;
+      background: rgba(0, 255, 0, 0.2);
+      cursor: pointer;
+    }
+
+    .drop-area:hover {
+      background: rgba(50, 205, 50, 0.4);
+    }
+
+    /* Outer Main Card */
+    .main-card {
+      position: relative;
+      border: 2px solid rgba(50, 205, 50, 0.7);
+      box-shadow: 0 0 8px 2px rgba(50, 205, 50, 0.7);
+      border-radius: 30px;
+      margin-bottom: 20px;
+
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      cursor: move;
+      touch-action: none; /* Prevent default touch behavior */
+      width:300px;
+    }
+
+    .dragging {
+      opacity: 0.5;
+    }
+
+    /* Flex container for cards */
+    .card-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Full-width card */
+    .card-full {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      text-align: center;
+      padding: 16px;
+      color: #fff;
+    }
+
+    /* Two cards in a row */
+    .card-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .card-half {
+      flex: 1;
+      border: 1px solid lime; /* Lime border */
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      text-align: center;
+      padding: 16px;
+      color: lime; /* Lime font color */
+      margin-bottom: 0px; /* Remove margin to avoid extra spacing */
+    }
+
+
+    /* Bottom Paragraph Styling */
+    .bottom-paragraph {
+      text-align: center;
+      font-size: 1rem;
+      color: #00ff00;
+      margin-top: 5px; /* Move closer to the two cards above */
+      padding-top: 2px; /* Smaller padding for a tighter fit */
+    }
+
+
+
+    /* Additional Styling */
+    .top-card {
+      text-align: center;
+      font-size: 1.5rem;
+      color: #00ff00;
+      font-weight: bold;
+      margin-bottom: 8px; /* Decreased margin for closer alignment */
+    }
+
+    .amber-text {
+      color: #FFBF00; /* Amber color */
+    }
+  </style>
+
+
+
+
+</head>
+<body>
+
+  <!-- Floor -->
+    <div class="containerF">
+        <div class="container-floor">
+            <label for="opt-floor">Select Floor:</label>
+            <select id="opt-floor" name="opt-floor">
+            <option value="UG">UG</option>
+            <option value="P2">P2</option>
+            <option value="5F">5F</option>
+            <option value="6F">6F</option>
+            <option value="7F">7F</option>
+            <option value="8F">8F</option>
+            <option value="9F">9F</option>
+            <option value="10F">10F</option>
+            <option value="11F">11F</option>
+            </select>
+        </div>
+    </div>
+
+
+
+  <!-- Pin -->
+    <div class="container-Pin">
+        <div class="input-wrapper">
+          <input 
+            type="text" 
+            class="outside-inputPin" 
+            id="pin-input" 
+            placeholder="Enter Port">
+          
+          <button 
+            class="manPin-button" 
+            id="open-modalPin">
+            <i class="bi bi-calculator-fill"></i>
+          </button>
+        </div>
+        <button 
+          class="bi bi-search" 
+          id="search-Pin">
+        </button>
+    </div>
+    
+    <div class="modalPin" id="PIN-modal">
+        <div class="modalPin-content">
+          <div class="container-Pin">
+            <div class="output" id="pin-display"></div>
+            <div class="card-pin" data-value="1">1</div>
+            <div class="card-pin" data-value="2">2</div>
+            <div class="card-pin" data-value="3">3</div>
+            <div class="card-pin" data-value="4">4</div>
+            <div class="card-pin" data-value="5">5</div>
+            <div class="card-pin" data-value="6">6</div>
+            <div class="card-pin" data-value="7">7</div>
+            <div class="card-pin" data-value="8">8</div>
+            <div class="card-pin" data-value="9">9</div>
+            <div class="card-pin" data-value="0">0</div>
+    
+            <button class="action-button" id="clearPin-button">Clear</button>
+            <button class="action-button" id="submitPin-button">Go</button>
+          </div>
+        </div>
+    </div>
+
+
+
+  <!-- Scrollable Container -->
+  <div class="scroll-container" id="cardContainer"></div>
+
+  <!-- Drop Area Container -->
+  <div class="drop-area-container">
+    <div id="ClearPort" class="drop-area">ClearPort</div>
+    <div id="ChangeVLAN" class="drop-area">ChangeVLAN</div>
+    <div id="ClrStick" class="drop-area">ClrStick</div>
+  </div>
+
+
+  <!-- SCRIPTS -->
+  <script>
+    const cardsData = [
+      { id: "idx001", top: "P-487", middle: ["80", "G1/0/22"], bottom: "6F Pod43 B" },
+      { id: "idx002", top: "S-123", middle: ["90", "G1/0/21"], bottom: "6F Pod44 A" },
+      { id: "idx003", top: "P-999", middle: ["60", "G1/0/23"], bottom: "6F Pod45 C" },
+      { id: "idx004", top: "S-321", middle: ["70", "G1/0/24"], bottom: "6F Pod46 D" }
+    ];
+
+    function generateCardHTML(card) {
+      const topClass = card.top.startsWith("S") ? "amber-text" : "";
+      return `
+        <div class="main-card" data-value="${card.id}" draggable="true">
+          <div class="top-card ${topClass}">${card.top}</div>
+          <div class="card-row">
+            <div class="card-half ${topClass}">${card.middle[0]}</div>
+            <div class="card-half ${topClass}">${card.middle[1]}</div>
+          </div>
+          <p class="bottom-paragraph ${topClass}">${card.bottom}</p>
+        </div>`;
+    }
+
+    function populateCards() {
+      const container = document.getElementById("cardContainer");
+      container.innerHTML = cardsData.map(generateCardHTML).join('');
+    }
+
+    populateCards();
+
+    // Drag and drop logic
+    const dropAreas = document.querySelectorAll('.drop-area');
+    let draggedElement = null;
+
+    document.addEventListener('dragstart', (e) => {
+      if (e.target.classList.contains('main-card')) {
+        draggedElement = e.target;
+        e.target.classList.add('dragging');
+      }
+    });
+
+    document.addEventListener('dragend', () => {
+      if (draggedElement) draggedElement.classList.remove('dragging');
+    });
+
+    dropAreas.forEach(area => {
+      area.addEventListener('dragover', e => e.preventDefault());
+      area.addEventListener('drop', () => {
+        if (draggedElement) {
+          alert(`Card ID: ${draggedElement.getAttribute('data-value')} dropped in: ${area.id}`);
+        }
+      });
+    });
+
+    // Touch logic
+    let touchStartX, touchStartY;
+
+    document.addEventListener('touchstart', (e) => {
+      if (e.target.closest('.main-card')) {
+        draggedElement = e.target.closest('.main-card');
+        draggedElement.classList.add('dragging');
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+      }
+    });
+
+    document.addEventListener('touchmove', (e) => {
+      if (draggedElement) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+
+        draggedElement.style.transform = `translate(${dx}px, ${dy}px)`;
+      }
+    });
+
+    document.addEventListener('touchend', (e) => {
+      if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+        draggedElement.style.transform = 'translate(0, 0)';
+        draggedElement = null;
+
+        const touch = e.changedTouches[0];
+        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+
+        if (dropTarget && dropTarget.classList.contains('drop-area')) {
+          alert(`Card dropped in: ${dropTarget.id}`);
+        }
+      }
+    });
+  </script>
+
+
+<!-- SCRIPTS -->
+    <script>
+    // Get the search button element
+    const searchPinButton = document.getElementById('search-Pin');
+
+
+    const pinDisplay = document.getElementById('pin-display');
+    const pinInput = document.getElementById('pin-input');
+    const clearPinButton = document.getElementById('clearPin-button');
+    const submitPinButton = document.getElementById('submitPin-button');
+    const openmodalPinButton = document.getElementById('open-modalPin');
+    const modalPin = document.getElementById('PIN-modal');
+    let pin = '';
+
+    // Handle number button clicks
+    document.querySelectorAll('.card-pin').forEach(card => {
+        card.addEventListener('click', () => {
+            const value = card.dataset.value;
+            pin += value;
+            pinDisplay.textContent = pin; // Display the entered value
+            });
+        });
+
+        // Clear button functionality
+        clearPinButton.addEventListener('click', () => {
+        pin = '';
+        pinDisplay.textContent = '';
+    });
+
+    // Submit button functionality
+    submitPinButton.addEventListener('click', () => {
+        //pinInput.value = pin; // Pass value to the input field
+        //pin = '';
+        //pinDisplay.textContent = '';
+        //modalPin.classList.remove('active'); // Close modalPin
+        pinInput.value = pin; // Pass value to the input field
+        pin = '';
+        pinDisplay.textContent = '';
+
+        const focusedCardX = document.querySelector('.card-X.focus-X');
+        const focusedValueX = focusedCardX ? focusedCardX.textContent : 'No card selected';
+
+        // Get the current value in the input field
+        const currentInputValue = pinInput.value;
+
+        modalPin.classList.remove('active'); // Close modalPin
+
+        // Create an alert with the information
+        alert(`Focused Horizontal Carousel Value: ${focusedValueX}\nCurrent Input Value: ${currentInputValue}`);
+    });
+
+    // Open modalPin button
+    openmodalPinButton.addEventListener('click', () => {
+        modalPin.classList.add('active');
+    });
+
+    // Close modalPin on clicking outside
+    modalPin.addEventListener('click', (e) => {
+        if (e.target === modalPin) {
+            modalPin.classList.remove('active');
+        }
+    });
+
+    // Allow manual editing in input field
+    pinInput.addEventListener('input', (e) => {
+    pin = e.target.value;
+    });
+
+    // Add global keydown event listener
+    document.addEventListener('keydown', (e) => {
+    // Check if the Escape key is pressed
+    if (e.key === 'Escape') {
+    // Clear the input field and PIN display
+    pinInput.value = '';
+    pin = '';
+    pinDisplay.textContent = '';
+    }
+
+    // Check if the Enter key is pressed
+    if (e.key === 'Enter') {
+    // Alert the current input value
+    if (pinInput.value) {
+        alert('Entered Value: ' + pinInput.value);
+    }
+    }
+    });
+
+
+    // Add click event listener to the search button
+    searchPinButton.addEventListener('click', () => {
+        // Find the currently focused horizontal carousel card
+        const focusedCardX = document.querySelector('.card-X.focus-X');
+        const focusedValueX = focusedCardX ? focusedCardX.textContent : 'No card selected';
+
+        // Get the current value in the input field
+        const currentInputValue = pinInput.value;
+
+        // Create an alert with the information
+        alert(`Focused Horizontal Carousel Value: ${focusedValueX}\nCurrent Input Value: ${currentInputValue}`);
+    });
+
+    </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Table with JSON Data</title>
+
+    
+<style>
+    .container {
+        max-width: 960px;
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.50rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .thead-dark th {
+        background-color: #343a40;
+        color: white;
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    
+    .align-middle {
+        vertical-align: middle;
+    }
+    
+    /* Custom striping for every two rows */
+    tbody tr:nth-child(4n+1),
+    tbody tr:nth-child(4n+2) {
+        background-color: #f2f2f2;
+    }
+    
+    tbody tr:nth-child(4n+3),
+    tbody tr:nth-child(4n+4) {
+        background-color: #ffffff;
+    }
+    
+    /* Hover effect for active rows */
+    tbody tr.active {
+        background-color: #d1e7dd !important;
+    }
+    
+    /* Indent for second row in each pair */
+    .indented {
+        padding-left: 2rem !important;
+    }
+</style>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background-color: #f8f9fa; /* Light background for contrast */
+    }
+    table {
+        width: 100%;
+        font-size: 13px; /*  font-size: 12px;    */
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
+    th, td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+    }
+    th {
+        background-color: #f4f4f4;
+    }
+    tr.active {
+        background-color: #d1e7dd; /* Highlighted row color */
+    }
+    .popup {
+        display: none; /* Hidden by default */
+        position: absolute;
+        background: rgba(255, 255, 255, 0.2); /* More transparent for frozen glass effect */
+        border-radius: 8px; /* Rounded edges */
+        padding: 10px;
+        backdrop-filter: blur(12px) brightness(0.9); /* Enhanced blur and brightness for frozen effect */
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        z-index: 10;
+        min-width: 150px; /* Minimum width for the popup */
+    }
+    .options-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 20px; /* Increase font size for visibility */
+        color: #007bff; /* Button color */
+        transition: color 0.3s;
+        display: flex; /* Flexbox for horizontal alignment */
+        align-items: center; /* Center items vertically */
+    }
+    .options-btn:hover {
+        color: #0056b3; /* Darker color on hover */
+    }
+    .popup button {
+        margin: 5px 0; /* Vertical alignment */
+        width: 100%; /* Full width buttons */
+        background-color: transparent; /* Transparent background */
+        color: inherit; /* Inherit text color */
+        border: 1px solid transparent; /* No border by default */
+        border-radius: 5px; /* Rounded button edges */
+        padding: 8px; /* Button padding */
+        cursor: pointer; /* Pointer cursor on hover */
+        display: flex; /* Flexbox for icon and text */
+        align-items: center; /* Center items vertically */
+        transition: background-color 0.3s, border-color 0.3s; /* Transition for hover effect */
+    }
+    .popup button:hover {
+        background-color: rgba(0, 123, 255, 0.1); /* Light background on hover */
+        border-color: #007bff; /* Border color on hover */
+    }
+    .popup button i {
+        margin-right: 5px; /* Space between icon and text */
+    }
+</style>
+
+</head>
+<body>
+    <a href="dashboard"><button>Back to User Page</button></a>
+    <div class="container">
+        <h2>XXMaster Item Maintenance</h2>
+
+        <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th rowspan="2" class="text-center align-middle">IDX</th>
+                    <th>SERIAL</th>
+                    <th>LOCATION</th>
+                    <th>BRAND</th>
+                    <th>MODEL</th>
+                    <th>TYPE</th>
+                    <th>ACTION</th>
+                </tr>
+                <tr>
+                    <th>DESCRIPTION</th>
+                    <th>MACADD</th>
+                    <th>REMARKS</th>
+                    <th>STATUS</th>
+                    <th>SWITCH</th>
+                    <th>TIMESTAMP</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    
+    </div>
+
+
+
+<script>
+    
+    const jsonData = {{ saved_entries | tojson }};
+
+    /*       
+    const jsonData = {
+        "data": [
+            {
+                "rowspan": "1",
+                "iteminfo": [
+                    { "data1": "serial1", "data2": "00:00:00:00:01", "data3": "N/A", "data4": "Active", "data5": "Switch1" },
+                    { "data6": "desc 1", "data7": "00:00:00:00:02", "data8": "N/A", "data9": "Inactive", "data10": "Switch2" , "data11": "time"}
+                ]
+            } , 
+            {
+                "rowspan": "2",
+                "iteminfo": [
+                    { "data1": "serial1", "data2": "00:00:00:00:01", "data3": "N/A", "data4": "Active", "data5": "Switch1" },
+                    { "data6": "desc 1", "data7": "00:00:00:00:02", "data8": "N/A", "data9": "Inactive", "data10": "Switch2" , "data11": "time"}
+                ]
+            } , 
+            {
+                "rowspan": "2",
+                "iteminfo": [
+                    { "data1": "serial1", "data2": "00:00:00:00:01", "data3": "N/A", "data4": "Active", "data5": "Switch1" },
+                    { "data6": "desc 1", "data7": "00:00:00:00:02", "data8": "N/A", "data9": "Inactive", "data10": "Switch2" , "data11": "time"}
+                ]
+            }        
+        ]
+
+
+    };
+    */
+    console.log(jsonData);
+
+    function renderTable(data) {
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        data.data.forEach((item) => {
+            // First row of the pair
+            const row1 = document.createElement('tr');
+            row1.innerHTML = `
+                <td rowspan="2" class="text-center align-middle">${item.rowspan}</td>
+                <td>${item.iteminfo[0].data1}</td>
+                <td>${item.iteminfo[0].data2}</td>
+                <td>${item.iteminfo[0].data3}</td>
+                <td>${item.iteminfo[0].data4}</td>
+                <td>${item.iteminfo[0].data5}</td>
+                <td>                    
+                    <button class="options-btn">⋮</button>
+                    <div class="popup">
+                        <button class="shareBtn"><i class="bi bi-share"></i>Disable</button>
+                        <button class="renameBtn"><i class="bi bi-pencil"></i>Modify</button>
+                        <button class="deleteBtn"><i class="bi bi-trash"></i>Delete Idx: ${item.rowspan} </button>
+                    </div>
+                </td>
+            `;
+
+            // Second row of the pair
+            const row2 = document.createElement('tr');
+            row2.innerHTML = `
+                <td class="indented">${item.iteminfo[1].data6}</td>
+                <td>${item.iteminfo[1].data7}</td>
+                <td>${item.iteminfo[1].data8}</td>
+                <td>${item.iteminfo[1].data9}</td>
+                <td>${item.iteminfo[1].data10}</td>
+                <td>${item.iteminfo[1].data11}</td>
+
+            `;
+
+            tbody.appendChild(row1);
+            tbody.appendChild(row2);
+        });
+
+
+
+
+        // Add hover effects
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                const hasRowspan = row.querySelector('td[rowspan]');
+                row.classList.add('active');
+                if (hasRowspan) {
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow) nextRow.classList.add('active');
+                } else {
+                    const prevRow = row.previousElementSibling;
+                    if (prevRow) prevRow.classList.add('active');
+                }
+            });
+
+            row.addEventListener('mouseleave', () => {
+                const hasRowspan = row.querySelector('td[rowspan]');
+                row.classList.remove('active');
+                if (hasRowspan) {
+                    const nextRow = row.nextElementSibling;
+                    if (nextRow) nextRow.classList.remove('active');
+                } else {
+                    const prevRow = row.previousElementSibling;
+                    if (prevRow) prevRow.classList.remove('active');
+                }
+            });
+        });
+    }
+
+    // Initialize the table
+    renderTable(jsonData);
+</script>
+
+
+<script>
+    let selectedRow = null;
+
+    document.querySelectorAll('.options-btn').forEach(btn => {
+        btn.addEventListener('click', function(event) {
+            const row = event.target.closest('tr');
+            const popup = row.querySelector('.popup');
+
+            // Clear previous selection
+            if (selectedRow && selectedRow !== row) {
+                selectedRow.classList.remove('active');
+                selectedRow.querySelector('.popup').style.display = 'none'; // Hide previous popup
+            }
+
+            // Set new selection
+            selectedRow = row;
+            selectedRow.classList.add('active');
+
+            // Position the popup next to the Options button
+            const rect = event.target.getBoundingClientRect();
+            popup.style.display = 'block';
+            popup.style.left = `${rect.right + window.scrollX}px`;
+            popup.style.top = `${rect.top + window.scrollY}px`;
+        });
+    });
+
+    // Hide popup when clicking outside
+    window.onclick = function(event) {
+        if (selectedRow && !selectedRow.contains(event.target)) {
+            selectedRow.classList.remove('active');
+            selectedRow.querySelector('.popup').style.display = 'none'; // Hide popup
+            selectedRow = null; // Reset selectedRow
+        }
+    }
+
+    document.querySelectorAll(".shareBtn").forEach(btn => {
+        btn.onclick = async function(event) {
+            const row = event.target.closest('tr');
+            const name = row.cells[1].innerText;
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated delay
+            alert(`Sharing ${name}`);
+            hidePopup(row);
+        }
+    });
+
+    document.querySelectorAll(".renameBtn").forEach(btn => {
+        btn.onclick = async function(event) {
+            const row = event.target.closest('tr');
+            const nameCell = row.cells[1];
+            const newName = prompt('Enter new name:', nameCell.innerText);
+            if (newName) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated delay
+                nameCell.innerText = newName;
+            }
+            hidePopup(row);
+        }
+    });
+
+    document.querySelectorAll(".deleteBtn").forEach(btn => {
+        btn.onclick = async function(event) {
+            const row = event.target.closest('tr');
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated delay
+            row.remove();
+            hidePopup(row);
+            selectedRow = null; // Reset selectedRow if the active row is deleted
+        }
+    });
+
+    function hidePopup(row) {
+        const popup = row.querySelector('.popup');
+        popup.style.display = 'none'; // Hide popup
+        row.classList.remove('active'); // Remove active class
+    }
+</script>
+
+
+
+
+</body>
+</html>
