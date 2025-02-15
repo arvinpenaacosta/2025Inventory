@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD App</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        .table-container {
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 1;
+        }
+        
+        .content-wrapper {
+            margin-bottom: 60px;
+        }
+
+
+
+
+    </style>
+
+<style>
+    .avatar_img img {
+        width: 50px;         /* Set width */
+        height: 50px;        /* Set height */
+        object-fit: cover;    /* Ensures the image maintains its aspect ratio */
+        border-radius: 50px;  /* Adjust this value for the desired roundness */
+    }
+</style>
+
+</head>
+<body>
+
+    
+    <div class="container mt-5 pt-5">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <input type="text" id="search" class="form-control" placeholder="Search">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary" onclick="searchItemLogs()">Search</button>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#itemModal" >Add Item</button>
+            </div>
+        </div>
+        <li><a class="dropdown-item" href="/dashboard">BACK</a></li>
+        <li><a class="dropdown-item" href="/logout">Logout {{ username }}</a></li>
+
+        <div class="table-container">
+            <table class="table table-bordered table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>Reference #</th>
+                        <th>Program</th>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Location</th>
+                        <th>Reason</th>
+                        <th>Timestamp</th>
+                        <th>Attended By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="item-log-table-body">
+                    <!-- Data will be populated here dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+
+
+    <!-- Add/Edit Modal -->
+    <div class="modal fade" id="itemModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Reference Number</label>
+            <input type="text" class="form-control" id="refnum-input" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Program</label>
+            <select class="form-select" id="program-select" required></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Item</label>
+            <select class="form-select" id="item-select" required></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Quantity</label>
+            <input type="number" class="form-control" id="quantity-input" required min="1">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-control" id="location-input" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Reason2</label>
+            <textarea class="form-control" id="reason-input" required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Attended By</label>
+            <input type="text" class="form-control" id="attendee-input" value="{{ username }}" readonly>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button class="btn btn-primary" id="submit-btn" data-bs-dismiss="modal" onclick="createItemLog()">Save2</button>
+        </div>
+      </div>
+    </div>
+    </div>
+    
+    <!-- Delete Confirmation Modal for each item -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" >
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this item?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>   
+
+
+    <script>
+                
+        // Constants for API endpoints
+        const API_BASE_URL = '/entryAPI';
+
+        // Utility function to make API requests
+        async function apiRequest(url, method = 'GET', body = null) {
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            const options = {
+                method,
+                headers,
+            };
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                return await response.json();
+            } catch (error) {
+                console.error('API request failed:', error);
+                throw error;
+            }
+        }
+
+        // Fetch and display programs
+        async function loadPrograms() {
+            const programs = await apiRequest(`${API_BASE_URL}/programs`);
+            const programSelect = document.getElementById('program-select');
+            programs.forEach(program => {
+                const option = document.createElement('option');
+                option.value = program.program_id;
+                option.textContent = program.program_name;
+                programSelect.appendChild(option);
+            });
+        }
+
+
+        // Fetch and display items
+        async function loadItems() {
+            const items = await apiRequest(`${API_BASE_URL}/items`);
+            const itemSelect = document.getElementById('item-select');
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.item_id;
+                option.textContent = item.item_name;
+                itemSelect.appendChild(option);
+            });
+        }
+
+        // Fetch and display item logs
+        async function loadItemLogs(result = null) {
+            const itemLogs = result && result.length > 0 ? result : await apiRequest(`${API_BASE_URL}/items-log`);
+            const tableBody = document.getElementById('item-log-table-body');
+            tableBody.innerHTML = '';  // Clear the table body before populating
+
+            if (itemLogs.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="text-center">No records found</td></tr>`;
+                return;
+            }
+
+            itemLogs.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${log.refnum}</td>
+                    <td>${log.program_name}</td>
+                    <td>${log.item_name}</td>
+                    <td>${log.quantity}</td>
+                    <td>${log.location}</td>
+                    <td>${log.reason}</td>
+                    <td>${log.timestamp}</td>
+                    <td>${log.attendee}</td>
+                    <td>
+                        <button onclick="editItemLog(${log.id})" 
+                            class="btn btn-link" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#itemModal">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+
+                        <button class="btn btn-link" 
+                            onclick="openDeleteModal(${log.id})">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+
+        // Create new item log
+        async function createItemLog() {
+            const refnum = document.getElementById('refnum-input').value;
+            const programId = document.getElementById('program-select').value;
+            const itemId = document.getElementById('item-select').value;
+            const quantity = document.getElementById('quantity-input').value;
+            const location = document.getElementById('location-input').value;
+            const reason = document.getElementById('reason-input').value;
+            const attendee = document.getElementById('attendee-input').value;
+
+            const newItemLog = {
+                refnum,
+                program_id: programId,
+                item_id: itemId,
+                quantity,
+                location,
+                reason,
+                attendee,
+            };
+
+            // Send the request to the server
+            await apiRequest(`${API_BASE_URL}/items-log`, 'POST', newItemLog);
+            
+            // Refresh the item logs
+            loadItemLogs();
+
+            // Close the modal using Bootstrap's method
+            const modalElement = document.getElementById('itemModal');
+            const modal = new bootstrap.Modal(modalElement);
+            modal.hide();  // Hide the modal programmatically
+
+            // Reset the form inputs after save
+            document.getElementById('refnum-input').value = '';
+            document.getElementById('quantity-input').value = '';
+            document.getElementById('location-input').value = '';
+            document.getElementById('reason-input').value = '';
+
+            // Change button text to "Save"
+            const submitButton = document.getElementById('submit-btn');
+            submitButton.textContent = 'Save31';
+
+
+            //submitButton.removeEventListener('click', createItemLog);  
+            //submitButton.addEventListener('click', createItemLog);
+
+            // Set new onclick event for updating the item
+            submitButton.onclick = function() {
+                createItemLog();
+            };
+
+        }
+
+
+
+        // Edit item log
+        async function editItemLog(id) {
+            console.log("Editing Item ID:", id); // Check if ID is correct
+
+            // Fetch the existing item data from the server
+            const response = await fetch(`${API_BASE_URL}/items-log/${id}`);
+            const item = await response.json();
+
+            console.log("Fetched Item Data:", item); // Check if data is correct
+
+            if (!item) {
+                alert("Item not found!");
+                return;
+            }
+
+            // Populate modal fields with item data
+            document.getElementById('refnum-input').value = item.refnum || '';
+            document.getElementById('program-select').value = item.program_id || '';
+            document.getElementById('item-select').value = item.item_id || '';
+            document.getElementById('quantity-input').value = item.quantity || '';
+            document.getElementById('location-input').value = item.location || '';
+            document.getElementById('reason-input').value = item.reason || '';
+            document.getElementById('attendee-input').value = item.attendee || '';
+
+
+            // Change button text to "Update"
+            const submitButton = document.getElementById('submit-btn');
+            submitButton.textContent = 'Update';
+
+            // Set new onclick event for updating the item
+            submitButton.onclick = function() {
+                updateItemLog(id);
+            };
+        }
+
+        // Update item log
+        async function updateItemLog(id) {
+
+            const refnum = document.getElementById('refnum-input').value;
+            const program_id = document.getElementById('program-select').value;
+            const item_id = document.getElementById('item-select').value;
+            const quantity = document.getElementById('quantity-input').value;
+            const location = document.getElementById('location-input').value;
+            const reason = document.getElementById('reason-input').value;
+            const attendee = document.getElementById('attendee-input').value;
+
+            const updatedItemLog = {
+                refnum,
+                program_id: program_id,
+                item_id: item_id,
+                quantity,
+                location,
+                reason,
+                attendee,
+            };
+
+            await apiRequest(`${API_BASE_URL}/items-log/${id}`, 'PUT', updatedItemLog);
+            loadItemLogs();  // Refresh item logs after update
+            document.getElementById('submit-btn').textContent =  'Create';//'Update';
+            document.getElementById('submit-btn').onclick = createItemLog;
+        }
+
+        // Delete item log
+        async function deleteItemLog(id) {
+            await apiRequest(`${API_BASE_URL}/items-log/${id}`, 'DELETE');
+            loadItemLogs();  // Refresh item logs after deletion
+
+            // Get the existing modal instance and hide it
+            let deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            if (deleteModal) {
+                deleteModal.hide();
+            }
+
+
+        }
+
+       
+
+        // Open delete modal and store the ID
+        function openDeleteModal(id) {
+            document.getElementById('confirmDeleteBtn').setAttribute('data-id', id);
+
+            // Open modal using Bootstrap
+            let deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        }
+
+        // Handle delete button click
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            let id = this.getAttribute('data-id');  // Retrieve the stored ID
+            if (id) {
+                deleteItemLog(id);  // Call delete function with the ID
+            }
+        });
+
+
+        // Search item logs
+        async function searchItemLogs() {
+            const searchTerm = document.getElementById('search').value;  // Get input value
+            if (!searchTerm) {
+                alert("Please enter a search term.");
+                return;
+            }
+
+            const result = await apiRequest(`${API_BASE_URL}/items-log-search`, 'POST', { search_term: searchTerm });
+            loadItemLogs(result); // load seached Value
+        }
+
+
+        // Initialize all data on page load
+        window.onload = function () {
+            loadPrograms();
+            loadItems();
+            loadItemLogs();
+        };
+
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+</body>
+</html>

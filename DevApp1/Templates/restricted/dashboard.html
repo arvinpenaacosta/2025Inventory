@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bootstrap Carousel Page</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      padding-top: 56px; /* Adjust for fixed navbar height */
+    }
+
+
+    /* Fixed Footer */
+    footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        z-index: 1030;
+        background-color: #343a40;
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+    }
+
+    .carousel-item img {
+      height: 500px;
+      object-fit: cover;
+    }
+
+    /* CSS for Glass Effect and Centering */
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+      backdrop-filter: blur(10px); /* Frosted glass blur effect */
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); /* Soft shadow */
+      border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
+      padding: 1.5rem; /* Add padding to the modal content */
+    }
+
+    .glass-effect .modal-header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px 15px 0 0; /* Rounded top corners */
+      padding-bottom: 1rem; /* Add spacing below the header */
+    }
+
+    .glass-effect .modal-body {
+      color: #fff; /* Light text for better contrast */
+      padding: 1rem; /* Add padding around the form elements */
+    }
+
+    .glass-effect .form-control {
+      padding: 0.75rem; /* Add padding inside input fields */
+      border-radius: 8px; /* Rounded input fields */
+    }
+
+    .glass-effect .btn {
+      margin-top: 1rem; /* Space above the button */
+    }
+
+    .form-control {
+      text-align: center; /* Center text in the input fields */
+    }
+
+    .gold-text {
+      color: gold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .form-floating label {
+      color: red; /* Set the label color to red */
+    }
+
+    .form-floating input:focus + label {
+      color: red;
+    }
+
+
+
+
+   /* Custom Toast positioning in the center of the screen */
+   .toast-container {
+      position: fixed;
+      top: 50%; /* Center vertically */
+      left: 50%; /* Center horizontally */
+      transform: translate(-50%, -50%); /* Offset by half the width and height to truly center it */
+      z-index: 1050; /* Ensure it stays above other content */
+    }
+
+    /* Customize the Toast for better visual */
+    .toast {
+      background-color: rgba(0, 0, 0, 0.8); /* Dark background for better contrast */
+      color: #fff; /* White text color */
+      border-radius: 8px;
+    }
+  </style>
+    <style>
+      body {
+      padding-top: 56px; /* Adjust for fixed navbar height */
+      }
+      .custom-modal .modal-dialog {
+      max-width: 500px; /* Set the desired width here */
+      }
+
+      
+      /* Base styles - remain unchanged for desktop */
+      .input-group-text {
+          width: 110px;
+          font-size: 0.875rem;
+          text-align: left;
+          display: inline-block;
+      }
+  
+      .input-group .form-control,
+      .input-group .form-select {
+          border: 1px solid #495057;
+          border-radius: .2rem;
+      }
+  
+      .input-group .form-control:focus,
+      .input-group .form-select:focus {
+          border-color: #343a40;
+          box-shadow: none;
+      }
+
+      #daTable tbody tr:hover {
+          background-color: #f0f8ff;
+          cursor: pointer;
+      }
+
+      tr.details td.dt-control {
+          background: url('https://cdn.datatables.net/1.11.5/images/details_open.png') no-repeat center center;
+          cursor: pointer;
+      }
+
+      .rounded-btn {
+          border-radius: 20px;
+          margin-right: 10px;
+      }
+
+      /* Mobile-specific styles */
+      @media only screen 
+      and (max-device-width: 812px) /* Max width for most mobile phones */
+      and (orientation: landscape) {
+          /* Reset container for mobile */
+          .container {
+              max-width: 100% !important;
+              margin: 0;
+              padding: 5px;
+              height: 100vh;
+          }
+
+          /* Adjust table container for mobile */
+          .table-responsive {
+              height: calc(100vh - 45px);
+              margin: 0;
+              padding: 0;
+          }
+
+          /* Optimize toolbar for mobile */
+          .toolbar {
+              padding: 2px 0;
+              margin-bottom: 5px;
+          }
+
+          /* Adjust buttons for mobile */
+          .rounded-btn {
+              padding: 3px 10px;
+              font-size: 0.875rem;
+          }
+
+          /* Optimize table for mobile */
+          #daTable {
+              margin: 0;
+          }
+
+          #daTable thead th {
+              padding: 5px;
+              font-size: 0.875rem;
+              position: sticky;
+              top: 0;
+              background-color: #007bff;
+              z-index: 1;
+          }
+
+          #daTable td {
+              padding: 5px;
+              font-size: 0.875rem;
+          }
+
+          /* Remove unnecessary spacing */
+          body {
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
+          }
+
+          .my-5 {
+              margin-top: 0 !important;
+              margin-bottom: 0 !important;
+          }
+      }
+
+      /* Keep default styles for non-mobile devices */
+      @media only screen 
+      and (min-device-width: 813px) {
+          .container {
+              /* Default Bootstrap container behavior */
+              max-width: 1140px;
+              margin: auto;
+          }
+
+          .my-5 {
+              margin-top: 3rem !important;
+              margin-bottom: 3rem !important;
+          }
+      }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">{{ pageheader }}</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Logout + {{ username }}!</a></li>
+            <li class="nav-item"><a class="nav-link active" href="/logout">Logout = {{ username }}</a></li>
+            <li class="nav-item"><a class="nav-link active" href="#">Help</a></li>
+          </ul>
+        </div>
+
+      </div>
+    </nav>
+  </header>
+  
+  <div class="container">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Application Manager  Dashboard
+                </a>
+
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="/main_app">Do not Click</a></li>
+                    <li><a class="dropdown-item" href="/main_app_test">Netscout V2</a></li>
+                    <li><a class="dropdown-item" href="/clock1">clock1</a></li>
+                    <li><a class="dropdown-item" href="/clock2">clock2</a></li>
+                    <li><a class="dropdown-item" href="/itemlog">index2.html</a></li>
+                    <hr/>
+                    <li><a class="dropdown-item" href="/items-log">TABLE</a></li>
+                    <hr/>
+                    <li><a class="dropdown-item" href="/programs">File Maintenance - Programs</a></li>
+                    <hr/>
+                    <li><a class="dropdown-item" href="/products">File Maintenance - Products</a></li>
+                    <hr/>
+                    <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                </ul>
+            </li>
+
+
+
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Analysis
+                </a>
+
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <li><a class="dropdown-item" href="#">Movements</a></li>
+                    
+                </ul>
+            </li>
+
+
+        </ul>
+
+      </div>
+
+    </div>
+  </nav>
+</div>
+{{ username }}{{ password }}
+
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content glass-effect">
+        <div class="modal-header border-0">
+          <h5 class="modal-title ms-auto gold-text" id="loginModalLabel">..Account Verification Login..</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body d-flex justify-content-center align-items-center flex-column">
+          <form style="width: 100%; max-width: 300px;">
+            <div class="form-floating mb-4">
+              <input type="text" class="form-control" id="username" placeholder="Username" required>
+              <label for="username">Username.</label>
+            </div>
+
+            <div class="form-floating mb-4">
+              <input type="password" class="form-control" id="password" placeholder="Password" required>
+              <label for="password">Password</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Button to trigger toast -->
+  <button type="button" class="btn btn-primary" id="liveToastBtn">Show live toast</button>
+
+  <!-- Toast container -->
+  <div class="toast-container">
+    <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header">
+        <strong class="me-auto">Bootstrap</strong>
+        <small>Just now</small>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body">
+        Hello, world! This is a centered toast message.
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+  <footer>
+     <p>&copy; {{ pagefooter }}}}</p>
+</footer><!-- Footer -->
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  document.getElementById('liveToastBtn').addEventListener('click', function () {
+    var toastEl = document.getElementById('liveToast');
+    var toast = new bootstrap.Toast(toastEl); // Initialize the toast
+    toast.show(); // Show the toast
+  });
+
+
+
+
+    // Automatically select all text in the username input field when focused
+    document.getElementById('username').addEventListener('focus', function() {
+      this.select();
+    });
+
+    // Automatically select all text in the password input field when focused
+    document.getElementById('password').addEventListener('focus', function() {
+      this.select();
+    });
+  </script>
+</body>
+</html>

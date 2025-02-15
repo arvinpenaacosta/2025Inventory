@@ -1,0 +1,107 @@
+Folder PATH listing
+Volume serial number is C4C3-E653
+C:.
+³   auth.zip
+³   ldap1.ts
+³   main notes.txt
+³   main.py
+³   main1.py
+³   main_jwt.py
+³   main_jwt2.py
+³   main_jwt_copy.py
+³   main_netmiko.py
+³   NetscoutV2.code-workspace
+³   requirements.txt
+³   startenv.bat
+³   startweb0.bat
+³   startweb1.bat
+³   startweb1a.bat
+³   startweb1a.zip
+³   structure.txt
+³   
+ÃÄÄÄauth
+³   ³   authentication.py
+³   ³   authentication2.py
+³   ³   auth_login.py
+³   ³   auth_sqlitedb.py
+³   ³   run_auth.ts
+³   ³   
+³   ÀÄÄÄ__pycache__
+³           authentication.cpython-311.pyc
+³           authentication.cpython-312.pyc
+³           auth_sqlitedb.cpython-311.pyc
+³           
+ÃÄÄÄcerts
+³       server.crt
+³       server.key
+³       server_unencrypted.key
+³       
+ÃÄÄÄdb
+³       appdata.db
+³       appdata2.db
+³       epmap.db
+³       
+ÃÄÄÄstatics
+³   ³   favicon.ico
+³   ³   styles.css
+³   ³   
+³   ÀÄÄÄassets
+³       ÃÄÄÄcss
+³       ³       style.css
+³       ³       
+³       ÀÄÄÄjs
+³               itemTable.js
+³               script.js
+³               
+ÃÄÄÄTemplates
+³   ³   welcome.html
+³   ³   welcome_aim.html
+³   ³   
+³   ÃÄÄÄbin
+³   ³       NetscoutV2-a.html
+³   ³       NetscoutV2.html
+³   ³       sampx2.html
+³   ³       sampx2a.html
+³   ³       testform.html
+³   ³       testform2.html
+³   ³       testform3.html
+³   ³       wheel_V.html
+³   ³       
+³   ÃÄÄÄdump
+³   ³       index.html
+³   ³       login.html
+³   ³       
+³   ÀÄÄÄrestricted
+³       ³   cards.css
+³       ³   clock1.html
+³       ³   clock2.html
+³       ³   dashboard.html
+³       ³   main_app_test.html
+³       ³   main_app_test2.html
+³       ³   
+³       ÀÄÄÄbin
+³               cards.html
+³               cards2.html
+³               cards3.html
+³               cards3_good.html
+³               entrypin.html
+³               floor.html
+³               main_app.html
+³               main_app2.html
+³               main_app_bootstrap.html
+³               main_app_class3.html
+³               main_app_class4.html
+³               main_app_test_ok.html
+³               main_items.html
+³               master_items.html
+³               master_items_temp.html
+³               netpin.html
+³               netscoutv2.html
+³               pinElement.html
+³               
+ÀÄÄÄ__pycache__
+        main1.cpython-311.pyc
+        main_jwt.cpython-311.pyc
+        main_jwt.cpython-312.pyc
+        main_netmiko.cpython-311.pyc
+        

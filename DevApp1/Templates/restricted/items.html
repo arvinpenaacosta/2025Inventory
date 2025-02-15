@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Management</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Item Management</h2>
+        <li><a class="dropdown-item" href="/dashboard">BACK</a></li>
+        <li><a class="dropdown-item" href="/logout">Logout {{ username }}</a></li>
+        <!-- Add Item Button -->
+        <button class="btn btn-primary mb-3" onclick="showModal('add')">
+            <i class="fas fa-plus"></i> Add Item
+        </button>
+
+        <!-- Items Table -->
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Item Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="itemsTable">
+                <!-- Items will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Item Modal (Used for both Add and Edit) -->
+    <div class="modal fade" id="programModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Add Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="errorAlert" class="alert alert-danger d-none"></div>
+                    <form id="programForm">
+                        <input type="hidden" id="programId">
+                        <div class="mb-3">
+                            <label for="programName" class="form-label">Item Name</label>
+                            <input type="text" class="form-control" id="programName" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="programStatus" checked>
+                            <label class="form-check-label" for="programStatus">Active</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveItem()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this program?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let programModal;
+        let deleteModal;
+        let currentItemId;
+        let isEditing = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            programModal = new bootstrap.Modal(document.getElementById('programModal'));
+            deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            loadItems();
+        });
+
+        async function loadItems() {
+            try {
+                const response = await fetch('/FM_API/items');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const items = await response.json();
+                const tableBody = document.getElementById('itemsTable');
+                tableBody.innerHTML = '';
+
+                items.forEach(program => {
+                    const row = `
+                        <tr>
+                            <td>${program.program_id}</td>
+                            <td>${program.program_name}</td>
+                            <td>
+                                <span class="badge ${program.status === 'active' ? 'bg-success' : 'bg-secondary'}">
+                                    ${program.status}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="showModal('edit', ${program.program_id}, '${program.program_name}', '${program.status}')">
+                                    <i class="fas fa-edit"></i> Modify
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="showDeleteModal(${program.program_id})">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error loading items:', error);
+                alert('Error loading items: ' + error.message);
+            }
+        }
+
+        function showModal(mode, id = null, name = '', status = 'active') {
+            isEditing = mode === 'edit';
+            document.getElementById('modalTitle').textContent = isEditing ? 'Edit Item' : 'Add Item';
+            document.getElementById('programId').value = id || '';
+            document.getElementById('programName').value = name;
+            document.getElementById('programStatus').checked = status === 'active';
+            document.getElementById('errorAlert').classList.add('d-none');
+            programModal.show();
+        }
+
+        function showDeleteModal(id) {
+            currentItemId = id;
+            deleteModal.show();
+        }
+
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            errorAlert.textContent = message;
+            errorAlert.classList.remove('d-none');
+        }
+
+        async function saveItem() {
+            const id = document.getElementById('programId').value;
+            const name = document.getElementById('programName').value.trim();
+            const status = document.getElementById('programStatus').checked ? 'active' : 'inactive';
+
+            if (!name) {
+                showError('Please enter a program name');
+                return;
+            }
+
+            try {
+                const url = isEditing ? `/FM_API/items/${id}` : '/FM_API/items';
+                const method = isEditing ? 'PUT' : 'POST';
+                const body = isEditing 
+                    ? { program_name: name, status: status }
+                    : { program_name: name };
+
+                console.log('Sending request:', {
+                    url,
+                    method,
+                    body: JSON.stringify(body)
+                });
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(responseData.detail || 'Failed to save program');
+                }
+
+                programModal.hide();
+                loadItems();
+            } catch (error) {
+                console.error('Error saving program:', error);
+                showError(error.message || 'Error saving program. Please try again.');
+            }
+        }
+
+        async function confirmDelete() {
+            try {
+                const response = await fetch(`/FM_API/items/${currentItemId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                deleteModal.hide();
+                loadItems();
+            } catch (error) {
+                console.error('Error deleting program:', error);
+                alert('Error deleting program: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
