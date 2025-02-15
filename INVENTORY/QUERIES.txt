@@ -1,0 +1,32 @@
+SELECT 
+    COALESCE(inv.Floor, '') AS Floor, 
+    COALESCE(inv.Location1, '') AS Location1, 
+    COALESCE(inv.Location2, '') AS Location2, 
+    COALESCE(inv.ComputerName, nc.Client) AS ComputerName, 
+    COALESCE(inv.SerialNumber, '') AS SerialNumber, 
+    COALESCE(inv.RecordedDateTime, '') AS LastInventory,
+    COALESCE(nc.User, '') AS User,
+    nc.a,
+    nc.b
+FROM "2024INV" inv
+LEFT JOIN "2025NonComplianceIAN" nc 
+    ON inv.ComputerName = nc.Client
+
+UNION ALL
+
+SELECT 
+    '' AS Floor, 
+    '' AS Location1, 
+    '' AS Location2, 
+    nc.Client AS ComputerName, 
+    '' AS SerialNumber, 
+    '' AS LastInventory,
+    COALESCE(nc.User, '') AS User,
+    nc.a,
+    nc.b
+FROM "2025NonComplianceIAN" nc
+LEFT JOIN "2024INV" inv
+    ON inv.ComputerName = nc.Client
+WHERE inv.ComputerName IS NULL
+
+ORDER BY Floor ASC, Location1 ASC, Location2 ASC;
