@@ -68,6 +68,10 @@ const getSystemInfo = async () => {
   const serialNumber = await runCommand(["wmic", "bios", "get", "serialnumber"]);
   const processor = await runCommand(["wmic", "cpu", "get", "name"]);
   const windowsVersion = await runCommand(["wmic", "os", "get", "caption"]);
+  const windispLayversion = await runCommand([ 
+    "reg", "query", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 
+    "/v", "DisplayVersion"
+  ]);
   const manufacturer = await runCommand(["wmic", "computersystem", "get", "manufacturer"]);
   const model = await runCommand(["wmic", "computersystem", "get", "model"]);
   const capacityOutput = await runCommand(["wmic", "memorychip", "get", "capacity"]);
@@ -87,9 +91,12 @@ const getSystemInfo = async () => {
     "29": "DDR5",
   };
 
+  
   const slotLines = typeof slotOutput === "string"
     ? slotOutput.split("\n").map(line => line.trim()).filter(line => line.length > 0)
     : [];
+
+
 
   const numRamSlots = slotLines.length > 1 ? slotLines.length - 1 : "Unknown"; 
 
@@ -111,10 +118,13 @@ const getSystemInfo = async () => {
     ramType = typeLines.length > 0 ? (ramTypeMap[typeLines[0]] || "Unknown") : "Unknown";
   }
 
+  const windispLayversionMatch = windispLayversion?.match(/DisplayVersion\s+REG_SZ\s+(\S+)/);
+
   return {
     SerialNumber: serialNumber?.split("\n")[1]?.trim() || "Unknown",
     Processor: processor?.split("\n")[1]?.trim() || "Unknown",
     WindowsVersion: windowsVersion?.split("\n")[1]?.trim() || "Unknown",
+    DisplayVersion: windispLayversionMatch ? windispLayversionMatch[1] : "Unknown",
     Manufacturer: manufacturer?.split("\n")[1]?.trim() || "Unknown",
     Model: model?.split("\n")[1]?.trim() || "Unknown",
     TotalRAM: totalRamInGB.toFixed(2) + " GB",
@@ -154,14 +164,15 @@ async function searchRegistryWithGUID(hive: string, path: string, searchPattern:
   return { displayName: "Not found", displayVersion: "Not found" };
 }
 
-// Function to save system info and registry data to the SQLite database
-const saveToSQLite = async (systemInfo: any, registryData: any) => {
+// Function to save system info to the SQLite database
+const saveToSQLite = async (systemInfo: any) => {
   const timestamp = formatTimestamp(new Date()); // Get formatted timestamp
 
   const {
     SerialNumber,
     Processor,
     WindowsVersion,
+    DisplayVersion,
     Manufacturer,
     Model,
     TotalRAM,
@@ -175,18 +186,17 @@ const saveToSQLite = async (systemInfo: any, registryData: any) => {
 
   const query = `
     INSERT INTO pc_info_inv (
-      serial_number, processor, windows_version, manufacturer, model, total_ram, 
-      ram_slots, ram_per_slot, ram_speed, ram_type, ip_address, mac_address, 
-      registry_display_name, registry_display_version, timestamp
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      serial_number, processor, windows_version, display_version, 
+      manufacturer, model, total_ram, ram_slots, ram_per_slot, 
+      ram_speed, ram_type, ip_address, mac_address, registry_display_name, registry_display_version, timestamp
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   db.query(query, [
-    SerialNumber, Processor, WindowsVersion, Manufacturer, Model, TotalRAM, 
-    RAMSlots, RAMPerSlot, RAMSpeed, RAMType, IPAddress, MACAddress,
-    registryData.displayName, registryData.displayVersion, timestamp
+    SerialNumber, Processor, WindowsVersion, DisplayVersion, Manufacturer, Model, TotalRAM, 
+    RAMSlots, RAMPerSlot, RAMSpeed, RAMType, IPAddress, MACAddress, registryData.displayName, registryData.displayVersion, timestamp
   ]);
-
+  
   console.log("✅ Data saved to SQLite");
 };
 
@@ -196,14 +206,9 @@ const path = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninsta
 const searchPattern = "Citrix Workspace";
 const registryData = await searchRegistryWithGUID(hive, path, searchPattern);
 
-
-
-
-// Get system information
+// Get system information and save it to SQLite
 const systemInfo = await getSystemInfo();
-
-// Save to SQLite
-await saveToSQLite(systemInfo, registryData);
+await saveToSQLite(systemInfo);
 
 // Close the database connection
 db.close();
