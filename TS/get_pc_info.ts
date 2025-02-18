@@ -1,20 +1,19 @@
+
 const runCommand = async (cmd: string[]) => {
-  const process = Deno.run({
-    cmd: ["cmd", "/c", ...cmd],
-    stdout: "piped",
-    stderr: "piped",
-  });
-
-  const output = await process.output();
-  const error = await process.stderrOutput();
-  process.close();
-
-  if (error.length > 0) {
-    console.error(new TextDecoder().decode(error));
-    return null;
-  }
-  return new TextDecoder().decode(output).trim();
-};
+    const process = new Deno.Command("cmd", {
+      args: ["/c", ...cmd],
+      stdout: "piped",
+      stderr: "piped",
+    }).spawn();
+  
+    const { stdout, stderr } = await process.output();
+  
+    if (stderr.length > 0) {
+      console.error(new TextDecoder().decode(stderr));
+      return null;
+    }
+    return new TextDecoder().decode(stdout).trim();
+  };
 
 const getSystemInfo = async () => {
   // Get basic system information
@@ -52,7 +51,10 @@ const getSystemInfo = async () => {
   };
 
   // Count RAM slots
-  const slotLines = slotOutput?.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+  const slotLines = typeof slotOutput === "string"
+    ? slotOutput.split("\n").map(line => line.trim()).filter(line => line.length > 0)
+    : [];
+  
   const numRamSlots = slotLines.length > 1 ? slotLines.length - 1 : "Unknown"; // Exclude header row
 
   // Process RAM capacities
