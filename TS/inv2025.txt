@@ -1,1 +1,22 @@
-test
+deno run -A <TS File>
+deno compile -A -o <output exe file> <TS File>
+
+deno run -A get_pc_info_sqlite.ts
+deno compile -A -o get_pc_info_sqlite get_pc_info_sqlite.ts
+
+deno run -A get_pc_info_csv.ts
+deno compile -A -o  get_pc_info_csv get_pc_info_csv.ts
+
+
+
++++++++++++++++++
+.env
++++++++++++++++++
+# .env
+FILE_PATH=\\ltop8672\devshared\DENO
+FILE_CSV=system_info3.csv
+FILE_SQLITE=NOC2025Inv
+OTHER_PARAMETER=SomeValue
+
+
+
