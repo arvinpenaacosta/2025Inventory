@@ -17,6 +17,7 @@ const runCommand = async (cmd: string[]) => {
 
 const getSystemInfo = async () => {
   // Get basic system information
+  const hostname = await runCommand(["wmic", "computersystem", "get", "name"]);
   const serialNumber = await runCommand(["wmic", "bios", "get", "serialnumber"]);
   const processor = await runCommand(["wmic", "cpu", "get", "name"]);
   const windowsVersion = await runCommand(["wmic", "os", "get", "caption"]);
@@ -84,6 +85,7 @@ const getSystemInfo = async () => {
 
   // Output all system info
   console.log("🔹 PC Information:");
+  console.log("Hostname:", hostname?.split("\n")[1]?.trim());
   console.log("Serial Number:", serialNumber?.split("\n")[1]?.trim());
   console.log("Processor:", processor?.split("\n")[1]?.trim());
   console.log("Windows Version:", windowsVersion?.split("\n")[1]?.trim());
