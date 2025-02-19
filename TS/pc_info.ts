@@ -15,6 +15,7 @@ const db = new DB(dbPath);
 db.query(`
   CREATE TABLE IF NOT EXISTS pc_info_inv (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hostname TEXT,
     serial_number TEXT,
     processor TEXT,
     windows_version TEXT,
@@ -28,8 +29,8 @@ db.query(`
     ram_type TEXT,
     ip_address TEXT,
     mac_address TEXT,
-    registry_display_name TEXT,
-    registry_display_version TEXT,
+    citrix_name TEXT,
+    citrix_version TEXT,
     timestamp TEXT
   )
 `);
@@ -65,6 +66,8 @@ const runCommand = async (cmd: string[]) => {
 
 // Function to retrieve system information
 const getSystemInfo = async () => {
+  const hostname = await runCommand(["wmic", "computersystem", "get", "name"]);
+  
   const serialNumber = await runCommand(["wmic", "bios", "get", "serialnumber"]);
   const processor = await runCommand(["wmic", "cpu", "get", "name"]);
   const windowsVersion = await runCommand(["wmic", "os", "get", "caption"]);
@@ -121,6 +124,7 @@ const getSystemInfo = async () => {
   const windispLayversionMatch = windispLayversion?.match(/DisplayVersion\s+REG_SZ\s+(\S+)/);
 
   return {
+    Hostname: hostname?.split("\n")[1]?.trim() || "Unknown",
     SerialNumber: serialNumber?.split("\n")[1]?.trim() || "Unknown",
     Processor: processor?.split("\n")[1]?.trim() || "Unknown",
     WindowsVersion: windowsVersion?.split("\n")[1]?.trim() || "Unknown",
@@ -169,6 +173,7 @@ const saveToSQLite = async (systemInfo: any) => {
   const timestamp = formatTimestamp(new Date()); // Get formatted timestamp
 
   const {
+    Hostname,
     SerialNumber,
     Processor,
     WindowsVersion,
@@ -186,14 +191,14 @@ const saveToSQLite = async (systemInfo: any) => {
 
   const query = `
     INSERT INTO pc_info_inv (
-      serial_number, processor, windows_version, display_version, 
+      hostname, serial_number, processor, windows_version, display_version, 
       manufacturer, model, total_ram, ram_slots, ram_per_slot, 
-      ram_speed, ram_type, ip_address, mac_address, registry_display_name, registry_display_version, timestamp
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ram_speed, ram_type, ip_address, mac_address, citrix_name, citrix_version, timestamp
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   db.query(query, [
-    SerialNumber, Processor, WindowsVersion, DisplayVersion, Manufacturer, Model, TotalRAM, 
+    Hostname, SerialNumber, Processor, WindowsVersion, DisplayVersion, Manufacturer, Model, TotalRAM, 
     RAMSlots, RAMPerSlot, RAMSpeed, RAMType, IPAddress, MACAddress, registryData.displayName, registryData.displayVersion, timestamp
   ]);
   
