@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reboot Confirmation</title>
+    <style>
+          body { display: flex; justify-content: center; align-items: flex-start; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif; margin: 0; padding-top: 100px; }  
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); text-align: center; }  
+        h2 { margin-bottom: 20px; }  
+        .btn { display: inline-block; padding: 10px 20px; margin: 10px; font-size: 16px; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }  
+        .btn-yes { background-color: #28a745; color: white; }  
+        .btn-yes:hover { background-color: #218838; }  
+        .btn-no { background-color: #dc3545; color: white; }  
+        .btn-no:hover { background-color: #c82333; } 
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Do you want to Reboot the PC?</h2>
+        <form method="POST" action="http://127.0.0.1:8000/yesreboot">
+            <button type="submit" class="btn btn-yes">Yes</button>
+        </form>
+        <form method="POST" action="http://127.0.0.1:8000/noreboot">
+            <button type="submit" class="btn btn-no">No</button>
+        </form>
+    </div>
+</body>
+</html>

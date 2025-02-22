@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Inventory Location</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/darkly/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 15px;
+      min-height: 100vh;
+      background-color: #2c3034;
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 15px;
+    }
+
+    .card {
+      background-color: #343a40;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+
+    .form-select, .form-control {
+      font-size: 16px;
+      height: 45px;
+    }
+
+    /* Improved radio button styling */
+    .btn-group-vertical {
+      width: 100%;
+      gap: 8px;
+    }
+
+    .btn-check + .btn {
+      text-align: left;
+      padding: 12px 15px;
+      border-radius: 6px;
+      font-size: 16px;
+      background-color: #454d55;
+      border-color: #454d55;
+      color: #fff;
+    }
+
+    .btn-check:checked + .btn {
+      background-color: #375a7f;
+      border-color: #375a7f;
+      color: #fff;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .result-box {
+      background-color: #454d55;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      word-break: break-word;
+    }
+
+    h1 {
+      font-size: calc(1.5rem + 1vw);
+      margin-bottom: 1rem;
+    }
+
+    h4 {
+      font-size: calc(1.1rem + 0.5vw);
+    }
+
+    .mb-3 {
+      margin-bottom: 1.5rem !important;
+    }
+
+    /* Fix for iOS dropdown */
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.7rem center;
+      background-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="card">
+      <h1>Location Parser</h1>
+      <form id="selectionForm">
+
+        <input type="hidden" id="hiddenResult" name="locationCode" value="">
+        <input type="hidden" id="hiddenFloor" name="selectedFloor" value="">
+        <input type="hidden" id="hiddenPrefix" name="roomPrefix" value="">
+        <input type="hidden" id="hiddenRoomSelected" name="roomSelected" value="">
+        <input type="hidden" id="hiddenE1" name="e1Value" value="">
+        <input type="hidden" id="hiddenE2" name="e2Value" value="">
+
+        <div class="mb-3">
+          <label for="floorSelect" class="form-label">Select Floor:</label>
+          <select id="floorSelect" class="form-select">
+            <option value="">--Select Floor--</option>
+          </select>
+        </div>
+        
+        <div class="mb-3">
+          <label for="roomSelect" class="form-label">Select Room:</label>
+          <select id="roomSelect" class="form-select">
+            <option value="">--Select Room--</option>
+          </select>
+        </div>
+        
+        <div id="E1Container" class="mb-3"></div>
+        
+        <button type="button" id="submitBtn" class="btn btn-primary">
+          Submit
+        </button>
+      </form>
+      
+      <div class="result-box">
+        <h4>Result:</h4>
+        <p id="result" class="fs-5"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="data2.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const floorSelect = document.getElementById('floorSelect');
+      const roomSelect = document.getElementById('roomSelect');
+      const E1Container = document.getElementById('E1Container');
+      const submitBtn = document.getElementById('submitBtn');
+      const resultDisplay = document.getElementById('result');
+
+      // Removed the problematic touch event handler
+
+      data.floors.forEach(floorObj => {
+        const option = document.createElement('option');
+        option.value = floorObj.floor;
+        option.textContent = floorObj.floor;
+        floorSelect.appendChild(option);
+      });
+
+      floorSelect.addEventListener('change', function() {
+        roomSelect.innerHTML = '<option value="">--Select Room--</option>';
+        E1Container.innerHTML = '';
+        resultDisplay.textContent = '';
+
+        const selectedFloor = this.value;
+        const floorData = data.floors.find(floorObj => floorObj.floor === selectedFloor);
+        if (floorData) {
+          floorData.rooms.forEach((room, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = room.name;
+            roomSelect.appendChild(option);
+          });
+        }
+      });
+
+      roomSelect.addEventListener('change', function() {
+        E1Container.innerHTML = '';
+        resultDisplay.textContent = '';
+        const selectedFloor = floorSelect.value;
+        const floorData = data.floors.find(floorObj => floorObj.floor === selectedFloor);
+        if (!floorData) return;
+
+        const roomIndex = parseInt(this.value);
+        if (isNaN(roomIndex)) return;
+
+        const room = floorData.rooms[roomIndex];
+        const E1 = room.E1;
+        const E2 = room.E2;
+        const L1 = room.L1;
+
+        const e1Group = document.createElement('div');
+        e1Group.className = 'mb-3';
+        const e1Label = document.createElement('label');
+        e1Label.className = 'form-label';
+        
+        if (typeof E1 === 'string') {
+          e1Label.textContent = E1 + ": ";
+        } else {
+          e1Label.textContent = L1 + ": ";
+        }
+        e1Group.appendChild(e1Label);
+
+        if (typeof E1 === 'string') {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = 'e1Input';
+          input.placeholder = E1;
+          input.className = 'form-control';
+          e1Group.appendChild(input);
+        } else if (typeof E1 === 'object') {
+          const btnGroup = document.createElement('div');
+          btnGroup.className = 'btn-group-vertical';
+          
+          for (const key in E1) {
+            if (E1.hasOwnProperty(key)) {
+              const radio = document.createElement('input');
+              radio.type = 'radio';
+              radio.name = 'E1Option';
+              radio.value = E1[key];
+              radio.id = 'E1-' + key;
+              radio.className = 'btn-check';
+              
+              const label = document.createElement('label');
+              label.className = 'btn btn-outline-primary';
+              label.htmlFor = 'E1-' + key;
+              label.textContent = E1[key];
+
+              btnGroup.appendChild(radio);
+              btnGroup.appendChild(label);
+            }
+          }
+          e1Group.appendChild(btnGroup);
+        }
+        E1Container.appendChild(e1Group);
+
+        const e2Group = document.createElement('div');
+        e2Group.className = 'mb-3';
+        const e2Label = document.createElement('label');
+        e2Label.className = 'form-label';
+        e2Label.textContent = E2 + ": ";
+        e2Group.appendChild(e2Label);
+        const e2Input = document.createElement('input');
+        e2Input.type = 'text';
+        e2Input.id = 'e2Input';
+        e2Input.className = 'form-control';
+        e2Group.appendChild(e2Input);
+        E1Container.appendChild(e2Group);
+      });
+
+
+
+      // Function to send data to API
+      async function sendToAPI(formData) {
+        try {
+          const response = await fetch('/go', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+              name: formData.locationCode,  // Using the combined location code as name
+              Lname: JSON.stringify({       // Storing additional details in Lname
+                floor: formData.selectedFloor,
+                prefix: formData.roomPrefix,
+                room: formData.roomSelected,
+                e1: formData.e1Value,
+                e2: formData.e2Value
+              })
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.text();
+          showStatus('Location saved successfully!');
+          return result;
+        } catch (error) {
+          showStatus(`Error: ${error.message}`, true);
+          throw error;
+        }
+      }
+
+
+
+
+
+
+
+      submitBtn.addEventListener('click', function() {
+        const selectedFloor = floorSelect.value;
+        if (!selectedFloor) {
+          alert("Please select a floor.");
+          return;
+        }
+
+        const selectedFloorObj = data.floors.find(floorObj => floorObj.floor === selectedFloor);
+        if (!selectedFloorObj) {
+          alert("Floor data not found.");
+          return;
+        }
+
+        const roomIndex = parseInt(roomSelect.value);
+        if (isNaN(roomIndex)) {
+          alert("Please select a room.");
+          return;
+        }
+        const room = selectedFloorObj.rooms[roomIndex];
+
+        let e1Value = "";
+        if (typeof room.E1 === 'string') {
+          const e1Input = document.getElementById('e1Input');
+          if (e1Input) {
+            e1Value = e1Input.value;
+          }
+        } else if (typeof room.E1 === 'object') {
+          const selectedRadio = document.querySelector('input[name="E1Option"]:checked');
+          if (selectedRadio) {
+            e1Value = selectedRadio.value;
+          }
+        }
+
+        const e2Input = document.getElementById('e2Input');
+        const e2Value = e2Input ? e2Input.value : "";
+
+        const combinedPrompt = `${selectedFloor} ${room.D1}${e1Value}-${e2Value.toUpperCase()}`;
+        resultDisplay.textContent = combinedPrompt;
+
+        // Store individual components in separate hidden inputs
+        hiddenResult.value = combinedPrompt;
+        hiddenFloor.value = selectedFloor;
+        hiddenPrefix.value = room.D1;
+        hiddenRoomSelected.value = room.name;
+        hiddenE1.value = e1Value;
+        hiddenE2.value = e2Value.toUpperCase();
+
+        // Prepare form data
+        const formData = {
+          locationCode: hiddenResult.value,
+          selectedFloor: hiddenFloor.value,
+          roomPrefix: hiddenPrefix.value,
+          roomSelected: hiddenRoomSelected.value,
+          e1Value: hiddenE1.value,
+          e2Value: hiddenE2.value
+        };
+
+        try {
+          // Send data to API
+          await sendToAPI(formData);
+        } catch (error) {
+          console.error('Error sending data:', error);
+        }
+
+
+      });
+    });
+  </script>
+</body>
+</html>
