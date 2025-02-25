@@ -110,29 +110,32 @@ async function main1(): Promise<InventoryRecord | null> {
 
     // Step 7: Process E1 prompt based on its type (object/dictionary or string)
     let e1Answer: string | null = null;
-    while (true) {
-      if (typeof selectedRoom.E1 === "object") {
-        // E1 is a dictionary; use L1 as prompt and list options
-        console.log("=========================================X");
-        console.log(selectedRoom.L1);
-        for (const [key, value] of Object.entries(selectedRoom.E1)) {
-          console.log(`  ${key}: ${value}`);
-        }
-        console.log("=========================================X1");
-        e1Answer = prompt(selectedRoom.L1);
-        if (!e1Answer || !selectedRoom.E1.hasOwnProperty(e1Answer)) {
+    if (typeof selectedRoom.E1 === "object") {
+      // E1 is a dictionary; use L1 as prompt and list options with keys and values
+      console.log(selectedRoom.L1);
+      for (const [key, value] of Object.entries(selectedRoom.E1)) {
+        console.log(`  ${key}: ${value}`);
+      }
+      while (true) {
+        const input = prompt(selectedRoom.L1);
+        if (!input || !selectedRoom.E1.hasOwnProperty(input)) {
           console.log("Invalid selection for E1. Please try again.");
           continue;
         }
-      } else if (typeof selectedRoom.E1 === "string") {
-        // E1 is a string; use it as the prompt directly
+        // Assign the actual value from the dictionary instead of the key
+        e1Answer = selectedRoom.E1[input];
+        break;
+      }
+    } else if (typeof selectedRoom.E1 === "string") {
+      // E1 is a string; use it as the prompt directly
+      while (true) {
         e1Answer = prompt(selectedRoom.E1);
         if (!e1Answer) {
           console.log("No input provided for E1. Please try again.");
           continue;
         }
+        break;
       }
-      break;
     }
 
     console.log("=========================================");
@@ -153,11 +156,30 @@ async function main1(): Promise<InventoryRecord | null> {
     console.log("=========================================X1");
     const phoneExt = prompt("Enter Citrix Phone Ext (Optional):") || "";
 
-    const finalOutput = `${selectedFloor.floor}  ${selectedRoom.name} ${phoneExt} | ${selectedRoom.D1}${e1Answer}-${e2Answer}`;
+    const finalOutput = `${selectedFloor.floor}  ${selectedRoom.name} | ${phoneExt} | ${selectedRoom.D1}${e1Answer}-${e2Answer}`;
 
-    // Step 10: Display the final result
-    console.log("++++++++++++++++++++++++++++++++++++++++++");
-    console.log("Final Combined Output: " + finalOutput);
+
+
+    // Step 10: Display the final result along with detailed information
+    console.log(`${green}=========================================${reset}`);
+    console.log("Generated Location: " + finalOutput);
+    console.log(`${green}=========================================${reset}`);
+    console.log("EID: " + eid);
+    console.log("Citrix Phone Ext: " + (phoneExt.trim() !== "" ? phoneExt : "None"));
+    console.log("Selected Floor: " + selectedFloor.floor);
+    console.log("Selected Room: " + selectedRoom.name);
+    console.log("E1 Answer: " + e1Answer);
+    console.log("E2 Answer: " + e2Answer);
+    console.log(`${green}=========================================${reset}`);
+
+
+
+
+
+
+
+
+
  
       // Return all the requested values in an object
       return {
