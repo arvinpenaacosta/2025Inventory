@@ -1,5 +1,5 @@
 // Import the SystemInfo class from your module file
-// Assuming it's saved as "system_info.ts"
+// Assuming it's saved as "pc_info_class.ts"
 import { SystemInfo } from "./pc_info_class.ts";
 
 async function displayHostnameAndSerial() {
@@ -13,10 +13,12 @@ async function displayHostnameAndSerial() {
   const infoData = sysInfo.getAllInfo();
   
   // Extract just the hostname and serial number
+  const username = infoData.system.username;
   const hostname = infoData.system.hostname;
   const serialNumber = infoData.system.serialNumber;
   
   // Display these values to the console
+  console.log("Computer Hostname:", username);
   console.log("Computer Hostname:", hostname);
   console.log("Serial Number:", serialNumber);
 }
