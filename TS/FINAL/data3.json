@@ -1,0 +1,366 @@
+{
+  "floors": [
+    {
+      "floor": "11",
+      "rooms": [
+        {
+          "CO": {"P": "Pod"},
+          "E1": {
+                  "label": "Enter POD Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                },
+          "E2": {
+                  "label": "Enter Station Letter",
+                  "Range": ["A", "B", "C", "D", "E", "F", "G"]
+                },
+          "D1": "POD_"
+        },
+        {
+          "CO":{"A": "PA"},
+          "E1": {
+                  "label": "Enter PA Number",
+                  "Range": [1, 2, 3, 4, 5, 6]
+                },
+          "E2": {
+                  "label": "Enter Station Letter",
+                  "Range": ["A", "B", "C", "D", "E", "F"]
+                },
+          "D1": "PA_"
+        },
+        {
+          "CO": {"C":"Coaching Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "CR_"
+        },
+        {
+          "CO": {"B":"Board Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "BR_"
+        },
+        {
+          "CO": {"E":"Enterprise"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "EN_"
+        },
+        {
+          "CO": {"T":"Training Room"},
+          "L1": "Select Training Room",
+          "E1": {  "label": "Select IOS or ANDROID",
+                   "Range": {"1": "IOS", "2": "ANDROID" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "TR_"
+        }
+      ]
+    },
+    {
+      "floor": "10",
+      "rooms": [
+        {
+          "CO": {"P": "Pod"},
+          "E1": {
+                  "label": "Enter POD Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                },
+          "E2": {
+                  "label": "Enter Station Letter",
+                  "Range": ["A", "B", "C", "D", "E", "F", "G"]
+                },
+          "D1": "POD_"
+        },
+        {
+          "CO":{"A": "PA"},
+          "E1": {
+                  "label": "Enter PA Number",
+                  "Range": [1, 2, 3, 4, 5, 6]
+                },
+          "E2": {
+                  "label": "Enter Station Letter",
+                  "Range": ["A", "B", "C", "D", "E", "F"]
+                },
+          "D1": "PA_"
+        },
+        {
+          "CO": {"C":"Coaching Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "CR_"
+        },
+        {
+          "CO": {"B":"Board Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "BR_"
+        },
+        {
+          "CO": {"E":"Enterprise"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "EN_"
+        },
+        {
+          "CO": {"T":"Training Room"},
+          "L1": "Select Training Room",
+          "E1": {  "label": "Select Salt Lake or San Jose",
+                   "Range": {"1": "SaltLake", "2": "SanJose" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "TR_"
+        }
+      ]
+    },
+    {
+      "floor": "9",
+      "rooms": [
+        {
+          "CO": {"C":"Coaching Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "CR_"
+        },
+        {
+          "CO": {"T":"Training Room"},
+          "L1": "Select Training Room",
+          "E1": {  "label": "Select Training Room Type",
+                   "Range": {
+                              "1": "Peace",
+                              "2": "Flexible",
+                              "3": "Honest",
+                              "4": "Resourceful",
+                              "5": "Result Oriented" 
+                            }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "TR_"
+        },
+        {
+          "CO": {"D":"Desk-Area"},
+          "L1": "Select Desk Area",
+          "E1": {  "label": "Select Desk-Area",
+                   "Range": {
+                              "1": "Concierge",
+                              "2": "Clinic",
+                              "3": "War Room",
+                              "4": "CompBen",
+                              "5": "MobSol",
+                              "6": "E3 Desk",
+                              "7": "E3 Office",
+                              "8": "Payroll"
+                            }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "DA_"
+        }
+      ]
+    },
+    {
+      "floor": "7",
+      "rooms": [
+        {
+          "CO": {"P": "Pod"},
+          "E1": {
+                  "label": "Enter POD Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                },
+          "E2": {
+                  "label": "Enter Station Letter",
+                  "Range": ["A", "B", "C", "D", "E", "F", "G"]
+                },
+          "D1": "POD_"
+        },
+        {
+          "CO":{"A": "PA"},
+          "E1": {
+                  "label": "Enter PA Number",
+                  "Range": [1, 2, 3, 4, 5, 6]
+                },
+          "E2": {
+                  "label": "Enter Station Letter",
+                  "Range": ["A", "B", "C", "D", "E", "F"]
+                },
+          "D1": "PA_"
+        },
+        {
+          "CO": {"C":"Coaching Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "CR_"
+        },
+        {
+          "CO": {"B":"Board Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "BR_"
+        },
+        {
+          "CO": {"E":"Enterprise"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "EN_"
+        },
+        {
+          "CO": {"T":"Training Room"},
+          "L1": "Select Training Room",
+          "E1": {  "label": "Select Omaha or Chandler",
+                   "Range": {"1": "Omaha", "2": "Chandler" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "TR_"
+        }
+      ]
+    },
+    {
+      "floor": "6",
+      "rooms": [
+        {
+          "CO": {"P": "Pod"},
+          "E1": {
+                  "label": "Enter POD Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                },
+          "E2": {
+                  "label": "Enter Station Letter",
+                  "Range": ["A", "B", "C", "D", "E", "F", "G"]
+                },
+          "D1": "POD_"
+        },
+        {
+          "CO":{"A": "PA"},
+          "E1": {
+                  "label": "Enter PA Number",
+                  "Range": [1, 2, 3, 4, 5, 6]
+                },
+          "E2": {
+                  "label": "Enter Station Letter",
+                  "Range": ["A", "B", "C", "D", "E", "F"]
+                },
+          "D1": "PA_"
+        },
+        {
+          "CO": {"C":"Coaching Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "CR_"
+        },
+        {
+          "CO": {"B":"Board Room"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "BR_"
+        },
+        {
+          "CO": {"E":"Enterprise"},
+          "E1": {  "label": "Select MOA or MAC",
+                   "Range": {"1": "MOA", "2": "MAC" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "EN_"
+        },
+        {
+          "CO": {"T":"Training Room"},
+          "L1": "Select Training Room",
+          "E1": {  "label": "Select TDH, Washington or PPTR",
+                   "Range": {"1": "TDH", "2": "Washington" , "3": "PPTR" }
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "TR_"
+        },
+        {
+          "CO": {"D":"Desk-Area"},
+          "E1": {  "label": "Select NOC or Facilities",
+                   "Range": {"1": "NOC", "2": "Facilities"}
+                },
+          "E2": {
+                  "label": "Enter Seat Number",
+                  "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                },
+          "D1": "DA_"
+        }
+      ]
+    }
+  ]
+}
