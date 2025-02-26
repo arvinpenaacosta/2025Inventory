@@ -122,6 +122,9 @@ export class SystemInfo {
    * @returns Promise that resolves when all information is gathered
    */
   public async gatherInfo(): Promise<void> {
+    // Get Username Logged-In
+    this.username = Deno.env.get("USERNAME") || Deno.env.get("USER");
+
     // Get basic system information
     const hostnameOutput = await this.runCommand(["wmic", "computersystem", "get", "name"]);
     this.hostname = this.extractValue(hostnameOutput);
@@ -229,6 +232,7 @@ export class SystemInfo {
   public getAllInfo(): SystemInfoData {
     return {
       system: {
+        username: this.username,
         hostname: this.hostname,
         serialNumber: this.serialNumber,
         processor: this.processor,
@@ -261,6 +265,7 @@ export class SystemInfo {
    */
   public printAllInfo(): void {
     console.log("🔹 PC Information:");
+    console.log("Username:", this.username);
     console.log("Hostname:", this.hostname);
     console.log("Serial Number:", this.serialNumber);
     console.log("Processor:", this.processor);
@@ -304,6 +309,7 @@ export class SystemInfo {
  */
 export interface SystemInfoData {
   system: {
+    username: string;
     hostname: string;
     serialNumber: string;
     processor: string;
