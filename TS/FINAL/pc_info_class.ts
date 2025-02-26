@@ -4,6 +4,7 @@
  */
 export class SystemInfo {
   // Basic system info properties
+  private username: string = "Unknown";
   private hostname: string = "Unknown";
   private serialNumber: string = "Unknown";
   private processor: string = "Unknown";
