@@ -1,0 +1,128 @@
+Open WSL Terminal
+Press Win + R, type wsl, and hit Enter.
+If you haven’t installed WSL yet, run this in PowerShell (Admin):
+
+powershell
+wsl --install
+
+Then restart your system.
+
+2️⃣ Download and Install Go in WSL
+For Ubuntu/Debian-based WSL
+Update your package list:
+sudo apt update && sudo apt upgrade -y
+
+Download the latest Go version (Check Go's download page for updates):
+wget https://go.dev/dl/go1.21.3.linux-amd64.tar.gz
+
+Extract and install Go in /usr/local:
+sudo tar -C /usr/local -xzf go1.21.3.linux-amd64.tar.gz
+
+Set up your environment variables (add to .bashrc or .zshrc):
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+source ~/.bashrc
+
+If you use Zsh:
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.zshrc
+source ~/.zshrc
+3️⃣ Verify Installation
+Check your Go version:
+
+go version
+Expected output:
+
+go version go1.21.3 linux/amd64
+4️⃣ Set Up Go Workspace (Optional)
+Create a workspace:
+
+mkdir -p $HOME/go/{bin,pkg,src}
+Set GOPATH environment variable (optional but recommended):
+
+echo 'export GOPATH=$HOME/go' >> ~/.bashrc
+echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.bashrc
+source ~/.bashrc
+5️⃣ Test Your Go Installation
+Create a test project:
+
+mkdir -p ~/go/src/hello
+cd ~/go/src/hello
+Create main.go:
+
+nano main.go
+===========================
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, Go on WSL!")
+}
+===========================
+
+Run the Go program:
+
+go run main.go
+
+If it prints:
+
+Hello, Go on WSL!
+
+🎉 You’ve successfully installed Go on WSL!
+Would you like help setting up a Go project or using VS Code with WSL? 🚀
+
+
+
+
+
+
+
+You said:
+how to compile it to exe
+ChatGPT said:
+To compile your Go program into a Windows .exe file while running inside WSL, you need to cross-compile it by setting the correct environment variables.
+
+1️⃣ Set the Windows Build Target in WSL
+Since WSL runs Linux, you must tell Go to compile for Windows by setting GOOS=windows and GOARCH=amd64 (for 64-bit Windows):
+
+sh
+Copy
+Edit
+GOOS=windows GOARCH=amd64 go build -o myprogram.exe main.go
+GOOS=windows → Target Windows OS
+GOARCH=amd64 → Target 64-bit architecture
+-o myprogram.exe → Output file as myprogram.exe
+2️⃣ Move the EXE File to Windows
+Once compiled, you need to move the .exe file to your Windows system to run it.
+From WSL, you can move it to your Windows home directory:
+
+
+mv myprogram.exe /mnt/c/Users/YourUsername/Desktop/
+Alternatively, copy the file using:
+
+cp myprogram.exe /mnt/c/path/to/your/folder/
+You can now open cmd.exe or PowerShell and run:
+
+powershell
+
+C:\Users\YourUsername\Desktop\myprogram.exe
+3️⃣ Optional: Compile Without Console Window
+If your app is a GUI program (not a terminal app), you can remove the console window by adding -ldflags "-H windowsgui":
+
+sh
+Copy
+Edit
+GOOS=windows GOARCH=amd64 go build -ldflags "-H windowsgui" -o myprogram.exe main.go
+4️⃣ Optional: Enable Cross-Compiling Support
+If you see an error like:
+
+bash
+Copy
+Edit
+exec: "gcc": executable file not found in $PATH
+You need to install mingw-w64 for Windows cross-compilation:
+
+sh
+Copy
+Edit
+sudo apt install gcc-mingw-w64
+Then try building again.

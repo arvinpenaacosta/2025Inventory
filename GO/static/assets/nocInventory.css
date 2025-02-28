@@ -1,0 +1,161 @@
+<style>
+    html {
+        
+
+        /*
+        background-image: url('/static/img/dominos.png'); 
+        */
+
+        
+        
+            /* Replace with the URL of your background image */
+        
+        background-size: cover; /* Ensure the background image covers the entire viewport */
+        background-repeat: no-repeat; /* Prevent background image from repeating */
+        background-attachment: fixed; /* Fix the background image in place */
+    }
+
+    body {
+        background: none; /* Remove any additional background set on the body */
+    }
+
+    .container {
+    margin-top: -150px;
+    }
+
+
+        /* Apply a frosted glass effect using a background image */
+    .glass-container {
+        width: 350px; /* Set the width to 350px */
+        background-image: url('assets/dominos2.png');  
+        background-size: cover; /* Adjust background size as needed */
+        border: 2px solid rgba(0, 0, 0, 0.1); /* Border with opacity */
+        border-radius: 10px; /* Rounded corners */
+        padding: 20px; /* Add some padding for spacing */
+        margin-top: 0px; /* Adjust this value as needed */
+        position: relative; /* Position container relative to allow pseudo-element */
+    }
+
+
+    .white-background-button {
+        background-color: white;
+    }
+
+    .rounded-input {
+        border-radius: 20px; /* Set the border radius to 20px */
+        opacity: 0.9;
+    }
+
+    .hover-button {
+        background-color: white;
+        transition: background-color 0.3s; /* Add a smooth transition effect */
+    }
+
+    /* Define the hover effect for the button */
+    .hover-red-button:hover {
+        background-color: red; /* Change the background color to amber on hover */
+    }
+
+    .hover-button:hover {
+        background-color: lime; /* Change the background color to amber on hover */
+    }
+
+    .rounded-button {
+        /* 	border-radius: 20px; */
+
+        border: 2px solid rgba(0, 0, 0, 0.1); /* Border with opacity */
+        border-radius: 0 20px 20px 0; /* top-left top-right bottom-right bottom-left */
+        opacity: 0.8;
+    }
+
+    .container-kbm {
+        height: 45px;
+        background-color: white;
+        background-size: cover; /* Adjust background size as needed */
+        border-radius: 20px; /* top-left top-right bottom-right bottom-left */
+        opacity: 0.8;
+
+        padding: 10px; /* Add some padding for spacing */
+        border: 40px;
+        
+    }
+
+</style>
+<style>
+
+
+
+    #qr-reader {
+        width: 350px; /* Set the desired width */
+        height: 350px;  /*Set the desired height */
+        margin: -20px auto 0 auto; /* Center the div horizontally */
+        /* background-color: #FF5733; /*  Set the background color to amber */
+    }
+
+    /*
+    .form-label {
+    color: white;
+    font-weight: bold;
+    background-color: transparent;
+    text-shadow: 6px 6px 25px teal;
+    -webkit-text-stroke: 0.5px black;
+    }
+    */
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    }
+
+    .modal-content {
+        background-color: white;
+        max-width: 400px;
+        margin: 20% auto;
+        padding: 20px;
+        border-radius: 5px;
+    }
+
+    /* Styles for the modal buttons */
+    .modal-buttons {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .modal-buttons button {
+        margin: 10px;
+    }
+
+    .modal-title {
+        color: red;
+    }
+
+    .modal-label {
+        
+    }
+
+    #revert-scan {
+        margin-top: 30px; /* Adjust the value as needed */
+        /* Position the button 20px lower relative to its original position */
+        top: -50px; /* Adjust the value as needed */
+        position: relative; /* Ensure the button stays within its container */
+        height: 100px;
+        width: 300px;
+    }
+
+    .revert-container {
+        display: flex;
+        justify-content: center; /* Center horizontally */
+        align-items: flex-start; /* Align content to the top (vertical position) */
+        border-radius: 45px;
+
+    }
+    .revert-rounded {
+        border-radius: 45px; /* Adjust the value to control the degree of rounding */
+    }
+
+</style>
