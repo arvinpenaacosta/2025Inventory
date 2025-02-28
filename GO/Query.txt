@@ -1,0 +1,11 @@
+# Select distinct serialnumber and the most recent update record
+SELECT * 
+FROM system_info AS s
+WHERE id = (
+    SELECT MAX(id) 
+    FROM system_info 
+    WHERE SerialNumber = s.SerialNumber
+);
+
+
+
