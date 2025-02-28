@@ -1,4 +1,5 @@
 # Select distinct serialnumber and the most recent update record
+1.
 SELECT * 
 FROM system_info AS s
 WHERE id = (
@@ -7,5 +8,14 @@ WHERE id = (
     WHERE SerialNumber = s.SerialNumber
 );
 
-
+2.
+SELECT id, SerialNumber, Username, Hostname, MacAddress, IPAddress, CitrixName, CitrixVersion, 
+       Processor, WindowsVersion, WindowsDisplayVersion, Manufacturer, Model, 
+       TotalRAM, NumRamSlots, RamPerSlot, RamSpeed, RamType, CollectionDate
+FROM system_info AS s
+WHERE id = (
+    SELECT MAX(id) 
+    FROM system_info 
+    WHERE SerialNumber = s.SerialNumber
+);
 
