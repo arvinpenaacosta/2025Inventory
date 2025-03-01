@@ -1,6 +1,3 @@
-// Working Deno QR Code Generator (No Terminal Output)
-// Uses the QR code library from npm via esm.sh
-
 import QRCode from "https://esm.sh/qrcode@1.5.3";
 import { parse } from "https://deno.land/std@0.224.0/flags/mod.ts";
 import { join } from "https://deno.land/std@0.224.0/path/mod.ts";
@@ -19,9 +16,6 @@ const args = parse(Deno.args, {
 
 /**
  * Generates a QR code from the provided text and saves it as an image.
- * 
- * @param text - The text or JSON string to encode in the QR code.
- * @param outputFile - The file name for saving the QR code.
  */
 async function generateQRCode(text: string, outputFile: string) {
   try {
@@ -56,5 +50,23 @@ const jsonData = JSON.stringify({
   },
 });
 
-// Call the function with JSON data
+// Generate QR Code
 await generateQRCode(jsonData, args.output);
+
+// Open Image in Browser
+const imagePath = `file:///${args.output}`;
+
+const browserCommands: Record<string, string[]> = {
+  windows: ["cmd", "/c", "start", "chrome", imagePath], // Change to "msedge" or "firefox" if needed
+  darwin: ["open", "-a", "Google Chrome", imagePath], // macOS
+  linux: ["google-chrome", imagePath], // Linux (Change to "firefox" if needed)
+};
+
+const osType = Deno.build.os;
+if (browserCommands[osType]) {
+  await new Deno.Command(browserCommands[osType][0], {
+    args: browserCommands[osType].slice(1),
+  }).output();
+} else {
+  console.error("Unsupported OS. Please open the file manually:", imagePath);
+}
