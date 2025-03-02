@@ -6,6 +6,16 @@ import { DB } from "https://deno.land/x/sqlite/mod.ts"; // to interact with SQLi
 // Add environment variable support
 import { config } from "https://deno.land/x/dotenv@v3.2.2/mod.ts";
 
+
+// Set Color effect
+const COLORS = {
+  green: "\x1b[32m",
+  red: "\x1b[31m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  reset: "\x1b[0m",
+};
+
 // Load environment variables from .env file
 const env = config();
 
@@ -107,18 +117,19 @@ const getSystemInfo = async () => {
     "26": "DDR4",
     "29": "DDR5",
   };
-
+  
   // Get timestamp in Philippines time zone (UTC+8)
   const timestamp = new Date(new Date().getTime() + 8 * 60 * 60 * 1000).toISOString().replace('T', ' ').split('.')[0];
-
+   
   const username = Deno.env.get("USERNAME") || Deno.env.get("USER");
 
   const hostnameOutput = await runCommand(["wmic", "computersystem", "get", "name"]);
   const hostname = extractValue(hostnameOutput);
+  
 
   const serialNumberOutput = await runCommand(["wmic", "bios", "get", "serialnumber"]);
   const serialNumber = extractValue(serialNumberOutput);
-
+  
   const processorOutput = await runCommand(["wmic", "cpu", "get", "name"]);
   const processor = extractValue(processorOutput);
 
@@ -129,6 +140,7 @@ const getSystemInfo = async () => {
     "reg", "query", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
     "/v", "DisplayVersion"
   ]);
+
   const displayVersionMatch = displayVersionOutput?.match(/DisplayVersion\s+REG_SZ\s+(\S+)/);
   const windowsDisplayVersion = displayVersionMatch ? displayVersionMatch[1] : "Unknown";
 
@@ -140,8 +152,11 @@ const getSystemInfo = async () => {
 
   // Get RAM details
   const capacityOutput = await runCommand(["wmic", "memorychip", "get", "capacity"]);
+
   const speedOutput = await runCommand(["wmic", "memorychip", "get", "speed"]);
+  
   const typeOutput = await runCommand(["wmic", "memorychip", "get", "SMBIOSMemoryType"]);
+  
   const slotOutput = await runCommand(["wmic", "memorychip", "get", "devicelocator"]);
 
   // Process RAM information
@@ -217,9 +232,7 @@ const getSystemInfo = async () => {
   };
 
   // Output all system info
-  const green: string = "\x1b[32m";
-  const reset: string = "\x1b[0m";
-  console.log(`${green}🔹 PC Information:${reset}`);
+  console.log(`${COLORS.green}🔹 PC Information:${COLORS.reset}`);
   console.log("   Log User:", systemInfo.logUser);
   console.log("   Hostname:", systemInfo.hostname);
   console.log("   Serial Number:", systemInfo.serialNumber);
@@ -229,25 +242,27 @@ const getSystemInfo = async () => {
   console.log("   Manufacturer:", systemInfo.manufacturer);
   console.log("   Model:", systemInfo.model);
 
-  console.log(`\n${green}🔹 RAM Information:${reset}`);
+  console.log(`\n${COLORS.green}🔹 RAM Information:${COLORS.reset}`);
   console.log("   Total RAM Capacity:", systemInfo.totalRam);
   console.log("   Number of RAM Slots:", systemInfo.numRamSlots);
   console.log("   RAM Installed per Slot:", systemInfo.ramPerSlot);
   console.log("   RAM Speed:", systemInfo.ramSpeed);
   console.log("   RAM Type:", systemInfo.ramType);
 
-  console.log(`\n${green}🔹 Network Information:${reset}`);
+  console.log(`\n${COLORS.green}🔹 Network Information:${COLORS.reset}`);
   console.log("   IP Address:", systemInfo.ipAddress);
   console.log("   MAC Address:", systemInfo.macAddress);
 
-  console.log(`\n${green}🔹 Citrix Information:${reset}`);
+  console.log(`\n${COLORS.green}🔹 Citrix Information:${COLORS.reset}`);
   console.log("   Citrix Name:", systemInfo.citrixName);
   console.log("   Citrix Version:", systemInfo.citrixVersion);
   console.log("   Timestamp:", systemInfo.Timestamp);
-  console.log("=================================================");
 
   return systemInfo;
 };
+
+
+
 
 /**
  * Generates a QR code from the provided text and saves it as an image.
@@ -263,6 +278,7 @@ async function generateQRCode(text: string, outputFile: string) {
         light: "#ffffff",
       },
     });
+    console.log(`${COLORS.green}+++++++++++++++++++++++++++++++++++++++++${COLORS.reset}`);
     console.log(`QR code saved to: ${outputFile}`);
     return true;
   } catch (error) {
@@ -274,31 +290,97 @@ async function generateQRCode(text: string, outputFile: string) {
 /**
  * Opens the generated QR code image in the default browser
  */
-async function openInBrowser(filePath: string) {
-  const imagePath = `file:///${filePath}`;
-  const browserCommands: Record<string, string[]> = {
-    windows: ["cmd", "/c", "start", "chrome", imagePath], // Change to "msedge" or "firefox" if needed
-    darwin: ["open", "-a", "Google Chrome", imagePath], // macOS
-    linux: ["google-chrome", imagePath], // Linux (Change to "firefox" if needed)
-  };
+ async function openInBrowser(filePath: string, hostname?: string) {
+    const htmlPath = filePath.replace(/\.png$/, ".html"); // Change PNG path to HTML path
   
-  const osType = Deno.build.os;
-  if (browserCommands[osType]) {
-    try {
-      await new Deno.Command(browserCommands[osType][0], {
-        args: browserCommands[osType].slice(1),
-      }).output();
-      console.log("QR code opened in browser");
-      return true;
-    } catch (error) {
-      console.error("Error opening browser:", error);
+    // Create an HTML file with the image and hostname
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Image Viewer</title>
+      <style>
+        * {
+          margin: 0; padding: 0;  box-sizing: border-box;
+        }
+    
+        body {
+          display: flex; flex-direction: column; justify-content: center; align-items: center;
+          height: 100vh; background-color: #000; color: white; font-family: Arial, sans-serif;
+        }
+        .header, .footer {
+          position: fixed; width: 100%; text-align: center; background: rgba(0, 0, 0, 0.8); /* Slight transparency */
+          padding: 10px 0;
+        }
+        .header {
+          top: 0; font-size: 1.5em; font-weight: bold; border-bottom: 2px solid white;
+        }
+        .footer {
+          bottom: 0; font-size: 1em; border-top: 2px solid white;
+        }
+        .content {
+          display: flex; flex-direction: column; justify-content: center; align-items: center;
+          flex-grow: 1; text-align: center; width: 100%;
+        }
+        img {
+          max-width: 80vw; max-height: 80vh;
+        }
+        .info {
+          margin-top: 20px; font-size: 1.2em;
+        }
+      </style>
+    </head>
+    <body>
+    
+      <!-- Header -->
+      <div class="header">PC Info QR Code Viewer</div>
+    
+      <!-- Content (QR Code and Hostname) -->
+      <div class="content">
+        <img src="file:///${filePath}" alt="QR Code">
+        <div class="info">${hostname ? `Hostname : ${hostname}` : ""}</div>
+      </div>
+    
+      <!-- Footer -->
+      <div class="footer">Powered by DevAppVin</div>
+    
+    </body>
+    </html>
+    
+    `;
+  
+    // Write the HTML file
+    await Deno.writeTextFile(htmlPath, htmlContent);
+  
+    // Open the HTML file in the browser
+    const browserCommands: Record<string, string[]> = {
+      windows: ["cmd", "/c", "start", "chrome", htmlPath],
+      darwin: ["open", "-a", "Google Chrome", htmlPath],
+      linux: ["google-chrome", htmlPath],
+    };
+  
+    const osType = Deno.build.os;
+    if (browserCommands[osType]) {
+      try {
+        await new Deno.Command(browserCommands[osType][0], {
+          args: browserCommands[osType].slice(1),
+        }).output();
+        console.log("QR code opened in browser with system info.");
+        return true;
+      } catch (error) {
+        console.error("Error opening browser:", error);
+        return false;
+      }
+    } else {
+      console.error("Unsupported OS. Please open the file manually:", htmlPath);
       return false;
     }
-  } else {
-    console.error("Unsupported OS. Please open the file manually:", imagePath);
-    return false;
   }
-}
+  
+  
+  
 
 /**
  * Sanitizes a string to be safe for filenames
@@ -345,7 +427,7 @@ function initDatabase(): DB {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         log_user TEXT,
         hostname TEXT,
-        serial_number TEXT UNIQUE,
+        serial_number TEXT,
         processor TEXT,
         windows_version TEXT,
         windows_display_version TEXT,
@@ -375,107 +457,60 @@ function initDatabase(): DB {
 /**
  * Save system information to SQLite database
  */
-function saveToDatabase(db: DB, systemInfo: any): boolean {
-  try {
-    // Check if record with this serial number already exists
-    const existingRecord = db.query("SELECT id FROM inventory WHERE serial_number = ?", [systemInfo.serialNumber]);
-    
-    if (existingRecord.length > 0) {
-      // Update existing record
-      db.query(`
-        UPDATE inventory SET
-          log_user = ?,
-          hostname = ?,
-          processor = ?,
-          windows_version = ?,
-          windows_display_version = ?,
-          manufacturer = ?,
-          model = ?,
-          total_ram = ?,
-          num_ram_slots = ?,
-          ram_per_slot = ?,
-          ram_speed = ?,
-          ram_type = ?,
-          ip_address = ?,
-          mac_address = ?,
-          citrix_name = ?,
-          citrix_version = ?,
-          timestamp = ?,
-          created_at = CURRENT_TIMESTAMP
-        WHERE serial_number = ?
-      `, [
-        systemInfo.logUser,
-        systemInfo.hostname,
-        systemInfo.processor,
-        systemInfo.windowsVersion,
-        systemInfo.windowsDisplayVersion,
-        systemInfo.manufacturer,
-        systemInfo.model,
-        systemInfo.totalRam,
-        systemInfo.numRamSlots,
-        systemInfo.ramPerSlot,
-        systemInfo.ramSpeed,
-        systemInfo.ramType,
-        systemInfo.ipAddress,
-        systemInfo.macAddress,
-        systemInfo.citrixName,
-        systemInfo.citrixVersion,
-        systemInfo.Timestamp,
-        systemInfo.serialNumber
-      ]);
-      console.log(`Updated existing record for serial number: ${systemInfo.serialNumber}`);
-    } else {
-      // Insert new record
-      db.query(`
-        INSERT INTO inventory (
-          log_user,
-          hostname,
-          serial_number,
-          processor,
-          windows_version,
-          windows_display_version,
-          manufacturer,
-          model,
-          total_ram,
-          num_ram_slots,
-          ram_per_slot,
-          ram_speed,
-          ram_type,
-          ip_address,
-          mac_address,
-          citrix_name,
-          citrix_version,
-          timestamp
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
-        systemInfo.logUser,
-        systemInfo.hostname,
-        systemInfo.serialNumber,
-        systemInfo.processor,
-        systemInfo.windowsVersion,
-        systemInfo.windowsDisplayVersion,
-        systemInfo.manufacturer,
-        systemInfo.model,
-        systemInfo.totalRam,
-        systemInfo.numRamSlots,
-        systemInfo.ramPerSlot,
-        systemInfo.ramSpeed,
-        systemInfo.ramType,
-        systemInfo.ipAddress,
-        systemInfo.macAddress,
-        systemInfo.citrixName,
-        systemInfo.citrixVersion,
-        systemInfo.Timestamp
-      ]);
-      console.log(`Added new record with serial number: ${systemInfo.serialNumber}`);
+ function saveToDatabase(db: DB, systemInfo: any): boolean {
+    try {
+      // Insert new record without checking for existing serial number
+      db.query(
+        `INSERT INTO inventory (
+            log_user,
+            hostname,
+            serial_number,
+            processor,
+            windows_version,
+            windows_display_version,
+            manufacturer,
+            model,
+            total_ram,
+            num_ram_slots,
+            ram_per_slot,
+            ram_speed,
+            ram_type,
+            ip_address,
+            mac_address,
+            citrix_name,
+            citrix_version,
+            timestamp
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          systemInfo.logUser,
+          systemInfo.hostname,
+          systemInfo.serialNumber,
+          systemInfo.processor,
+          systemInfo.windowsVersion,
+          systemInfo.windowsDisplayVersion,
+          systemInfo.manufacturer,
+          systemInfo.model,
+          systemInfo.totalRam,
+          systemInfo.numRamSlots,
+          systemInfo.ramPerSlot,
+          systemInfo.ramSpeed,
+          systemInfo.ramType,
+          systemInfo.ipAddress,
+          systemInfo.macAddress,
+          systemInfo.citrixName,
+          systemInfo.citrixVersion,
+          systemInfo.Timestamp,
+        ]
+      );
+      
+      console.log(`Added new record with serial number: ${COLORS.red}${systemInfo.serialNumber}${COLORS.reset}`);
+      return true;
+    } catch (error) {
+      console.error("Error saving to database:", error);
+      return false;
     }
-    
-    return true;
-  } catch (error) {
-    console.error("Error saving to database:", error);
-    return false;
   }
-}
+  
 
 /**
  * Main function to run the workflow sequentially
@@ -483,17 +518,16 @@ function saveToDatabase(db: DB, systemInfo: any): boolean {
 async function main() {
   console.clear();
 
-  const green: string = "\x1b[32m";
-  const reset: string = "\x1b[0m";
-
-  console.log(`${green}+++++++++++++++++++++++++++++++++++++++++${reset}`);
-  console.log(`${green}+                 2 0 2 5               +${reset}`);
-  console.log(`${green}+             V I N T O O L S           +${reset}`);
-  console.log(`${green}+                                       +${reset}`);
-  console.log(`${green}+        INVENTORY RECORDER Rev.3       +${reset}`);
-  console.log(`${green}+++++++++++++++++++++++++++++++++++++++++${reset}`);
 
 
+  console.log(`${COLORS.green}+++++++++++++++++++++++++++++++++++++++++${COLORS.reset}`);
+  console.log(`${COLORS.green}+                 2 0 2 5               +${COLORS.reset}`);
+  console.log(`${COLORS.green}+             V I N T O O L S           +${COLORS.reset}`);
+  console.log(`${COLORS.green}+                                       +${COLORS.reset}`);
+  console.log(`${COLORS.green}+        INVENTORY RECORDER Rev.3       +${COLORS.reset}`);
+  console.log(`${COLORS.green}+++++++++++++++++++++++++++++++++++++++++${COLORS.reset}`);
+
+  //Deno.exit(0); 
   // Step 1: Collecting system information
   const systemInfo = await getSystemInfo();
   
@@ -512,13 +546,14 @@ async function main() {
   
   // Step 3: Save to database if flag is set
   if (args.saveToDb) {
-    console.log(`\n${green}🔹 Database Operation:${reset}`);
+    console.log(`\n${COLORS.green}🔹 Database Operation:${COLORS.reset}`);
     try {
       const db = initDatabase();
       const dbSuccess = saveToDatabase(db, systemInfo);
       
       if (dbSuccess) {
-        console.log(`   System information saved to database: ${getDatabasePath()}`);
+        //console.log(`   System information saved to database: ${getDatabasePath()}`);
+        console.log(`   System information saved to database...`);
       } else {
         console.log("   Failed to save system information to database");
       }
@@ -531,8 +566,10 @@ async function main() {
   }
   
   // Step 4: Display QR code if flag is set
+
   if (qrSuccess && args.qr) {
-    await openInBrowser(outputPath);
+    //await openInBrowser(outputPath);
+    await openInBrowser(outputPath, systemInfo.hostname || "Unknown Host");
   }
   
   console.log("\nProcess completed!");
@@ -554,7 +591,7 @@ if (args.help) {
   console.log("\nEnvironment Variables (.env file):");
   console.log("  FILE_PATH            Directory path for the SQLite database");
   console.log("  FILE_SQLITE          SQLite filename (without .db extension)");
-  Deno.exit(0);
+
 }
 
 // Run the script
