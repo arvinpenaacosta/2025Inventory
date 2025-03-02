@@ -344,7 +344,7 @@ async function generateQRCode(text: string, outputFile: string) {
       </div>
     
       <!-- Footer -->
-      <div class="footer">Powered by DevAppVin</div>
+      <div class="footer">Powered by <Deno2.2> DevAppVin</div>
     
     </body>
     </html>
