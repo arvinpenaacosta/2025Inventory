@@ -2,7 +2,7 @@ import QRCode from "https://esm.sh/qrcode@1.5.3";
 import { parse } from "https://deno.land/std@0.224.0/flags/mod.ts";
 import { join } from "https://deno.land/std@0.224.0/path/mod.ts";
 // Add SQLite dependency
-import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
+import { DB } from "https://deno.land/x/sqlite/mod.ts"; // to interact with SQLite
 // Add environment variable support
 import { config } from "https://deno.land/x/dotenv@v3.2.2/mod.ts";
 
