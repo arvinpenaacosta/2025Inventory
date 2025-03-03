@@ -27,21 +27,25 @@
     .btn-group-vertical {
       width: 100%;
       gap: 8px;
-    }
-    .btn-check + .btn {
-      text-align: left;
-      padding: 12px 15px;
-      border-radius: 6px;
-      font-size: 16px;
-      background-color: #454d55;
-      border-color: #454d55;
-      color: #fff;
-    }
-    .btn-check:checked + .btn {
-      background-color: #375a7f;
-      border-color: #375a7f;
-      color: #fff;
-    }
+/* Default styling for unselected radio buttons */
+.btn-check + .btn {
+  text-align: left;
+  padding: 12px 15px;
+  border-radius: 6px;
+  font-size: 16px;
+  background-color: #454d55;  /* Dark gray */
+  border-color: #454d55;
+  color: #fff; /* White text */
+  transition: all 0.3s ease-in-out;
+}
+
+/* Style when radio button is selected */
+.btn-check:checked + .btn {
+  background-color: #fff !important;  /* White background */
+  border-color: #fff !important;
+  color: #000 !important;  /* Black text */
+}
+
     .btn {
       width: 100%;
       padding: 12px;
@@ -81,9 +85,15 @@
         <div id="dynamicContainer" class="mb-3"></div>
         <button type="button" id="submitBtn" class="btn btn-primary">Submit</button>
       </form>
+
       <div class="result-box">
         <h4>Result:</h4>
-        <p id="result" class="fs-5"></p>
+        <p><strong>Floor:</strong> <span id="floorResult"></span></p>
+        <p><strong>Room:</strong> <span id="roomResult"></span></p>
+        <p><strong>E1:</strong> <span id="e1Result"></span></p>
+        <p><strong>E2:</strong> <span id="e2Result"></span></p>
+        <hr>
+        <p><strong>Final Result:</strong> <span id="finalResult" class="fs-5"></span></p>
       </div>
     </div>
   </div>
@@ -457,16 +467,18 @@
       };
     
       </script>
-
-
-
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const floorSelect = document.getElementById('floorSelect');
       const roomSelect = document.getElementById('roomSelect');
       const dynamicContainer = document.getElementById('dynamicContainer');
       const submitBtn = document.getElementById('submitBtn');
-      const resultDisplay = document.getElementById('result');
+
+      const floorResult = document.getElementById('floorResult');
+      const roomResult = document.getElementById('roomResult');
+      const e1Result = document.getElementById('e1Result');
+      const e2Result = document.getElementById('e2Result');
+      const finalResult = document.getElementById('finalResult');
 
       // Populate Floors
       data3.floors.forEach(floor => {
@@ -480,7 +492,7 @@
       floorSelect.addEventListener('change', function() {
         roomSelect.innerHTML = '<option value="">--Select Room--</option>';
         dynamicContainer.innerHTML = '';
-        resultDisplay.textContent = '';
+        clearResults();
 
         const selectedFloorData = data3.floors.find(floor => floor.floor === this.value);
         if (selectedFloorData) {
@@ -497,7 +509,7 @@
       // Handle Room Selection
       roomSelect.addEventListener('change', function() {
         dynamicContainer.innerHTML = '';
-        resultDisplay.textContent = '';
+        clearResults();
 
         const selectedFloorData = data3.floors.find(floor => floor.floor === floorSelect.value);
         if (!selectedFloorData) return;
@@ -507,10 +519,8 @@
 
         const room = selectedFloorData.rooms[roomIndex];
 
-        // Generate E1 Field
+        // Generate E1 and E2 Fields
         generateField(room.E1, 'e1Input');
-
-        // Generate E2 Field
         generateField(room.E2, 'e2Input');
       });
 
@@ -558,12 +568,20 @@
         dynamicContainer.appendChild(fieldGroup);
       }
 
+      function clearResults() {
+        floorResult.textContent = "";
+        roomResult.textContent = "";
+        e1Result.textContent = "";
+        e2Result.textContent = "";
+        finalResult.textContent = "";
+      }
+
       // Submit & Generate Result
       submitBtn.addEventListener('click', function() {
         const floor = floorSelect.value;
         const roomIndex = parseInt(roomSelect.value);
         if (!floor || isNaN(roomIndex)) {
-          alert("Please select floor and room.");
+          alert("Please select a floor and a room.");
           return;
         }
 
@@ -576,8 +594,11 @@
           return;
         }
 
-        const result = `${floor} ${room.D1}${e1Value}-${e2Value}`;
-        resultDisplay.textContent = result;
+        floorResult.textContent = floor;
+        roomResult.textContent = room.CO[Object.keys(room.CO)[0]];
+        e1Result.textContent = e1Value;
+        e2Result.textContent = e2Value;
+        finalResult.textContent = `${floor} ${room.D1}${e1Value}-${e2Value}`;
       });
     });
   </script>
