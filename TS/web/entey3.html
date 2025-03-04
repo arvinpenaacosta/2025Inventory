@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Inventory Location</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/darkly/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding: 15px;
+      min-height: 100vh;
+      background-color: #2c3034;
+    }
+    .main-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 15px;
+    }
+    .card {
+      background-color: #343a40;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      margin-bottom: 20px;
+    }
+    .btn-group-vertical {
+      width: 100%;
+      gap: 8px;
+    }
+    /* Default styling for unselected radio buttons */
+    .btn-check + .btn {
+      text-align: left;
+      padding: 12px 15px;
+      border-radius: 6px;
+      font-size: 16px;
+      background-color: #454d55;  /* Dark gray */
+      border-color: #454d55;
+      color: #fff; /* White text */
+      transition: all 0.3s ease-in-out;
+    }
+
+    /* Style when radio button is selected */
+    .btn-check:checked + .btn {
+      background-color: #fff !important;  /* White background */
+      border-color: #fff !important;
+      color: #000 !important;  /* Black text */
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .result-box {
+      background-color: #454d55;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      word-break: break-word;
+    }
+    select, .form-control {
+      font-size: 16px;
+      height: 45px;
+    }
+    
+    /* New inline fields styling */
+    .fields-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .field-group {
+      flex: 1;
+      min-width: 250px;
+    }
+    
+    @media (max-width: 576px) {
+      .field-group {
+        flex-basis: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="card">
+      <h1>Location Parser</h1>
+      <form id="selectionForm">
+        <div class="mb-3">
+          <label for="floorSelect" class="form-label">Select Floor:</label>
+          <select id="floorSelect" class="form-select">
+            <option value="">--Select Floor--</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="roomSelect" class="form-label">Select Room:</label>
+          <select id="roomSelect" class="form-select">
+            <option value="">--Select Room--</option>
+          </select>
+        </div>
+        <div id="dynamicContainer" class="mb-3"></div>
+        <button type="button" id="submitBtn" class="btn btn-primary">Submit</button>
+      </form>
+
+      <div class="result-box">
+        <h4>Result:</h4>
+        <p><strong>Floor:</strong> <span id="floorResult"></span></p>
+        <p><strong>Room:</strong> <span id="roomResult"></span></p>
+        <p><strong>E1:</strong> <span id="e1Result"></span></p>
+        <p><strong>E2:</strong> <span id="e2Result"></span></p>
+        <hr>
+        <p><strong>Final Result:</strong> <span id="finalResult" class="fs-5"></span></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const data3 = {
+        "floors": [
+          {
+            "floor": "11",
+            "rooms": [
+              {
+                "CO": {"P": "Pod"},
+                "E1": {
+                        "label": "Enter POD Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                      },
+                "E2": {
+                        "label": "Enter Station Letter",
+                        "Range": ["A", "B", "C", "D", "E", "F", "G"]
+                      },
+                "D1": "POD_"
+              },
+              {
+                "CO":{"A": "PA"},
+                "E1": {
+                        "label": "Enter PA Number",
+                        "Range": [1, 2, 3, 4, 5, 6]
+                      },
+                "E2": {
+                        "label": "Enter Station Letter",
+                        "Range": ["A", "B", "C", "D", "E", "F"]
+                      },
+                "D1": "PA_"
+              },
+              {
+                "CO": {"C":"Coaching Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "CR_"
+              },
+              {
+                "CO": {"B":"Board Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "BR_"
+              },
+              {
+                "CO": {"E":"Enterprise"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "EN_"
+              },
+              {
+                "CO": {"T":"Training Room"},
+                "L1": "Select Training Room",
+                "E1": {  "label": "Select IOS or ANDROID",
+                        "Range": {"1": "IOS", "2": "ANDROID" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "TR_"
+              }
+            ]
+          },
+          {
+            "floor": "10",
+            "rooms": [
+              {
+                "CO": {"P": "Pod"},
+                "E1": {
+                        "label": "Enter POD Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                      },
+                "E2": {
+                        "label": "Enter Station Letter",
+                        "Range": ["A", "B", "C", "D", "E", "F", "G"]
+                      },
+                "D1": "POD_"
+              },
+              {
+                "CO":{"A": "PA"},
+                "E1": {
+                        "label": "Enter PA Number",
+                        "Range": [1, 2, 3, 4, 5, 6]
+                      },
+                "E2": {
+                        "label": "Enter Station Letter",
+                        "Range": ["A", "B", "C", "D", "E", "F"]
+                      },
+                "D1": "PA_"
+              },
+              {
+                "CO": {"C":"Coaching Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "CR_"
+              },
+              {
+                "CO": {"B":"Board Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "BR_"
+              },
+              {
+                "CO": {"E":"Enterprise"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "EN_"
+              },
+              {
+                "CO": {"T":"Training Room"},
+                "L1": "Select Training Room",
+                "E1": {  "label": "Select Salt Lake or San Jose",
+                        "Range": {"1": "SaltLake", "2": "SanJose" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "TR_"
+              }
+            ]
+          },
+          {
+            "floor": "9",
+            "rooms": [
+              {
+                "CO": {"C":"Coaching Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "CR_"
+              },
+              {
+                "CO": {"T":"Training Room"},
+                "L1": "Select Training Room",
+                "E1": {  "label": "Select Training Room Type",
+                        "Range": {
+                                    "1": "Peace",
+                                    "2": "Flexible",
+                                    "3": "Honest",
+                                    "4": "Resourceful",
+                                    "5": "Result Oriented" 
+                                  }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "TR_"
+              },
+              {
+                "CO": {"D":"Desk-Area"},
+                "L1": "Select Desk Area",
+                "E1": {  "label": "Select Desk-Area",
+                        "Range": {
+                                    "1": "Concierge",
+                                    "2": "Clinic",
+                                    "3": "War Room",
+                                    "4": "CompBen",
+                                    "5": "MobSol",
+                                    "6": "E3 Desk",
+                                    "7": "E3 Office",
+                                    "8": "Payroll"
+                                  }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "DA_"
+              }
+            ]
+          },
+          {
+            "floor": "7",
+            "rooms": [
+              {
+                "CO": {"P": "Pod"},
+                "E1": {
+                        "label": "Enter POD Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                      },
+                "E2": {
+                        "label": "Enter Station Letter",
+                        "Range": ["A", "B", "C", "D", "E", "F", "G"]
+                      },
+                "D1": "POD_"
+              },
+              {
+                "CO":{"A": "PA"},
+                "E1": {
+                        "label": "Enter PA Number",
+                        "Range": [1, 2, 3, 4, 5, 6]
+                      },
+                "E2": {
+                        "label": "Enter Station Letter",
+                        "Range": ["A", "B", "C", "D", "E", "F"]
+                      },
+                "D1": "PA_"
+              },
+              {
+                "CO": {"C":"Coaching Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "CR_"
+              },
+              {
+                "CO": {"B":"Board Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "BR_"
+              },
+              {
+                "CO": {"E":"Enterprise"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "EN_"
+              },
+              {
+                "CO": {"T":"Training Room"},
+                "L1": "Select Training Room",
+                "E1": {  "label": "Select Omaha or Chandler",
+                        "Range": {"1": "Omaha", "2": "Chandler" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "TR_"
+              }
+            ]
+          },
+          {
+            "floor": "6",
+            "rooms": [
+              {
+                "CO": {"P": "Pod"},
+                "E1": {
+                        "label": "Enter POD Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+                      },
+                "E2": {
+                        "label": "Enter Station Letter",
+                        "Range": ["A", "B", "C", "D", "E", "F", "G"]
+                      },
+                "D1": "POD_"
+              },
+              {
+                "CO":{"A": "PA"},
+                "E1": {
+                        "label": "Enter PA Number",
+                        "Range": [1, 2, 3, 4, 5, 6]
+                      },
+                "E2": {
+                        "label": "Enter Station Letter",
+                        "Range": ["A", "B", "C", "D", "E", "F"]
+                      },
+                "D1": "PA_"
+              },
+              {
+                "CO": {"C":"Coaching Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "CR_"
+              },
+              {
+                "CO": {"B":"Board Room"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "BR_"
+              },
+              {
+                "CO": {"E":"Enterprise"},
+                "E1": {  "label": "Select MOA or MAC",
+                        "Range": {"1": "MOA", "2": "MAC" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "EN_"
+              },
+              {
+                "CO": {"T":"Training Room"},
+                "L1": "Select Training Room",
+                "E1": {  "label": "Select TDH, Washington or PPTR",
+                        "Range": {"1": "TDH", "2": "Washington" , "3": "PPTR" }
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "TR_"
+              },
+              {
+                "CO": {"D":"Desk-Area"},
+                "E1": {  "label": "Select NOC or Facilities",
+                        "Range": {"1": "NOC", "2": "Facilities"}
+                      },
+                "E2": {
+                        "label": "Enter Seat Number",
+                        "Range": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                      },
+                "D1": "DA_"
+              }
+            ]
+          }
+        ]
+      };
+    
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const floorSelect = document.getElementById('floorSelect');
+      const roomSelect = document.getElementById('roomSelect');
+      const dynamicContainer = document.getElementById('dynamicContainer');
+      const submitBtn = document.getElementById('submitBtn');
+
+      const floorResult = document.getElementById('floorResult');
+      const roomResult = document.getElementById('roomResult');
+      const e1Result = document.getElementById('e1Result');
+      const e2Result = document.getElementById('e2Result');
+      const finalResult = document.getElementById('finalResult');
+
+      // Populate Floors
+      data3.floors.forEach(floor => {
+        const option = document.createElement('option');
+        option.value = floor.floor;
+        option.textContent = `Floor ${floor.floor}`;
+        floorSelect.appendChild(option);
+      });
+
+      // Handle Floor Selection
+      floorSelect.addEventListener('change', function() {
+        roomSelect.innerHTML = '<option value="">--Select Room--</option>';
+        dynamicContainer.innerHTML = '';
+        clearResults();
+
+        const selectedFloorData = data3.floors.find(floor => floor.floor === this.value);
+        if (selectedFloorData) {
+          selectedFloorData.rooms.forEach((room, index) => {
+            const key = Object.keys(room.CO)[0];
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = room.CO[key]; // Room name from CO object
+            roomSelect.appendChild(option);
+          });
+        }
+      });
+
+      // Handle Room Selection
+      roomSelect.addEventListener('change', function() {
+        dynamicContainer.innerHTML = '';
+        clearResults();
+
+        const selectedFloorData = data3.floors.find(floor => floor.floor === floorSelect.value);
+        if (!selectedFloorData) return;
+
+        const roomIndex = parseInt(this.value);
+        if (isNaN(roomIndex)) return;
+
+        const room = selectedFloorData.rooms[roomIndex];
+
+        // Generate E1 and E2 Fields within a container to make them inline
+        // First create a container for both fields
+        const fieldsContainer = document.createElement('div');
+        fieldsContainer.className = 'fields-container';
+        dynamicContainer.appendChild(fieldsContainer);
+        
+        // Generate E1 and E2 Fields
+        generateField(room.E1, 'e1Input', fieldsContainer);
+        generateField(room.E2, 'e2Input', fieldsContainer);
+      });
+
+      function generateField(fieldData, id, container) {
+        if (!fieldData) return;
+
+        const fieldGroup = document.createElement('div');
+        fieldGroup.className = 'field-group';
+        
+        const fieldLabel = document.createElement('label');
+        fieldLabel.className = 'form-label';
+        fieldLabel.textContent = fieldData.label + ": ";
+        fieldGroup.appendChild(fieldLabel);
+
+        if (Array.isArray(fieldData.Range)) {
+          // For array ranges, always use a select dropdown
+          const select = document.createElement('select');
+          select.id = id;
+          select.className = 'form-select';
+          
+          // Add a default empty option
+          const defaultOption = document.createElement('option');
+          defaultOption.value = '';
+          defaultOption.textContent = `--Select ${fieldData.label}--`;
+          select.appendChild(defaultOption);
+          
+          fieldData.Range.forEach(value => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+          });
+          fieldGroup.appendChild(select);
+        } else {
+          // For object ranges, check the number of options
+          const optionCount = Object.keys(fieldData.Range).length;
+          
+          if (optionCount > 2) {
+            // Convert to select dropdown for more than 2 options
+            const select = document.createElement('select');
+            select.id = id;
+            select.className = 'form-select';
+            
+            // Add a default empty option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = `--Select ${fieldData.label}--`;
+            select.appendChild(defaultOption);
+            
+            for (const key in fieldData.Range) {
+              const option = document.createElement('option');
+              option.value = fieldData.Range[key];
+              option.textContent = fieldData.Range[key];
+              select.appendChild(option);
+            }
+            fieldGroup.appendChild(select);
+          } else {
+            // Use radio buttons for 1-2 options
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'btn-group-vertical';
+            for (const key in fieldData.Range) {
+              const radio = document.createElement('input');
+              radio.type = 'radio';
+              radio.name = id;
+              radio.value = fieldData.Range[key];
+              radio.id = id + '-' + key;
+              radio.className = 'btn-check';
+              const label = document.createElement('label');
+              label.className = 'btn btn-outline-primary';
+              label.htmlFor = id + '-' + key;
+              label.textContent = fieldData.Range[key];
+              btnGroup.appendChild(radio);
+              btnGroup.appendChild(label);
+            }
+            fieldGroup.appendChild(btnGroup);
+          }
+        }
+
+        container.appendChild(fieldGroup);
+      }
+
+      function clearResults() {
+        floorResult.textContent = "";
+        roomResult.textContent = "";
+        e1Result.textContent = "";
+        e2Result.textContent = "";
+        finalResult.textContent = "";
+      }
+
+      // Submit & Generate Result
+      submitBtn.addEventListener('click', function() {
+        const floor = floorSelect.value;
+        const roomIndex = parseInt(roomSelect.value);
+        if (!floor || isNaN(roomIndex)) {
+          alert("Please select a floor and a room.");
+          return;
+        }
+
+        const room = data3.floors.find(f => f.floor === floor).rooms[roomIndex];
+        let e1Value = document.querySelector('input[name="e1Input"]:checked')?.value || document.getElementById('e1Input')?.value || '';
+        let e2Value = document.querySelector('input[name="e2Input"]:checked')?.value || document.getElementById('e2Input')?.value || '';
+
+        if (!e1Value || !e2Value) {
+          alert("Please fill in all required fields.");
+          return;
+        }
+
+        floorResult.textContent = floor;
+        roomResult.textContent = room.CO[Object.keys(room.CO)[0]];
+        e1Result.textContent = e1Value;
+        e2Result.textContent = e2Value;
+        finalResult.textContent = `${floor} ${room.D1}${e1Value}-${e2Value}`;
+      });
+    });
+  </script>
+</body>
+</html>
