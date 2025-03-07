@@ -6,10 +6,6 @@ import { DB } from "https://deno.land/x/sqlite/mod.ts"; // to interact with SQLi
 // Add environment variable support
 import { config } from "https://deno.land/x/dotenv@v3.2.2/mod.ts";
 
-//import { InventoryRecorder } from "./entry_class.ts";  // Ensure correct path
-
-
-
 // Set Color effect
 const COLORS = {
   green: "\x1b[32m",
@@ -383,8 +379,6 @@ async function generateQRCode(text: string, outputFile: string) {
     }
   }
   
-  
-  
 
 /**
  * Sanitizes a string to be safe for filenames
@@ -476,7 +470,8 @@ function initDatabase(): DB {
       const d1 = locationInfo?.D1 || null;
       const e1 = locationInfo?.E1 || null;
       const e2 = locationInfo?.E2 || null;
-      const de1 = `${d1}${e1}`;
+      const de1 = d1 && e1 ? `${d1}${e1}` : null;
+
       // Insert new record with location information if available
       db.query(
         `INSERT INTO inventory (
