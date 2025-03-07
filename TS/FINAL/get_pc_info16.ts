@@ -6,7 +6,7 @@ import { DB } from "https://deno.land/x/sqlite/mod.ts"; // to interact with SQLi
 // Add environment variable support
 import { config } from "https://deno.land/x/dotenv@v3.2.2/mod.ts";
 
-//import { InventoryRecorder } from "./input_class.ts";  // Ensure correct path
+//import { InventoryRecorder } from "./entry_class.ts";  // Ensure correct path
 
 
 
