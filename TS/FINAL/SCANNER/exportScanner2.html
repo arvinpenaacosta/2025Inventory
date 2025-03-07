@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export QR Scan Data</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Scanned QR Data Records</h1>
+        <button id="exportCsvBtn" class="btn btn-success mb-3">Export to CSV</button>
+        <button id="clearRecordsBtn" class="btn btn-danger mb-3">Clear Records</button>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <td>locEAM</td>
+                    <td>logUser</td>
+                    <td>hostname</td>
+                    <td>serialNumber</td>
+                    <td>processor</td>
+                    <td>windowsVersion</td>
+                    <td>windowsDisplayVersion</td>
+                    <td>manufacturer</td>
+                    <td>model</td>
+                    <td>totalRam</td>
+                    <td>numRamSlots</td>
+                    <td>ramPerSlot</td>
+                    <td>ramSpeed</td>
+                    <td>ramType</td>
+                    <td>ipAddress</td>
+                    <td>macAddress</td>
+                    <td>citrixName</td>
+                    <td>citrixVersion</td>
+                    <td>Timestamp</td>
+
+                </tr>
+            </thead>
+            <tbody id="dataTableBody">
+                <!-- Records will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const DB_CONFIG = {
+            name: 'vinToolDBQR',
+            version: 1,
+            store: 'ScannedObjQR'
+        };
+
+        document.addEventListener('DOMContentLoaded', fetchRecords);
+        document.getElementById('exportCsvBtn').addEventListener('click', exportToCsv);
+        document.getElementById('clearRecordsBtn').addEventListener('click', clearRecords);
+
+function fetchRecords() {
+    const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
+    request.onsuccess = function (event) {
+        const db = event.target.result;
+        const transaction = db.transaction(DB_CONFIG.store, 'readonly');
+        const store = transaction.objectStore(DB_CONFIG.store);
+        const cursorRequest = store.openCursor();
+
+        const tableBody = document.getElementById('dataTableBody');
+        tableBody.innerHTML = '';
+        let index = 1;
+        let records = [];
+
+        cursorRequest.onsuccess = function (event) {
+            const cursor = event.target.result;
+            if (cursor) {
+                const data = cursor.value;
+                records.push([
+                    index,
+                    data.locEAM,
+                    data.logUser,
+                    data.hostname,
+                    data.serialNumber,
+                    data.processor,
+                    data.windowsVersion,
+                    data.windowsDisplayVersion,
+                    data.manufacturer,
+                    data.model,
+                    data.totalRam,
+                    data.numRamSlots,
+                    data.ramPerSlot,
+                    data.ramSpeed,
+                    data.ramType,
+                    data.ipAddress,
+                    data.macAddress,
+                    data.citrixName,
+                    data.citrixVersion,
+                    data.Timestamp
+                ]);
+
+                const row = `<tr>
+                    <td>${index}</td>
+                    <td>${data.locEAM}</td>
+                    <td>${data.logUser}</td>
+                    <td>${data.hostname}</td>
+                    <td>${data.serialNumber}</td>
+                    <td>${data.processor}</td>
+                    <td>${data.windowsVersion}</td>
+                    <td>${data.windowsDisplayVersion}</td>
+                    <td>${data.manufacturer}</td>
+                    <td>${data.model}</td>
+                    <td>${data.totalRam}</td>
+                    <td>${data.numRamSlots}</td>
+                    <td>${data.ramPerSlot}</td>
+                    <td>${data.ramSpeed}</td>
+                    <td>${data.ramType}</td>
+                    <td>${data.ipAddress}</td>
+                    <td>${data.macAddress}</td>
+                    <td>${data.citrixName}</td>
+                    <td>${data.citrixVersion}</td>
+                    <td>${data.Timestamp}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+
+                index++;
+                cursor.continue();
+            }
+        };
+
+        transaction.oncomplete = function () {
+            document.getElementById('exportCsvBtn').dataset.records = JSON.stringify(records);
+        };
+    };
+
+    request.onerror = function (event) {
+        console.error("Error opening IndexedDB:", event.target.error);
+    };
+}
+
+
+        function exportToCsv() {
+            let records = JSON.parse(document.getElementById('exportCsvBtn').dataset.records || '[]');
+            if (records.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,Index,Location,Device Serial,Timestamp\n";
+            records.forEach(row => {
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "scanned_data.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function clearRecords() {
+            const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                const transaction = db.transaction(DB_CONFIG.store, 'readwrite');
+                const store = transaction.objectStore(DB_CONFIG.store);
+                const clearRequest = store.clear();
+                
+                clearRequest.onsuccess = function() {
+                    console.log('All records cleared');
+                    document.getElementById('dataTableBody').innerHTML = '';
+                    document.getElementById('exportCsvBtn').dataset.records = "[]";
+                };
+                
+                clearRequest.onerror = function(event) {
+                    console.error('Error clearing records:', event.target.error);
+                };
+            };
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
