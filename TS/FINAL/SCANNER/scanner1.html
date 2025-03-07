@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Scanner with IndexedDB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="static/assets/html5-qrcode.min.js"></script>
+<style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .scanner-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        #scan-counter {
+            margin-top: 15px;
+            font-size: 1.2rem;
+        }
+        .scan-action-buttons {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .scan-results {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #1e1e1e;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .scan-results strong {
+            color: #0d6efd;
+        }
+        .modal-content {
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #444;
+        }
+        .modal-header, .modal-footer {
+            border-color: #444;
+        }
+        .modal-footer .btn {
+            margin: 0 5px;
+        }
+        .btn-centered {
+            margin: 0 auto;
+            display: block;
+        }
+        .frosted-glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
+            width: 300px;
+        }
+        input, textarea, select {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+        }
+        input:focus, textarea:focus, select:focus {
+            background-color: #444;
+            outline: none;
+        }
+    </style>
+
+</head>
+<body>
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">User Login</h5>
+                </div>
+                <div class="modal-body">
+                    <label for="usernameInput">Enter Your Name:</label>
+                    <input type="text" id="usernameInput" class="form-control">
+                    <div id="error-message" class="text-danger mt-2" style="display:none;">Username cannot be empty!</div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveUserBtn" class="btn btn-primary">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scanner Modal -->
+    <div class="modal fade" id="scannerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Scan QR Codes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="scanner-container">
+                        <div id="qr-reader"></div>
+                        <p id="scan-counter"><strong>Scan Location (0/2)</strong></p>
+                        
+                        <!-- Scan Results Display (Initially Hidden) -->
+                        <div id="scan-results" class="scan-results" style="display:none;">
+                            <label for="location-value">Location:</label>
+                            <input type="text" id="location-value" class="form-control">
+
+                            <label for="serial-value">Serial Number:</label>
+                            <input type="text" id="serial-value" class="form-control">
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- Initial button -->
+                    <button type="button" id="cancelScanBtn" class="btn btn-danger btn-centered" data-bs-dismiss="modal">End Scanning</button>
+                    
+                    <!-- These buttons will appear when both QRs are scanned -->
+                    <div class="scan-action-buttons" style="display:none;">
+                        <button id="saveScanBtn" class="btn btn-warning">Save & Scan Again</button>
+                        <button id="saveCloseBtn" class="btn btn-success">Save & Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio files -->
+    <audio id="beep-sound" src="static/assets/audio/beep.mp3" preload="auto"></audio>
+    <audio id="triple-beep" src="static/assets/audio/3beep.mp3" preload="auto"></audio>
+    <audio id="cancel-sound" src="static/assets/audio/cancel2.mp3" preload="auto"></audio>
+
+    <div class="container mt-5 d-flex justify-content-center">
+        <div class="frosted-glass p-4 text-center">
+            <h1>QR Code Scanner</h1>
+            <p class="mb-3">Scan location and device serial numbers</p>
+            
+            <div class="d-flex flex-column align-items-center gap-3 w-100">
+                <button class="btn btn-primary w-100" id="loginBtn">Login</button>
+                <button class="btn btn-primary w-100" id="viewBtn">View Scanned QR</button>
+                <button class="btn btn-primary w-100" id="startScanBtn">Start Scanning</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database configuration
+        const DB_CONFIG = {
+            name: 'vinToolDB',
+            version: 1,
+            store: 'ScannedObj'
+        };
+
+        // Scanner configuration
+        const SCANNER_CONFIG = {
+            delay: 1300,
+            requiredScans: 2,
+            qrBox: 250,
+            fps: 10
+        };
+
+        // Application state
+        const state = {
+            scannedValues: [],
+            html5QrCode: null,
+            isScanningAllowed: true,
+            loginModal: null,
+            scannerModal: null
+        };
+
+        // Audio elements
+        const audio = {
+            beep: document.getElementById('beep-sound'),
+            tripleBeep: document.getElementById('triple-beep'),
+            cancel: document.getElementById('cancel-sound')
+        };
+
+        // DOM elements
+        const elements = {
+            usernameInput: document.getElementById('usernameInput'),
+            errorMessage: document.getElementById('error-message'),
+            saveUserBtn: document.getElementById('saveUserBtn'),
+            scanCounter: document.getElementById('scan-counter'),
+            saveScanBtn: document.getElementById('saveScanBtn'),
+            saveCloseBtn: document.getElementById('saveCloseBtn'),
+            cancelScanBtn: document.getElementById('cancelScanBtn'),
+            startScanBtn: document.getElementById('startScanBtn'),
+            viewBtn: document.getElementById('viewBtn'),
+            qrReader: document.getElementById('qr-reader'),
+            loginModalElement: document.getElementById('loginModal'),
+            scannerModalElement: document.getElementById('scannerModal'),
+            scanResults: document.getElementById('scan-results'),
+            locationValue: document.getElementById('location-value'),
+            serialValue: document.getElementById('serial-value'),
+            scanActionButtons: document.querySelector('.scan-action-buttons')
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        function initApp() {
+            initializeModals();
+            setupEventListeners();
+            checkUserLogin();
+            initializeDatabase();
+        }
+
+        // Initialize Bootstrap modals
+        function initializeModals() {
+            state.loginModal = new bootstrap.Modal(elements.loginModalElement);
+            state.scannerModal = new bootstrap.Modal(elements.scannerModalElement);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // User login
+            elements.saveUserBtn.addEventListener('click', handleUserLogin);
+            elements.usernameInput.addEventListener('input', () => {
+                elements.errorMessage.style.display = 'none';
+            });
+
+            // Scanner actions
+            elements.startScanBtn.addEventListener('click', () => {
+                state.scannerModal.show();
+            });
+            elements.viewBtn.addEventListener('click', () => {
+                window.location.href = 'exportSavedInfo.html';
+                //window.open('exportSavedInfo.html', '_blank');
+            });
+            elements.saveScanBtn.addEventListener('click', handleSaveAndScanAgain);
+            elements.saveCloseBtn.addEventListener('click', handleSaveAndClose);
+            elements.cancelScanBtn.addEventListener('click', handleCancelScan);
+
+            // Modal events
+            elements.scannerModalElement.addEventListener('shown.bs.modal', initializeScanner);
+            elements.scannerModalElement.addEventListener('hidden.bs.modal', cleanupScanner);
+        }
+
+        // Check if user is logged in
+        function checkUserLogin() {
+            if (!localStorage.getItem('loggedUser')) {
+                state.loginModal.show();
+            }
+        }
+
+        // Initialize IndexedDB
+        function initializeDatabase() {
+            const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(DB_CONFIG.store)) {
+                    db.createObjectStore(DB_CONFIG.store, { autoIncrement: true });
+                }
+            };
+            
+            request.onerror = (event) => {
+                console.error('Database error:', event.target.error);
+            };
+        }
+
+        // Handle user login
+        function handleUserLogin() {
+            const username = elements.usernameInput.value.trim();
+            
+            if (username === '') {
+                elements.errorMessage.style.display = 'block';
+            } else {
+                localStorage.setItem('loggedUser', username);
+                state.loginModal.hide();
+            }
+        }
+
+        // Initialize QR scanner
+        function initializeScanner() {
+            resetScanState();
+            
+            state.html5QrCode = new Html5Qrcode('qr-reader');
+            state.html5QrCode.start(
+                { facingMode: 'environment' },
+                { fps: SCANNER_CONFIG.fps, qrbox: SCANNER_CONFIG.qrBox },
+                handleQrCodeSuccess,
+                handleQrCodeError
+            );
+        }
+
+        // Reset scan state
+        function resetScanState() {
+            state.scannedValues = [];
+            state.isScanningAllowed = true;
+            updateScanCounter();
+            elements.scanActionButtons.style.display = 'none';
+            elements.cancelScanBtn.style.display = 'block';
+            elements.scanResults.style.display = 'none';
+            elements.locationValue.textContent = '-';
+            elements.serialValue.textContent = '-';
+        }
+
+        // Handle successful QR code scan
+        function handleQrCodeSuccess(decodedText) {
+            if (!state.isScanningAllowed) return;
+
+            if (state.scannedValues.includes(decodedText)) {
+                playSound(audio.tripleBeep);
+                return;
+            }
+
+            if (state.scannedValues.length < SCANNER_CONFIG.requiredScans) {
+                state.scannedValues.push(decodedText);
+                updateScanCounter();
+                playSound(audio.beep);
+            }
+
+            if (state.scannedValues.length === SCANNER_CONFIG.requiredScans) {
+                showScanActions();
+                displayScannedValues();
+                stopScanner();
+            }
+
+            pauseThenResumeScanning();
+        }
+
+        // Display scanned values
+        function displayScannedValues() {
+            document.getElementById('location-value').value = state.scannedValues[0];
+            document.getElementById('serial-value').value = state.scannedValues[1];
+
+            if (state.scannedValues.length === SCANNER_CONFIG.requiredScans) {
+                //elements.locationValue.textContent = state.scannedValues[0];
+                //elements.serialValue.textContent = state.scannedValues[1];
+                elements.scanResults.style.display = 'block';
+
+                
+                // Hide the counter when showing the results
+                elements.scanCounter.style.display = 'none';
+            }
+        }
+
+        // Handle QR code scanning error
+        function handleQrCodeError(errorMessage) {
+            // Silently handle errors to prevent UI disruption
+            console.log('QR scan error:', errorMessage);
+        }
+
+        // Update scan counter display
+        function updateScanCounter() {
+            elements.scanCounter.innerHTML = `<strong>Scan Location (${state.scannedValues.length}/${SCANNER_CONFIG.requiredScans})</strong>`;
+            elements.scanCounter.style.display = 'block';
+        }
+
+        // Show scan action buttons
+        function showScanActions() {
+            // Hide the cancel button
+            elements.cancelScanBtn.style.display = 'none';
+            
+            // Show the action buttons container with the equally spaced buttons
+            elements.scanActionButtons.style.display = 'flex';
+        }
+
+        // Pause then resume scanning
+        function pauseThenResumeScanning() {
+            if (!state.html5QrCode) return;
+            
+            state.isScanningAllowed = false;
+            setTimeout(() => {
+                state.isScanningAllowed = true;
+            }, SCANNER_CONFIG.delay);
+        }
+
+        // Stop scanner
+        function stopScanner() {
+            if (state.html5QrCode) {
+                state.html5QrCode.stop().catch(error => {
+                    console.error('Error stopping scanner:', error);
+                });
+            }
+        }
+
+        // Clean up scanner resources
+        function cleanupScanner() {
+            stopScanner();
+            state.html5QrCode = null;
+        }
+
+        // Function to get current timestamp
+        function getCurrentTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // Save scanned data to IndexedDB
+        function saveScannedData() {
+            const loggedUser = localStorage.getItem('loggedUser');
+            if (!loggedUser || state.scannedValues.length < SCANNER_CONFIG.requiredScans) return;
+
+            const locationValue = document.getElementById('location-value').value;
+            const serialValue = document.getElementById('serial-value').value;
+
+            const record = {
+                location: locationValue,
+                devSerial: serialValue,
+                loggedUser: loggedUser,
+                timestamp: getCurrentTime()
+            };
+
+            saveToIndexedDB(record);
+        }
+
+        // Save record to IndexedDB
+        function saveToIndexedDB(record) {
+            const request = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
+            
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                const transaction = db.transaction(DB_CONFIG.store, 'readwrite');
+                const store = transaction.objectStore(DB_CONFIG.store);
+                
+                const addRequest = store.add(record);
+                
+                addRequest.onsuccess = function() {
+                    console.log('Record saved successfully');
+                };
+                
+                addRequest.onerror = function(event) {
+                    console.error('Error saving record:', event.target.error);
+                };
+            };
+            
+            request.onerror = function(event) {
+                console.error('Database error:', event.target.error);
+            };
+        }
+
+        // Handle save and scan again
+        function handleSaveAndScanAgain() {
+            saveScannedData();
+            resetScanState();
+            initializeScanner();
+        }
+
+        // Handle save and close
+        function handleSaveAndClose() {
+            saveScannedData();
+            state.scannerModal.hide();
+        }
+
+        // Handle cancel scan
+        function handleCancelScan() {
+            playSound(audio.cancel);
+        }
+
+        // Play sound and vibrate
+        function playSound(audioElement) {
+            audioElement.play().catch(error => {
+                console.error('Error playing audio:', error);
+            });
+            
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
