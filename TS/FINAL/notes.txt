@@ -4,6 +4,6 @@ deno compile -A --no-check -o get_pc_info16.exe get_pc_info16.ts
 requirements :
   get_pc_info16.ts
   entry_class.ts
-
+  data3.json
 
 
