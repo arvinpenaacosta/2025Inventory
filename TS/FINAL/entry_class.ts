@@ -62,10 +62,15 @@ export class InventoryRecorder {
 
   async run() {
     console.clear();
+    
     console.log(`${this.COLORS.green}+++++++++++++++++++++++++++++++++++++++++${this.COLORS.reset}`);
+    console.log(`${this.COLORS.green}+                 2 0 2 5               +${this.COLORS.reset}`);
+    console.log(`${this.COLORS.green}+             V I N T O O L S           +${this.COLORS.reset}`);
+    console.log(`${this.COLORS.green}+                                       +${this.COLORS.reset}`);
     console.log(`${this.COLORS.green}+        INVENTORY RECORDER Rev.2       +${this.COLORS.reset}`);
     console.log(`${this.COLORS.green}+         Powered by DENO-DevApp        +${this.COLORS.reset}`);
     console.log(`${this.COLORS.green}+++++++++++++++++++++++++++++++++++++++++${this.COLORS.reset}`);
+
 
     await this.loadData();
     const floorChoices = this.data.floors.map(floor => floor.floor);
