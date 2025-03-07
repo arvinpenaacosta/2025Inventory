@@ -1,0 +1,5 @@
+# .env
+FILE_PATH=\\ltop8672\devshared\DENO
+FILE_CSV=system_info3.csv
+FILE_SQLITE=NOC2025InvC
+OTHER_PARAMETER=SomeValue
