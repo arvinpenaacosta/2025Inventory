@@ -553,7 +553,7 @@ async function main() {
   if (args.entry) {
     try {
       // Import the InventoryRecorder class
-      const { InventoryRecorder } = await import("./input_class.ts");
+      const { InventoryRecorder } = await import("./entry_class.ts");
       
       // Create an instance with the provided input file or default to "data3.json"
       const inputFile = typeof args.entry === 'string' && args.entry !== '' ? args.entry : "data3.json";
