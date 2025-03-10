@@ -748,15 +748,18 @@ if (args.help) {
   console.log("  --qr                 Display QR code in browser (default: false)");
   console.log("  --output=<path>      Specify custom output path for QR code image");
   console.log("                       (default: <temp_dir>/<hostname>_<serialnumber>.png)");
-  console.log("  --saveToDb           Save system information to SQLite database (default: false)");
+  console.log("  --saveToDb           Save PC Information to SQLite database (default: false)");
   console.log("  --db=<path>          Specify SQLite database file path");
   console.log("                       (default: uses FILE_PATH and FILE_SQLITE from .env file)");
-  console.log("  --entry[=<file>]     Import and run InventoryRecorder class from input_class.ts");
-  console.log("                       (provide optional JSON file path or defaults to data3.json)");
+  console.log("  --entry[=<file>]     Enter Floor Information and auto capturing of PC Informations");
+  console.log("                       (provide option to Enter Floor Information)");
+  console.log("  --env[=<file>]       Specify Selected env file to be use.");
+  console.log("                       (provide optional env file or defaults)");
   console.log("  --help               Show this help message");
   console.log("\nEnvironment Variables (.env file):");
   console.log("  FILE_PATH            Directory path for the SQLite database");
   console.log("  FILE_SQLITE          SQLite filename (without .db extension)");
+  Deno.exit(0);
 }
 
 // Run the script
