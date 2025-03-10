@@ -1,0 +1,6 @@
+rcedit-x64 hello_arvin.exe ^
+    --set-version-string "ProductName" "Dynamic Inventory Collector" ^
+    --set-version-string "ProductVersion" "1.0.1" ^
+    --set-version-string "LegalCopyright" "© 2025 DevAppVin. All rights reserved." ^
+    --set-file-version "1.0.0.18" ^
+    --set-product-version "1.0.0.0"
