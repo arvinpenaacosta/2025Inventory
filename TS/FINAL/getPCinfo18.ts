@@ -26,7 +26,7 @@ class InventoryRecorder {
       this.data = await readJson("devapp.json");
     }
 
-    public displayBanner() {
+    public displayBanner() {  //InventoryRecorder.displayBanner
         console.clear();
         console.log(`${this.COLORS.green}+++++++++++++++++++++++++++++++++++++++++${this.COLORS.reset}`);
         console.log(`${this.COLORS.green}+                 2 0 2 5               +${this.COLORS.reset}`);
@@ -179,7 +179,9 @@ const args = parse(Deno.args, {
 
   const envFile = args.env && args.env.endsWith(".env") ? args.env : `${args.env}.env`;
   const env = config({ path: envFile });
-  
+  console.clear();
+  const renderMe = new InventoryRecorder();
+  renderMe.displayBanner();
   console.log(`Using environment file: ${envFile}`);
 
 
@@ -529,6 +531,7 @@ function getDatabasePath(): string {
   
   // Then check if path is provided via environment variables
   if (env.FILE_PATH && env.FILE_SQLITE) {
+    //console.log("line 532: ", env.FILE_PATH);
     return `${env.FILE_PATH}\\${env.FILE_SQLITE}.db`;
   }
   
@@ -542,10 +545,10 @@ function getDatabasePath(): string {
 function initDatabase(): DB {
   try {
     const dbPath = getDatabasePath();
-    console.log(`Using database at: ${dbPath}`);
-    
     const db = new DB(dbPath);
-    
+    console.log(`${COLORS.green}+++++++++++++++++++++++++++++++++++++++++${COLORS.reset}`);
+    console.log(`Using database at: ${dbPath}`);
+
     // Create the inventory table if it doesn't exist
     db.query(`
       CREATE TABLE IF NOT EXISTS inventory (
@@ -590,6 +593,7 @@ function initDatabase(): DB {
  * Save system information to SQLite database
  */
  function saveToDatabase(db: DB, systemInfo: any, locationInfo: any = null): boolean {
+    
     try {
       // Prepare location information if available
       const floor = locationInfo?.floor || null;
@@ -653,7 +657,7 @@ function initDatabase(): DB {
         ]
       );
       
-      console.log(`Added new record with serial number: ${COLORS.red}${systemInfo.serialNumber}${COLORS.reset}`);
+      console.log(`Added new record with serial number: ${COLORS.yellow}${systemInfo.serialNumber}${COLORS.reset}`);
       return true;
     } catch (error) {
       console.error("Error saving to database:", error);
