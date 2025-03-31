@@ -1,1 +1,1 @@
-
+uvicorn main_jwt:app --host 0.0.0.0.0 --port 8821 --reload --ssl-keyfile=certs/server_unencrypted.key --ssl-certfile=certs/server.crt 
