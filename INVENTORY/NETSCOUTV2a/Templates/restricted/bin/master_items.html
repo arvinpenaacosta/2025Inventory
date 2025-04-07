@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootstrap Modal Example</title>
+
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!--
+    <link  href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+-->
+
+    <link  href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link  href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+    
+    <style>
+        body {
+        padding-top: 56px; /* Adjust for fixed navbar height */
+        }
+        .custom-modal .modal-dialog {
+        max-width: 500px; /* Set the desired width here */
+        }
+
+
+        /* Fixed Footer */
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 1030;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+        
+        /* Base styles - remain unchanged for desktop */
+        .input-group-text {
+            width: 110px;
+            font-size: 0.875rem;
+            text-align: left;
+            display: inline-block;
+        }
+    
+        .input-group .form-control,
+        .input-group .form-select {
+            border: 1px solid #495057;
+            border-radius: .2rem;
+        }
+    
+        .input-group .form-control:focus,
+        .input-group .form-select:focus {
+            border-color: #343a40;
+            box-shadow: none;
+        }
+
+        #daTable tbody tr:hover {
+            background-color: #f0f8ff;
+            cursor: pointer;
+        }
+
+        tr.details td.dt-control {
+            background: url('https://cdn.datatables.net/1.11.5/images/details_open.png') no-repeat center center;
+            cursor: pointer;
+        }
+
+        .rounded-btn {
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+
+        /* Mobile-specific styles */
+        @media only screen 
+        and (max-device-width: 812px) /* Max width for most mobile phones */
+        and (orientation: landscape) {
+            /* Reset container for mobile */
+            .container {
+                max-width: 100% !important;
+                margin: 0;
+                padding: 5px;
+                height: 100vh;
+            }
+
+            /* Adjust table container for mobile */
+            .table-responsive {
+                height: calc(100vh - 45px);
+                margin: 0;
+                padding: 0;
+            }
+
+            /* Optimize toolbar for mobile */
+            .toolbar {
+                padding: 2px 0;
+                margin-bottom: 5px;
+            }
+
+            /* Adjust buttons for mobile */
+            .rounded-btn {
+                padding: 3px 10px;
+                font-size: 0.875rem;
+            }
+
+            /* Optimize table for mobile */
+            #daTable {
+                margin: 0;
+            }
+
+            #daTable thead th {
+                padding: 5px;
+                font-size: 0.875rem;
+                position: sticky;
+                top: 0;
+                background-color: #007bff;
+                z-index: 1;
+            }
+
+            #daTable td {
+                padding: 5px;
+                font-size: 0.875rem;
+            }
+
+            /* Remove unnecessary spacing */
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+
+            .my-5 {
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+        }
+
+        /* Keep default styles for non-mobile devices */
+        @media only screen 
+        and (min-device-width: 813px) {
+            .container {
+                /* Default Bootstrap container behavior */
+                max-width: 1140px;
+                margin: auto;
+            }
+
+            .my-5 {
+                margin-top: 3rem !important;
+                margin-bottom: 3rem !important;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+          <div class="container">
+            <a class="navbar-brand" href="#">{{ pageheader }}</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+    
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav ms-auto">
+              </ul>
+    
+              <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link active" href="/dashboard">Back</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Logout</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/logout">Logout {{ username }}</a></li>
+                <li class="nav-item"><a class="nav-link active" href="#">Help</a></li>
+              </ul>
+            </div>
+    
+          </div>
+        </nav>
+
+      </header><!-- Header -->
+
+      <div class="container">
+        <a class="navbar-brand" href="#">Item Inventory Manager - UI</a>
+    </div>
+<!-- APPLICATION - START HERE-->
+
+  <div class="container my-5">
+
+    <div class="table-responsive">
+
+      <div class="toolbar">
+        <button class="btn btn-primary rounded-btn" onclick="openModal(null, 'new')">..Add New</button>
+      </div>
+      
+      <table id="daTable" class="table table-striped table-bordered table-sm">
+        <thead>
+          <tr style="background-color: #007bff; color: white;">
+            <th></th>
+            <th>ID</th>
+            <th>Serial Number</th>
+            <th>Description</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Brand</th>
+            <th>Model</th>
+            <th>TimeStamp</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Rows will be dynamically populated here -->
+        </tbody>
+      </table>
+
+    </div><!-- class="table-responsive" -->
+
+
+    
+    <div class="modal fade" id="itemModal" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title" id="entryModalLabel">Add New Item</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              
+              <div class="modal-body">
+                  <form id="itemForm">
+                      <!-- Form for asset entry -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">ID</span>
+                          <input type="text" id="id" name="id" class="form-control" placeholder="ID" readonly autocomplete="off">
+                      </div><!-- ID -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Serial Number</span>
+                          <input type="text" id="serial_number" name="serial_number" class="form-control" placeholder="Serial Number" required>
+                      </div><!-- Serial Number -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Description</span>
+                          <input type="text" id="description" name="description" class="form-control" placeholder="Description" required>
+                      </div><!-- Description -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Location</span>
+                          <input type="text" id="location" name="location" class="form-control" placeholder="Location" required>
+                      </div><!-- Location -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Status</span>
+                          <select id="status" name="status" class="form-control form-control-sm" required>
+                              <option value="" disabled selected>Select Status</option>
+                              <option value="In-Storage">In-Storage</option>
+                              <option value="Allocated">Allocated</option>
+                          </select>
+                      </div><!-- Status Location -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Type</span>
+                          <select id="itypes" name="itypes" class="form-control form-control-sm" required>
+                              <option value="" disabled selected>Select Type</option>
+                              <option value="Desktop Mini">Desktop Mini</option>
+                              <option value="Desktop Tower">Desktop Tower</option>
+                              <option value="Monitors">Monitors</option>
+                              <option value="Laptop">Laptop</option>
+                              <option value="USBs">USBs</option>
+                              <option value="Printer">Printer</option>
+                              <option value="Copier">Copier</option>
+                              <option value="Phones">Phones</option>
+                          </select>
+                      </div><!-- iTypes -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Brand</span>
+                          <input type="text" id="brand" name="brand" class="form-control" placeholder="Brand" required>
+                      </div><!-- Brand -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Model</span>
+                          <input type="text" id="model" name="model" class="form-control" placeholder="Model" required>
+                      </div><!-- Model -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">MAC Address</span>
+                          <input type="text" id="macadd" name="macadd" class="form-control" placeholder="MAC Address" required>
+                      </div><!-- MAC Address -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Remarks</span>
+                          <input type="text" id="remarks" name="remarks" class="form-control" placeholder="Remarks">
+                      </div><!-- Remarks -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Switch</span>
+                          <div class="d-flex ms-auto">
+                              <div class="form-check form-switch ms-3">
+                                  <input class="form-check-input" type="checkbox" role="switch" id="switchONOFF" name="switch" value="1" checked>
+                                  <label class="form-check-label" for="switchONOFF" id="switchLabel">Enable</label>
+                              </div>
+                          </div>
+                      </div><!-- Switch - Active or Deprecated -->
+                      <div class="input-group input-group-sm mb-3">
+                          <span class="input-group-text">Timestamp</span>
+                          <input type="text" id="timestamp" name="timestamp" class="form-control" placeholder="Timestamp" readonly>
+                      </div><!-- Timestamp -->
+
+                  </form>
+              </div>
+
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary" onclick="saveItem()">Save changes</button>
+                  <button type="button" class="btn btn-primary" onclick="saveData()">View</button>
+                  <button type="button" class="btn btn-primary" id="saveBtn">Save</button>
+                  
+              </div>
+          </div>
+      </div>
+    </div><!--itemModal : ENTRY FORM MODAL -->   
+
+    <div class="modal fade" id="delitemModal" tabindex="-1" aria-labelledby="delitemModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="delitemModalLabel">Confirm Delete</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            <p>Are you sure you want to delete item <strong id="delItemId"></strong>? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+        </div>
+    </div><!--delitemModal :DELETE ITEM MODAL -->
+
+  </div>
+
+
+<!-- APPLICATION - END HERE-->
+    <footer>
+        <p>&copy; {{ pagefooter }}</p>
+    </footer><!-- Footer -->
+
+
+<!-- List of Scripts Here  ============================================================-->
+<script>
+  document.getElementById('switchONOFF').addEventListener('change', function() {
+      const label = document.getElementById('switchLabel');
+      if (this.checked) {
+          label.textContent = 'Enable';
+          this.value = '1';
+      } else {
+          label.textContent = 'Disable';
+          this.value = '0';
+      }
+  });
+</script><!-- Modal Form Switch Enable label -->
+
+<script>
+  // Fetch Data before Populate
+  function fetchItemData(id, onSuccess) {
+      $.ajax({
+          url: `/items/${id}`,
+          type: 'GET',
+          success: (item) => {
+              console.log('Received item:', item);
+              onSuccess(item);
+          },
+          error: (error) => {
+              console.error('Error fetching item data:', error);
+          }
+      });
+  }
+
+  // Populate for Modify
+  function populateModalAndShow(item) {
+      populateModalFields(item);
+      populateReadOnly(item, false); 
+      const myModal1 = new bootstrap.Modal(document.getElementById('itemModal'));
+      myModal1.show();
+  }
+
+  // Populate for Clone
+  function populateModalForCloneAndShow(item) {
+      populateModalFields(item);
+      document.getElementById('id').value = ''; // Clear ID for clone
+      document.getElementById('serial_number').value = ''; // Clear serial number
+      document.getElementById('timestamp').value = ''; // Clear timestamp
+
+      populateReadOnly(item, true); 
+      
+      const myModal = new bootstrap.Modal(document.getElementById('itemModal'));
+      myModal.show();
+  }
+
+</script><!-- Fetch & Polulate for Modify and Clone -->
+
+<script>
+  function openModal(id, action) {
+      const modalTitle = document.getElementById('entryModalLabel');
+      const saveButton = document.getElementById('saveBtn');
+      saveButton.onclick = () => saveItem(id, action);
+
+      if (!id && action === "new") {
+          const myModal = new bootstrap.Modal(document.getElementById('itemModal'));
+          document.getElementById('itemForm').reset();
+          modalTitle.textContent = 'ADD ITEM';
+          saveButton.textContent = 'Save New Item';
+          myModal.show();
+
+      } else if (id && action === "modify") {
+          //alert('Modify : ' + id);
+          modalTitle.textContent = 'MODIFY ITEM';
+          saveButton.textContent = 'Update Item';
+          fetchItemData(id, populateModalAndShow);
+          document.getElementById('serial_number').readOnly = true;
+          document.getElementById('timestamp').readOnly = true;
+
+      } else if (id && action === "clone") {
+          //alert('Clone : ' + id);
+          modalTitle.textContent = 'DUPLICATE ITEM';
+          saveButton.textContent = 'Save Cloned Item';
+          fetchItemData(id, populateModalForCloneAndShow);
+          document.getElementById('serial_number').readOnly = false;
+
+      } else {
+          modalTitle.textContent = 'MODAL ITEM';
+          saveButton.textContent = 'Save';
+          console.error("Invalid action or ID");
+      }
+  }
+</script><!-- OPEN MODAL for Add | Modify | Clone -->
+
+<script>
+  function populateModalFields(item) {
+      //alert("Data: " +  item.serial_number + item.id);
+      document.getElementById('id').value = item.id || '';
+      document.getElementById('serial_number').value = item.serial_number || '';
+      document.getElementById('location').value = item.location || '';
+      document.getElementById('brand').value = item.brand || '';
+      document.getElementById('model').value = item.model || '';
+      document.getElementById('description').value = item.description || '';
+      document.getElementById('itypes').value = item.itypes || '';
+      document.getElementById('macadd').value = item.macadd || '';
+      document.getElementById('remarks').value = item.remarks || '';
+      document.getElementById('status').value = item.status || '';
+      // switchONOFF
+      const label = document.getElementById('switchLabel');
+      if (item.switch === 1 || item.switch === '1') {
+          document.getElementById('switchONOFF').checked = true;
+          label.textContent = 'Enable';
+      } else {
+          document.getElementById('switchONOFF').checked = false;
+          label.textContent = 'Disable';
+      }
+      document.getElementById('switchONOFF').value = item.switch === 1 || item.switch === '1' ? '1' : '0';
+
+      document.getElementById('timestamp').value = item.stampTime || '';
+  }
+
+  // Read-Only for Cloning Item
+  function populateReadOnly(item, isReadOnly) {
+      document.getElementById('location').readOnly = isReadOnly;
+      document.getElementById('brand').readOnly = isReadOnly;
+      document.getElementById('model').readOnly = isReadOnly;
+      document.getElementById('description').readOnly = isReadOnly;
+      document.getElementById('itypes').disabled = isReadOnly; // For disabled fields
+      document.getElementById('macadd').readOnly = isReadOnly;
+      document.getElementById('remarks').readOnly = isReadOnly;
+      document.getElementById('status').disabled = isReadOnly;
+      document.getElementById('switchONOFF').disabled = isReadOnly; // For checkboxes or switches
+      //document.getElementById('timestamp').readOnly = isReadOnly;
+  }
+          
+</script><!-- Populate Modal Fields Script -->
+
+<script>
+    function formatTimestamp() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+</script><!-- stampTime Format Script -->
+
+<script>
+    async function saveItem(id, action) {
+        let url;
+        let method;
+        let aktion;
+
+        // Determine URL and method based on ID and action
+        if (!id && action === "new") {
+            method = "POST";
+            url = '/item/save';
+
+        } else if (id && action === "modify") {
+            method = "PUT";
+            url = `/items/${id}`;
+
+        } else if (id && action === "clone") {
+            method = "POST";
+            url = '/item/save';
+
+        } else {
+            console.error("Invalid action or ID");
+            return;
+        }
+
+        const formattedTimestamp = formatTimestamp();
+        // Collect form data
+        const data = {
+            serial_number: document.getElementById('serial_number').value,
+            location: document.getElementById('location').value,
+            brand: document.getElementById('brand').value,
+            model: document.getElementById('model').value,
+            description: document.getElementById('description').value,
+            itypes: document.getElementById('itypes').value,
+            macadd: document.getElementById('macadd').value,
+            remarks: document.getElementById('remarks').value,
+            status: document.getElementById('status').value,
+            switch: document.getElementById('switchONOFF').value,
+            stampTime: formattedTimestamp // Add current timestamp in ISO format
+        };
+
+        alert("Data: " + JSON.stringify(data, null, 2));
+        aktion = action.charAt(0).toUpperCase() + action.slice(1);
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                alert(aktion + ' Item saved successfully');
+                location.reload(); // Optionally reload the page or refresh the item list
+            } else {
+                const errorText = await response.text();
+                console.error('Error saving item:', errorText);
+                alert('Error saving item! Please check the console for details.');
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            alert('Network error! Please check your connection and try again.');
+        }
+    }
+</script><!-- SAVE ITEM Script -->
+  
+
+
+<script>
+  function XsaveItem(id, action) {
+      let url ;
+      let method;
+      let aktion;
+      
+      if (!id && action === "new") {
+          method = "POST";
+          url = '/item/save';
+
+      } else if (id && action === "modify") {
+          method = "PUT";
+          url = `/items/${id}`;
+         
+      } else if (id && action === "clone") {
+          method = "POST";
+          url = '/item/save';
+
+      } else {
+          console.error("Invalid action or ID");
+      }   // ==>  if else condition for id & action
+
+      const data = {
+          serial_number: document.getElementById('serial_number').value,
+          location: document.getElementById('location').value,
+          brand: document.getElementById('brand').value,
+          model: document.getElementById('model').value,
+          description: document.getElementById('description').value,
+          itypes: document.getElementById('itypes').value,
+          macadd: document.getElementById('macadd').value,
+          remarks: document.getElementById('remarks').value,
+          status: document.getElementById('status').value,
+          switch: document.getElementById('switchONOFF').value,
+          stampTime: new Date().toISOString() // Add current timestamp in ISO format
+      };
+
+      alert("Data: " + JSON.stringify(data, null, 2));
+      aktion = action.charAt(0).toUpperCase() + action.slice(1);
+
+      $.ajax({
+          url: url,
+          type: method,
+          contentType: 'application/json',
+          data: JSON.stringify(data),
+          success: () => {
+              alert(aktion + ' Item saved successfully');
+              location.reload(); // Optionally reload the page or refresh the item list
+          },
+          error: (error) => {
+              console.error('Error saving item:', error.responseText);
+              alert('Error saving item! Please check the console for details.');
+          }
+      });
+  }
+</script><!-- X SAVE ITEM Script -->
+
+
+<script>
+  function openDelModal(itemId, action) {
+
+      document.getElementById('delItemId').textContent = itemId;
+
+      const confirmButton = document.getElementById('confirmDeleteBtn');
+      //confirmButton.onclick = function () { performDelete(itemId); };
+      confirmButton.onclick = () => performDelete(itemId);
+
+      // Show the modal
+      const delModal = new bootstrap.Modal(document.getElementById('delitemModal'));
+      delModal.show();
+  }
+
+  // Perform the delete action using Ajax
+  function performDelete(itemId) {
+      // Send DELETE request to the backend
+      $.ajax({
+          url: `/items/delete/${itemId}`,  // URL with dynamic itemId
+          type: 'DELETE',                  // HTTP method DELETE
+          success: () => {
+              alert("Item deleted successfully!");
+              location.reload();  // Reload the page after successful deletion
+          },
+          error: (error) => {
+              console.error('Error deleting item:', error);  // Log any error
+              alert("Error deleting item. Please try again.");
+          }
+      });
+
+      const delModal = bootstrap.Modal.getInstance(document.getElementById('delitemModal'));
+      delModal.hide();
+  }
+</script><!-- DELETE ITEM Script -->
+
+<script>
+  function saveData() {
+      const data = {
+          serialNumber: document.getElementById('serial_number').value,
+          location: document.getElementById('location').value,
+          brand: document.getElementById('brand').value,
+          model: document.getElementById('model').value,
+          description: document.getElementById('description').value,
+          itypes: document.getElementById('itypes').value,
+          macadd: document.getElementById('macadd').value,
+          remarks: document.getElementById('remarks').value,
+          status: document.getElementById('status').value,
+          switch: document.querySelector('input[name="switch"]:checked')?.value || '0'
+      };
+      console.log("Data saved:", data);
+      alert("Data: " + JSON.stringify(data, null, 2));
+  }
+</script><!-- saveData ITEM Script -->
+
+
+
+
+<!-- Scripts   ============================================================-->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="./statics/assets/js/itemTable.js"></script>
+
+<!----
+
+-->
+
+
+</body>
+</html>
+

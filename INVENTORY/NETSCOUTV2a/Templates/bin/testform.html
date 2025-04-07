@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bootstrap Form with Submit</title>
+  <link
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+</head>
+<body>
+  <div class="container mt-5">
+    <h2 class="mb-4">Bootstrap Form Example</h2>
+    <form id="exampleForm">
+      <!-- Static Email -->
+      <div class="form-group row">
+        <label for="staticEmail" class="col-sm-2 col-form-label">Email</label>
+        <div class="col-sm-10">
+          <input
+            type="text"
+            readonly
+            class="form-control-plaintext"
+            id="staticEmail"
+            value="email@example.com"
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group row">
+        <label for="inputPassword" class="col-sm-2 col-form-label">Password</label>
+        <div class="col-sm-10">
+          <input
+            type="password"
+            class="form-control"
+            id="inputPassword"
+            placeholder="Password"
+          />
+        </div>
+      </div>
+
+      <!-- Default Checkbox -->
+      <div class="form-check mb-3">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          value="checked"
+          id="defaultCheck1"
+        />
+        <label class="form-check-label" for="defaultCheck1">
+          Default checkbox
+        </label>
+      </div>
+
+      <!-- Inline Radio Buttons -->
+      <div class="form-check form-check-inline">
+        <input
+          class="form-check-input"
+          type="radio"
+          name="inlineRadioOptions"
+          id="inlineRadio1"
+          value="1"
+        />
+        <label class="form-check-label" for="inlineRadio1">1</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input
+          class="form-check-input"
+          type="radio"
+          name="inlineRadioOptions"
+          id="inlineRadio2"
+          value="2"
+        />
+        <label class="form-check-label" for="inlineRadio2">2</label>
+      </div>
+
+      <!-- Email and Password Inputs -->
+      <div class="form-group row mt-4">
+        <label for="inputEmail3" class="col-sm-2 col-form-label">Email</label>
+        <div class="col-sm-10">
+          <input
+            type="email"
+            class="form-control"
+            id="inputEmail3"
+            placeholder="Email"
+          />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="inputPassword3" class="col-sm-2 col-form-label">Password</label>
+        <div class="col-sm-10">
+          <input
+            type="password"
+            class="form-control"
+            id="inputPassword3"
+            placeholder="Password"
+          />
+        </div>
+      </div>
+
+      <!-- Radios -->
+      <fieldset class="form-group">
+        <div class="row">
+          <legend class="col-form-label col-sm-2 pt-0">Radios</legend>
+          <div class="col-sm-10">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="gridRadios"
+                id="gridRadios1"
+                value="First radio"
+              />
+              <label class="form-check-label" for="gridRadios1">
+                First radio
+              </label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="gridRadios"
+                id="gridRadios2"
+                value="Second radio"
+              />
+              <label class="form-check-label" for="gridRadios2">
+                Second radio
+              </label>
+            </div>
+            <div class="form-check disabled">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="gridRadios"
+                id="gridRadios3"
+                value="Third radio (disabled)"
+                disabled
+              />
+              <label class="form-check-label" for="gridRadios3">
+                Third disabled radio
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Example Checkbox -->
+      <div class="form-group row">
+        <div class="col-sm-2">Checkbox</div>
+        <div class="col-sm-10">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="gridCheck1" />
+            <label class="form-check-label" for="gridCheck1">
+              Example checkbox
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Select Dropdown -->
+      <div class="form-group">
+        <label for="inputGroupSelect03">Select Options</label>
+        <select class="custom-select" id="inputGroupSelect03">
+          <option selected>Choose...</option>
+          <option value="1">One</option>
+          <option value="2">Two</option>
+          <option value="3">Three</option>
+        </select>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="form-group row">
+        <div class="col-sm-10">
+          <button type="button" class="btn btn-primary" onclick="submitForm()">Submit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function submitForm() {
+      const formData = {
+        staticEmail: document.getElementById("staticEmail").value,
+        password: document.getElementById("inputPassword").value,
+        defaultCheckbox: document.getElementById("defaultCheck1").checked,
+        inlineRadio: document.querySelector('input[name="inlineRadioOptions"]:checked')?.value,
+        email: document.getElementById("inputEmail3").value,
+        password3: document.getElementById("inputPassword3").value,
+        gridRadio: document.querySelector('input[name="gridRadios"]:checked')?.value,
+        exampleCheckbox: document.getElementById("gridCheck1").checked,
+        selectOption: document.getElementById("inputGroupSelect03").value,
+      };
+
+      let message = "Form Values:\n";
+      for (const [key, value] of Object.entries(formData)) {
+        message += `${key}: ${value}\n`;
+      }
+      alert(message);
+    }
+  </script>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

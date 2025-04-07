@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Carousel</title>
+    <link rel="stylesheet" href="styles.css">
+
+<style>
+            * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+    }
+
+    .carousel-container {
+        perspective: 1000px;
+        width: 500px;
+        height: 500px;
+        position: relative;
+    }
+
+    .carousel {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 1s ease;
+    }
+
+    .card {
+        position: absolute;
+        width: 200px;
+        height: 300px;
+        background-color: #3498db;
+        color: white;
+        font-size: 24px;
+        text-align: center;
+        line-height: 300px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        transform-origin: center;
+    }
+
+    button {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .prev-btn {
+        left: -100px;
+    }
+
+    .next-btn {
+        right: -100px;
+    }
+
+    button:hover {
+        background-color: #2980b9;
+    }
+
+    .focused {
+        border: 3px solid #e74c3c;
+    }
+</style>
+</head>
+<body>
+
+    <div class="carousel-container">
+        <div class="carousel">
+            <!-- Cards will go here -->
+            <div class="card">Card 1</div>
+            <div class="card">Card 2</div>
+            <div class="card">Card 3</div>
+            <div class="card">Card 4</div>
+            <div class="card">Card 5</div>
+            <div class="card">Card 6</div>
+            <div class="card">Card 7</div>
+        </div>
+    </div>
+
+    <button class="prev-btn">Previous</button>
+    <button class="next-btn">Next</button>
+
+    <script>
+        
+        class Carousel {
+    constructor() {
+        this.carousel = document.querySelector('.carousel');  // Assuming a class of .carousel for the container
+        this.cards = document.querySelectorAll('.card');  // Assuming each card has the class .card
+        this.currentAngle = 0;
+        this.currentIndex = 0;
+        this.angleStep = 0;  // Will be calculated
+        this.totalCards = 0;  // Will be set based on the number of cards
+        this.radius = 200;  // Example value for the radius of the carousel, adjust as needed
+        this.initializeCarousel();
+    }
+
+    // Initialize the carousel by setting the angles and positions for each card
+    initializeCarousel() {
+        if (!this.cards || this.cards.length === 0) return;
+
+        this.angleStep = 360 / this.cards.length;
+        this.totalCards = this.cards.length;
+
+        this.cards.forEach((card, index) => {
+            const angle = index * this.angleStep;
+            console.log(`Card ${index}: Angle ${angle}`);
+            card.style.transform = `rotateX(${angle}deg) translateZ(${this.radius}px)`;
+        });
+
+        this.updateFocus();
+    }
+
+    // Handle carousel rotation when the user clicks next/prev
+    rotateCarousel(direction) {
+        if (!this.cards || this.cards.length === 0) return;
+        
+        if (direction === 'next') {
+            this.currentAngle -= this.angleStep;
+            this.currentIndex = (this.currentIndex + 1) % this.totalCards;
+        } else {
+            this.currentAngle += this.angleStep;
+            this.currentIndex = (this.currentIndex - 1 + this.totalCards) % this.totalCards;
+        }
+
+        this.carousel.style.transform = `rotateX(${this.currentAngle}deg)`;
+        console.log("247: ", this.carousel.style.transform);
+        
+        this.updateFocus();
+    }
+
+    // Update the focused card (based on currentIndex)
+    updateFocus() {
+        this.cards.forEach((card, index) => {
+            if (index === this.currentIndex) {
+                card.classList.add('focused');  // Assuming 'focused' class highlights the active card
+            } else {
+                card.classList.remove('focused');
+            }
+        });
+    }
+}
+
+// Initialize the carousel when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    const carousel = new Carousel();
+
+    // Add event listeners for rotating carousel
+    document.querySelector('.next-btn').addEventListener('click', () => {
+        carousel.rotateCarousel('next');
+    });
+
+    document.querySelector('.prev-btn').addEventListener('click', () => {
+        carousel.rotateCarousel('prev');
+    });
+});
+
+    </script>
+</body>
+</html>

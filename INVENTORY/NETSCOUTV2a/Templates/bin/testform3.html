@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Small Form</title>
+  <link
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <style>
+    /* Custom font size for form elements */
+    body {
+      font-size: 10px; /* Set this to your desired base font size */
+    }
+    .form-control,
+    .form-check-input,
+    .custom-select {
+      font-size: 10px; /* Adjust input font size */
+      padding: 0.25rem 0.5rem; /* Adjust padding for smaller look */
+    }
+    .form-label, .form-check-label {
+      font-size: 10px; /* Adjust label font size */
+    }
+    .btn {
+      font-size: 10px; /* Adjust button font size */
+      padding: 0.25rem 0.5rem; /* Smaller button padding */
+    }
+    legend {
+      font-size: 10px; /* Adjust legend font size */
+    }
+  </style>
+  
+<style>
+  .form-check-input.toggle-switch {
+    width: 40px;
+    height: 20px;
+    background-color: #e6e6e6;
+    border-radius: 15px;
+    position: relative;
+    appearance: none;
+    outline: none;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .form-check-input.toggle-switch:checked {
+    background-color: #0d6efd;
+  }
+  .form-check-input.toggle-switch::before {
+    content: '';
+    width: 18px;
+    height: 18px;
+    background-color: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    transition: all 0.3s;
+  }
+  .form-check-input.toggle-switch:checked::before {
+    left: 21px;
+  }
+</style>
+
+</head>
+<body>
+  <div class="container mt-5">
+    <h4 class="mb-4">Custom Small Bootstrap Form Example</h4>
+    <form id="exampleForm">
+      <!-- Static Email -->
+      <div class="form-group row">
+        <label for="staticEmail" class="col-sm-2 col-form-label">Email</label>
+        <div class="col-sm-10">
+          <input
+            type="text"
+            readonly
+            class="form-control"
+            id="staticEmail"
+            value="email@example.com"
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group row">
+        <label for="inputPassword" class="col-sm-2 col-form-label">Password</label>
+        <div class="col-sm-10">
+          <input
+            type="password"
+            class="form-control"
+            id="inputPassword"
+            placeholder="Password"
+          />
+        </div>
+      </div>
+
+
+<!-- Inline Radio Buttons -->
+
+<div class="form-group row align-items-center">
+  <label for="inlineRadio1" class="col-sm-2 col-form-label">Select Options</label>
+  <div class="col-sm-10">
+    <div class="form-check form-check-inline">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="inlineRadioOptions"
+        id="inlineRadio1"
+        value="0"
+        checked
+      />
+      <label class="form-check-label" for="inlineRadio1">Disabled</label>
+    </div>
+
+    <div class="form-check form-check-inline">
+      <input
+        class="form-check-input"
+        type="radio"
+        name="inlineRadioOptions"
+        id="inlineRadio2"
+        value="1"
+      />
+      <label class="form-check-label" for="inlineRadio2">Enabled</label>
+    </div>
+  </div>
+</div>
+
+
+<div class="form-group row align-items-center">
+  <label for="switchONOFF" class="col-sm-2 col-form-label">Status</label>
+  <div class="col-sm-10">
+    <div class="form-check form-switch">
+      <input
+        class="form-check-input toggle-switch"
+        type="checkbox"
+        id="switchONOFF"
+        name="switch"
+        checked
+        onchange="updateLabel()"
+      />
+      <label class="form-check-label ms-2 col-sm-10" for="switchONOFF" id="switchLabel">Enabled</label>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Toggle Switch Styling -->
+
+
+
+
+
+
+
+
+
+
+
+
+      <!-- Email and Password Inputs -->
+      <div class="form-group row mt-4">
+        <label for="inputEmail3" class="col-sm-2 col-form-label">Emailswww</label>
+        <div class="col-sm-10">
+          <input
+            type="email"
+            class="form-control"
+            id="inputEmail3"
+            placeholder="Email"
+          />
+        </div>
+      </div>
+	  
+      <div class="form-group row">
+        <label for="inputPassword3" class="col-sm-2 col-form-label">Password</label>
+        <div class="col-sm-10">
+          <input
+            type="password"
+            class="form-control"
+            id="inputPassword3"
+            placeholder="Password"
+          />
+        </div>
+      </div>
+
+      <!-- Radios -->
+      <fieldset class="form-group">
+        <div class="row">
+          <legend class="col-form-label col-sm-2 pt-0">Radios</legend>
+          <div class="col-sm-10">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="gridRadios"
+                id="gridRadios1"
+                value="First radio"
+              />
+              <label class="form-check-label" for="gridRadios1">
+                First radio
+              </label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="gridRadios"
+                id="gridRadios2"
+                value="Second radio"
+              />
+              <label class="form-check-label" for="gridRadios2">
+                Second radio
+              </label>
+            </div>
+            <div class="form-check disabled">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="gridRadios"
+                id="gridRadios3"
+                value="Third radio (disabled)"
+                disabled
+              />
+              <label class="form-check-label" for="gridRadios3">
+                Third disabled radio
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Example Checkbox -->
+<div class="form-group row align-items-center">
+  <label for="gridCheck1" class="col-sm-2 col-form-label">Checkbox</label>
+  <div class="col-sm-10">
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" id="gridCheck1" />
+      <label class="form-check-label ms-2" for="gridCheck1">Example checkbox</label>
+    </div>
+  </div>
+</div>
+
+
+	  <!-- Inline Select Dropdown -->
+<div class="form-group row">
+  <label for="inputGroupSelect03" class="col-sm-2 col-form-label">Select Options</label>
+  <div class="col-sm-10">
+    <select class="custom-select" id="inputGroupSelect03">
+      <option selected>Choose...</option>
+      <option value="1">One</option>
+      <option value="2">Two</option>
+      <option value="3">Three</option>
+      <option value="4">Four</option>
+    </select>
+  </div>
+</div>
+
+	  
+	  
+<div class="form-group row align-items-center">
+  <label for="inputGroupSelect03" class="col-sm-2 col-form-label pe-2">Select Options</label>
+  <div class="col-sm-10">
+    <select class="form-select form-select-sm" id="inputGroupSelect03">
+      <option selected>Choose...</option>
+      <option value="1">One</option>
+      <option value="2">Two</option>
+      <option value="3">Three</option>
+      <option value="4">Four</option>
+    </select>
+  </div>
+</div>
+   
+	  
+      <!-- Submit Button -->
+      <div class="form-group row">
+        <div class="col-sm-10">
+          <button type="button" class="btn btn-primary" onclick="submitForm()">Submit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  
+  
+<script>
+  function updateLabel() {
+    const toggle = document.getElementById("switchONOFF");
+    const label = document.getElementById("switchLabel");
+    label.textContent = toggle.checked ? "Enabled" : "Disabled";
+  }
+</script>
+
+
+  <script>
+    function submitForm() {
+      const formData = {
+        staticEmail: document.getElementById("staticEmail").value,
+        password: document.getElementById("inputPassword").value,
+        defaultCheckbox: document.getElementById("defaultCheck1").checked,
+        inlineRadio: document.querySelector('input[name="inlineRadioOptions"]:checked')?.value,
+        email: document.getElementById("inputEmail3").value,
+        password3: document.getElementById("inputPassword3").value,
+        gridRadio: document.querySelector('input[name="gridRadios"]:checked')?.value,
+        exampleCheckbox: document.getElementById("gridCheck1").checked,
+        selectOption: document.getElementById("inputGroupSelect03").value,
+      };
+
+      let message = "Form Values:\n";
+      for (const [key, value] of Object.entries(formData)) {
+        message += `${key}: ${value}\n`;
+      }
+      alert(message);
+    }
+  </script>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

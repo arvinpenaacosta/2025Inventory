@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Vertical Carousel with Swipe</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, rgba(105, 42, 251, 0.71), rgb(4, 4, 4));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      gap: 20px;
+    }
+
+    /* Fixed Footer */
+    footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        z-index: 1030;
+        background-color: #343a40;
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+    }
+
+
+    .Xcontainer-X {
+      width: 870px;
+      height: 570px;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .carousel-X {
+      position: relative;
+      width: 500px;
+      height: 400px;
+      perspective: 1100px;
+    }
+
+    .carousel-inner-X {
+      width: 100%;
+      height: 80%;
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease-in-out;
+    }
+
+    .card-X {
+      position: absolute;
+      width: 400px;
+      height: 200px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      transform-origin: center;
+      transition: box-shadow 0.3s ease, transform 0.3s ease, border 0.3s ease;
+      background: transparent;
+      border: 2px solid transparent;
+      color: rgb(98, 107, 98);
+    }
+
+    .card-X img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Ensures the image covers the card size */
+      border-radius: 10px; /* Makes the image fit within the rounded card */
+    }
+
+    .card-X.focus-X {
+      box-shadow: 0 0 20px 5px rgba(0, 255, 0, 0.5);
+      border-color: lime;
+      transform: scale(1.1);
+      color: lime;
+    }
+
+
+    /* Glass Effect Modal Styles */
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+      backdrop-filter: blur(10px); /* Frosted glass blur effect */
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); /* Soft shadow */
+      border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
+      padding: 1.5rem; /* Add padding to the modal content */
+    }
+
+    .glass-effect .modal-header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px 15px 0 0; /* Rounded top corners */
+      padding-bottom: 1rem; /* Add spacing below the header */
+    }
+
+    .glass-effect .modal-body {
+      color: #fff; /* Light text for better contrast */
+      padding: 1rem; /* Add padding around the form elements */
+    }
+
+    .glass-effect .form-control {
+      padding: 0.75rem; /* Add padding inside input fields */
+      border-radius: 8px; /* Rounded input fields */
+    }
+
+    .glass-effect .btn {
+      margin-top: 1rem; /* Space above the button */
+    }
+
+    .form-control {
+      text-align: center; /* Center text in the input fields */
+    }
+
+    .gold-text {
+      color: gold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .form-floating label {
+      color: red; /* Set the label color to red */
+    }
+
+    /* Optionally, add a hover effect to make the label color change when focused */
+    .form-floating input:focus + label {
+      color: red;
+    }
+
+
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">{{ pageheader }}</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a></li>
+            <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">About</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Services</a></li>
+            <li class="nav-item"><a class="nav-link" href="#">Contact(welcome_aim.html)</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+
+  <!-- Horizontal Carousel   statics/assets/img/netscout/1.png -->
+  <div class="container-X">
+    <div class="carousel-X" id="carousel-container-X">
+      <div class="carousel-inner-X" id="carousel-X">
+
+        <div class="card-X"><img src="statics/assets/img/netscout/24.png" alt="Image 14"></div>
+        <div class="card-X"><img src="statics/assets/img/netscout/12.png" alt="Image 13"></div>
+        <div class="card-X"><img src="statics/assets/img/netscout/23.png" alt="Image 12"></div>
+        <div class="card-X"><img src="statics/assets/img/netscout/22.png" alt="Image 11"></div>
+
+        <div class="card-X"><img src="statics/assets/img/netscout/21.png" alt="Image 4"></div>
+        <div class="card-X"><img src="statics/assets/img/netscout/20.png" alt="Image 3"></div>
+        <div class="card-X"><img src="statics/assets/img/netscout/19.png" alt="Image 2"></div>
+        <div class="card-X"><img src="statics/assets/img/netscout/1.png" alt="Image 1"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Login Modal -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content glass-effect">
+        <div class="modal-header border-0">
+          <h5 class="modal-title ms-auto gold-text" id="loginModalLabel">...Account Verification Login</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body d-flex justify-content-center align-items-center flex-column">
+          <form action="/login" method="post" style="width: 100%; max-width: 300px;">
+            <div class="form-floating mb-4">
+              <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+              <label for="username">Username</label>
+            </div>
+            <div class="form-floating mb-4">
+              <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+              <label for="password">Password</label>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+  <footer>
+    <p>{{ pagefooter }}</p>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Check for session expiry notification
+    async function checkSession() {
+        const token = document.cookie.split('; ').find(row => row.startsWith('access_token='));
+        const isAuthenticated = token ? true : false;
+
+        if (!isAuthenticated) {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('error')) {
+                const errorMessage = urlParams.get('error');
+                alert(errorMessage); // Prompt the error message if user is not authenticated
+            }
+        }
+    }
+
+    // Call the function on page load
+    window.onload = checkSession;
+  </script>
+
+  <script>
+    // Automatically select all text in the username input field when focused
+    document.getElementById('username').addEventListener('focus', function() {
+      this.select();
+    });
+
+    // Automatically select all text in the password input field when focused
+    document.getElementById('password').addEventListener('focus', function() {
+      this.select();
+    });
+  </script>
+
+
+<script>
+      
+  const carouselX = document.getElementById('carousel-X');
+  const carouselContainerX = document.getElementById('carousel-container-X');
+  const cardsX = document.querySelectorAll('.card-X');
+  const totalCardsX = cardsX.length;
+  const angleStepX = 360 / totalCardsX;
+  let currentAngleX = 0;
+  let currentIndexX = 0;
+
+  let startX = 0;
+  let endX = 0;
+  let isDraggingX = false;
+
+  // Set the distance between the cards based on the width of card2
+  const cardWidth = cardsX[0].offsetWidth;
+  const distanceBetweenCards = cardWidth + 40; // This is the distance between card1 and card3, for example
+
+  // Arrange cards in a circular horizontal layout
+  cardsX.forEach((cardX, index) => {
+    const angle = index * angleStepX;
+    // Set translateZ distance to create the desired spacing
+    const translateZValue = distanceBetweenCards / (2 * Math.tan(Math.PI / totalCardsX)); 
+    cardX.style.transform = `rotateY(${angle}deg) translateZ(${translateZValue}px)`;
+  });
+
+  // Update focus card
+  function updateFocusX() {
+    cardsX.forEach((cardX, index) => {
+      if (index === currentIndexX) {
+        cardX.classList.add('focus-X');
+      } else {
+        cardX.classList.remove('focus-X');
+      }
+    });
+  }
+
+  // Handle swipe gestures and mouse drag
+  function handleSwipeOrDragX() {
+    const swipeDistanceX = endX - startX;
+
+    if (swipeDistanceX > 50) {
+      // Swipe or drag right
+      currentAngleX += angleStepX;
+      currentIndexX = (currentIndexX - 1 + totalCardsX) % totalCardsX;
+    } else if (swipeDistanceX < -50) {
+      // Swipe or drag left
+      currentAngleX -= angleStepX;
+      currentIndexX = (currentIndexX + 1) % totalCardsX;
+    }
+
+    carouselX.style.transform = `rotateY(${currentAngleX}deg)`;
+    updateFocusX();
+  }
+
+  // Auto-rotate the carousel every 5 seconds (5000ms)
+  setInterval(() => {
+    currentAngleX += angleStepX; // Rotate by one step
+    currentIndexX = (currentIndexX + 1) % totalCardsX; // Move to the next card
+
+    carouselX.style.transform = `rotateY(${currentAngleX}deg)`;
+    updateFocusX(); // Update focus
+  }, 5000); // Change this to 10000 for 10 seconds
+
+  // Touch event listeners
+  carouselContainerX.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+  });
+
+  carouselContainerX.addEventListener('touchmove', (e) => {
+    endX = e.touches[0].clientX;
+  });
+
+  carouselContainerX.addEventListener('touchend', () => {
+    handleSwipeOrDragX();
+  });
+
+  // Mouse drag event listeners
+  carouselContainerX.addEventListener('mousedown', (e) => {
+    isDraggingX = true;
+    startX = e.clientX;
+  });
+
+  carouselContainerX.addEventListener('mousemove', (e) => {
+    if (isDraggingX) {
+      endX = e.clientX;
+    }
+  });
+
+  carouselContainerX.addEventListener('mouseup', () => {
+    if (isDraggingX) {
+      isDraggingX = false;
+      handleSwipeOrDragX();
+    }
+  });
+
+  carouselContainerX.addEventListener('mouseleave', () => {
+    if (isDraggingX) {
+      isDraggingX = false;
+    }
+  });
+
+  // Mouse wheel event for desktop scrolling, only within container-X
+  carouselContainerX.addEventListener('wheel', (e) => {
+    // Check if mouse is within the container-X bounds
+    const rect = carouselContainerX.getBoundingClientRect();
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+
+    if (mouseX >= rect.left && mouseX <= rect.right && mouseY >= rect.top && mouseY <= rect.bottom) {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        // Scroll right
+        currentAngleX -= angleStepX;
+        currentIndexX = (currentIndexX + 1) % totalCardsX;
+      } else if (e.deltaY > 0) {
+        // Scroll left
+        currentAngleX += angleStepX;
+        currentIndexX = (currentIndexX - 1 + totalCardsX) % totalCardsX;
+      }
+
+      carouselX.style.transform = `rotateY(${currentAngleX}deg)`;
+      updateFocusX();
+    }
+  }, { passive: false });
+
+  // Set initial focus
+  updateFocusX();
+
+   
+</script>
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bootstrap Modal Example</title>
+
+
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<!--
+    <link  href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+-->
+
+    <link  href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link  href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+    
+    <style>
+        body {
+        padding-top: 56px; /* Adjust for fixed navbar height */
+        }
+        .custom-modal .modal-dialog {
+        max-width: 500px; /* Set the desired width here */
+        }
+
+
+        /* Fixed Footer */
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 1030;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+        
+        /* Base styles - remain unchanged for desktop */
+        .input-group-text {
+            width: 110px;
+            font-size: 0.875rem;
+            text-align: left;
+            display: inline-block;
+        }
+    
+        .input-group .form-control,
+        .input-group .form-select {
+            border: 1px solid #495057;
+            border-radius: .2rem;
+        }
+    
+        .input-group .form-control:focus,
+        .input-group .form-select:focus {
+            border-color: #343a40;
+            box-shadow: none;
+        }
+
+        #daTable tbody tr:hover {
+            background-color: #f0f8ff;
+            cursor: pointer;
+        }
+
+        tr.details td.dt-control {
+            background: url('https://cdn.datatables.net/1.11.5/images/details_open.png') no-repeat center center;
+            cursor: pointer;
+        }
+
+        .rounded-btn {
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+
+        /* Mobile-specific styles */
+        @media only screen 
+        and (max-device-width: 812px) /* Max width for most mobile phones */
+        and (orientation: landscape) {
+            /* Reset container for mobile */
+            .container {
+                max-width: 100% !important;
+                margin: 0;
+                padding: 5px;
+                height: 100vh;
+            }
+
+            /* Adjust table container for mobile */
+            .table-responsive {
+                height: calc(100vh - 45px);
+                margin: 0;
+                padding: 0;
+            }
+
+            /* Optimize toolbar for mobile */
+            .toolbar {
+                padding: 2px 0;
+                margin-bottom: 5px;
+            }
+
+            /* Adjust buttons for mobile */
+            .rounded-btn {
+                padding: 3px 10px;
+                font-size: 0.875rem;
+            }
+
+            /* Optimize table for mobile */
+            #daTable {
+                margin: 0;
+            }
+
+            #daTable thead th {
+                padding: 5px;
+                font-size: 0.875rem;
+                position: sticky;
+                top: 0;
+                background-color: #007bff;
+                z-index: 1;
+            }
+
+            #daTable td {
+                padding: 5px;
+                font-size: 0.875rem;
+            }
+
+            /* Remove unnecessary spacing */
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+
+            .my-5 {
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }
+        }
+
+        /* Keep default styles for non-mobile devices */
+        @media only screen 
+        and (min-device-width: 813px) {
+            .container {
+                /* Default Bootstrap container behavior */
+                max-width: 1140px;
+                margin: auto;
+            }
+
+            .my-5 {
+                margin-top: 3rem !important;
+                margin-bottom: 3rem !important;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+          <div class="container">
+            <a class="navbar-brand" href="#">{{ pageheader }}</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+    
+            <div class="collapse navbar-collapse" id="navbarNav">
+              <ul class="navbar-nav ms-auto">
+              </ul>
+    
+              <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link active" href="/dashboard">Back</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Logout</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/logout">Logout {{ username }}</a></li>
+                <li class="nav-item"><a class="nav-link active" href="#">Help</a></li>
+              </ul>
+            </div>
+    
+          </div>
+        </nav>
+
+      </header><!-- Header -->
+
+<!-- APPLICATION - START HERE-->
+
+TEMPLATE
+TEMPLATE
+TEMPLATE
+
+<!-- APPLICATION - END HERE-->
+    <footer>
+        <p>&copy; {{ pagefooter }}</p>
+    </footer><!-- Footer -->
+
+
+<!-- List of Scripts Here  ============================================================-->
+
+
+
+
+
+<!-- Scripts   ============================================================-->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="./statics/assets/js/itemTable.js"></script>
+
+<!----
+
+-->
+
+
+</body>
+</html>
+

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile-Friendly Drag and Drop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Outer container for centering */
+        .outer-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 10px;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Inner responsive container */
+        .responsive-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            width: 100%;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Form container */
+        .form-container {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        #portnum, #search, #confirmAction, #cancelAction{
+            height: 80px; /* Set equal height for both */
+
+        }
+        #vlanSelect{ 
+            height: 60px;
+        }
+
+        .form-container .form-select, 
+        .form-container .form-control {
+            font-size: 1.5rem;
+            padding: 1rem;
+            height: 60px;
+        }
+
+        .form-container .button {
+            font-size: 1.8rem;
+            padding: 0.75rem 1.5rem;
+        }
+
+        /* Scrollable container */
+        .scrollable-container {
+            width: 100%;
+            height: 300px;
+            overflow-y: auto;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .dragItem {
+            width: 90%;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            border-radius: 5px;
+            touch-action: none;
+            padding: 10px;
+        }
+
+        .dragItem table {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .dragItem td {
+            padding: 5px;
+            text-align: center;
+            color: white;
+            font-size: 1.5rem;  /* Increase font size for table cells */
+        }
+
+.dragItem td.col1 { 
+    width: 150px; 
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.dragItem td.col2 { 
+    width: 100px; 
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.dragItem td.col3 { 
+    width: 120px; 
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+
+
+        /* Horizontal drop areas container */
+        .dropArea-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        /* Drop areas */
+        .dropArea {
+            flex: 1;
+            min-width: 100px;
+            height: 100px;
+            background-color: #b1f1b9;
+            color: rgb(28, 20, 68);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            font-size: 1.8rem;
+            padding: 5px;
+        }
+
+        /* Custom button style */
+        .button {
+            width: 200px;
+            height: ;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 6px 8px 15px rgba(0, 0, 0, 0.05),
+                        4px 5px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .button:active {
+            box-shadow: inset 6px 8px 15px rgba(0, 0, 0, 0.05),
+                        inset 4px 5px 10px rgba(0, 0, 0, 0.08);
+            transform: translateY(2px);
+        }
+
+        /* Form adjustments for mobile */
+        .form-floating {
+            margin-bottom: 10px;
+            height: 60px;
+        }
+
+/* Add these styles to the existing <style> tag */
+    .modal-dialog {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+    margin: 0.5rem auto;
+    pointer-events: none;
+}
+
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 600px; /* Match the max-width of .responsive-container */
+    margin: 0 auto;
+}
+
+
+
+
+
+    </style>
+</head>
+
+<body>
+    <div class="outer-container">
+        <div class="responsive-container">
+            <!-- Form container -->
+            <div class="form-container">
+                <form class="d-flex flex-column gap-2">
+                    <div class="form-floating">
+                        <select class="form-select" id="floatingSelectGrid">
+                            <option selected>Select Floor</option>
+                            <option value="1">One</option>
+                            <option value="2">Two</option>
+                            <option value="3">Three</option>
+                        </select>
+                        <label for="floatingSelectGrid">Floor</label>
+                    </div>
+
+
+
+                    <div class="form-floating input-group">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="portnum" placeholder="Port Number / Interface">
+                            <label for="portnum">Port Number / Interface</label>
+                        </div>
+                        <button id="search" class="button">Search</button>
+                    </div>
+
+
+
+                </form>
+
+            </div>
+
+            <!-- Scrollable container -->
+            <div class="scrollable-container">
+            </div>
+
+            <!-- Horizontal drop areas -->
+            <div class="dropArea-container">
+                <div class="dropArea" data-action="Clear Port">Clear Port</div>
+                <div class="dropArea" data-action="Clear Sticky">Clear Sticky</div>
+                <div class="dropArea" data-action="Change VLAN">Change VLAN</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Modal -->
+    <div id="actionModal" class="modal fade" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="actionTitle" class="modal-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="vlanSelectContainer" style="display: none;">
+                        <h4>Select VLAN</h4>
+                        <select id="vlanSelect" class="form-select">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="30">30</option>
+                            <option value="40">40</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmAction" class="btn btn-primary">Confirm</button>
+                    <button id="cancelAction" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    
+    <script>
+        // Data for populating the scrollable container
+        const dataItems = [
+            { value: "p-123", port:"80", intf:"g1/0/12"},
+            { value: "s-123", port:"227", intf:"fa0/12"},
+            { value: "p-231", port:"81", intf:"g1/0/22"},
+            { value: "s-231", port:"226", intf:"fa0/22"},
+            { value: "p-233", port:"82", intf:"g1/0/25"},
+            { value: "s-233", port:"225", intf:"fa0/25"}
+        ];
+
+        // Wait for the DOM to be fully loaded before populating the container
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.querySelector('.scrollable-container');
+            
+            // Ensure the container exists before proceeding
+            if (!container) {
+                console.error('Scrollable container not found!');
+                return;
+            }
+
+            // Clear any existing content (optional)
+            container.innerHTML = '';
+
+            dataItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'dragItem';
+                div.setAttribute('draggable', 'true');
+                div.setAttribute('data-value', item.value);
+
+                // Create a table for each div
+                const table = document.createElement('table');
+                const tbody = document.createElement('tbody');
+
+                // Create a single row with three cells
+                const row = document.createElement('tr');
+                const valueCell = document.createElement('td');
+                valueCell.textContent = item.value;
+                valueCell.className = 'col1'; // Add class for first column
+
+                const portCell = document.createElement('td');
+                portCell.textContent = item.port;
+                valueCell.className = 'col2'; // Add class for first column
+
+                const intfCell = document.createElement('td');
+                intfCell.textContent = item.intf;
+                valueCell.className = 'col3'; // Add class for first column
+
+                // Append cells to the row
+                row.appendChild(valueCell);
+                row.appendChild(portCell);
+                row.appendChild(intfCell);
+
+                // Append row to the table body
+                tbody.appendChild(row);
+
+                // Append tbody to the table
+                table.appendChild(tbody);
+
+                // Append table to the div
+                div.appendChild(table);
+
+                // Set the background color based on the value
+                if (item.value.startsWith("p")) {
+                    div.style.backgroundColor = "#3498db"; // Blue for "p"
+                } else if (item.value.startsWith("s")) {
+                    div.style.backgroundColor = "#eb9029"; // Orange for "s"
+                } else {
+                    div.style.backgroundColor = "#ee81c4"; // Pink for others
+                }
+
+                container.appendChild(div);
+            });
+        });
+    </script>
+  
+    <script>
+        // Touch and drag event handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const dragItems = document.querySelectorAll('.dragItem');
+            const dropAreas = document.querySelectorAll('.dropArea');
+            const actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
+            const actionTitle = document.getElementById('actionTitle');
+            const vlanSelectContainer = document.getElementById('vlanSelectContainer');
+            const vlanSelect = document.getElementById('vlanSelect');
+            const confirmAction = document.getElementById('confirmAction');
+            const cancelAction = document.getElementById('cancelAction');
+
+            let draggedValue = '';
+            let selectedAction = '';
+            let draggedItem = null;
+
+            // Touch event handlers
+            dragItems.forEach(item => {
+                item.addEventListener('touchstart', handleTouchStart, false);
+                item.addEventListener('touchmove', handleTouchMove, false);
+                item.addEventListener('touchend', handleTouchEnd, false);
+
+                // Regular drag events
+                item.addEventListener('dragstart', (event) => {
+                    draggedValue = item.getAttribute('data-value');
+                    draggedItem = item;
+                    event.dataTransfer.setData('text/plain', draggedValue);
+                });
+            });
+
+            function handleTouchStart(e) {
+                draggedItem = this;
+                draggedValue = this.getAttribute('data-value');
+                this.style.opacity = '0.7';
+            }
+
+            function handleTouchMove(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                if (target && target.classList.contains('dropArea')) {
+                    target.style.backgroundColor = '#1abc9c';
+                }
+            }
+
+            function handleTouchEnd(e) {
+                e.preventDefault();
+                if (draggedItem) {
+                    draggedItem.style.opacity = '1';
+                    const touch = e.changedTouches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+                    if (target && target.classList.contains('dropArea')) {
+                        selectedAction = target.getAttribute('data-action');
+                        target.style.backgroundColor = '#2ecc71';
+                        
+                        if (selectedAction === 'Change VLAN') {
+                            vlanSelectContainer.style.display = 'block';
+                        } else {
+                            vlanSelectContainer.style.display = 'none';
+                        }
+
+                        actionTitle.textContent = `${draggedValue} will process ${selectedAction}`;
+                        actionModal.show();
+                    }
+                }
+            }
+
+            // Regular drop events
+            dropAreas.forEach(area => {
+                area.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    area.style.backgroundColor = '#1abc9c';
+                });
+
+                area.addEventListener('dragleave', (e) => {
+                    area.style.backgroundColor = '#2ecc71';
+                });
+
+                area.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    area.style.backgroundColor = '#2ecc71';
+                    
+                    selectedAction = area.getAttribute('data-action');
+                    if (selectedAction === 'Change VLAN') {
+                        vlanSelectContainer.style.display = 'block';
+                    } else {
+                        vlanSelectContainer.style.display = 'none';
+                    }
+
+                    actionTitle.textContent = `${draggedValue} will process ${selectedAction}`;
+                    actionModal.show();
+                });
+            });
+
+            // Modal action handlers
+            confirmAction.addEventListener('click', () => {
+                if (selectedAction === 'Change VLAN') {
+                    const selectedVlan = vlanSelect.value;
+                    //alert(`VLAN ${selectedVlan} selected for ${draggedValue}. Proceeding with ${selectedAction}.`);
+                } else {
+                    //alert(`${draggedValue} will be processed with ${selectedAction}.`);
+                }
+                actionModal.hide();
+            });
+
+            cancelAction.addEventListener('click', () => {
+                //alert(`Action cancelled for ${draggedValue}.`);
+                actionModal.hide();
+            });
+        });
+    </script>
+</body>
+</html>

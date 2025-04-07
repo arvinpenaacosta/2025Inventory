@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Container with Tables</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<style>
+    body {
+        padding-top: 20px; /* Adjust this value to create space below the navbar */
+    }
+    
+    .nav-bg {
+        background: url('/statics/assets/netscout.png') no-repeat center center;
+        background-size: cover;
+        height: 50px;  /* Adjust the height to fit your navbar */
+    }
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #343a40; /* Dark background like navbar */
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 14px;
+    }
+</style>
+
+<body class="bg-light">
+
+<!-- ✅ Header -->
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">{{ pageheader }}</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">{{ username }}{{ password }}</li>
+            <li class="nav-item"><a class="nav-link" href="/">Back to Main</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+</header>
+
+<!-- ✅ Below HEADER  -->
+<div class="container mt-5">
+    <label>Search Filter Input</label>
+
+    <div class="tab-content mt-3">
+        <!-- ✅ Main Tab Content -->
+        <form id="dataForm" method="POST" action="/submit">
+            
+            <!-- ✅ Inline Input Fields -->
+            <div class="container mt-3">
+                <div class="row g-2 align-items-center"> 
+                    
+                    <!-- All inputs in a single row -->
+                    <div class="col-md-2">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="stationInput" name="station" placeholder="P-456">
+                            <label for="stationInput">Station</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" id="ipportInput" name="ip_port" placeholder="10.16.0.80">
+                            <label for="ipportInput">IP Port</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="interfaceInput" name="interface" placeholder="G1/0/28">
+                            <label for="interfaceInput">Interface</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="floorInput" name="floor" placeholder="P2">
+                            <label for="floorInput">Floor</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="locationInput" name="info2" placeholder="Washington">
+                            <label for="locationInput">Location</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ Search Button (placed below the input fields) -->
+            <div class="container mt-3">
+                <div class="row mt-3">
+                    <!-- Stacked buttons -->
+                    <div class="col d-flex flex-column gap-2">
+                        <button type="submit" 
+                                class="btn btn-primary form-control">
+                            Search
+                        </button>
+                        <button type="button" 
+                                class="btn btn-warning form-control"
+                                onclick="clearSearch()">Clear Search</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ Buttons in the next row -->
+            <div class="container mt-3">
+                <div class="row g-2">
+                    <div class="col-md-12 d-flex gap-2 justify-content-center">
+                        <a href="#" 
+                           class="btn btn-danger"
+                           onclick="confirmFirst(clearport, 'Clear Port')">
+                           Clear Port
+                        </a>
+
+                        <a href="#" 
+                           class="btn btn-info"
+                           onclick="openVlanModal()">
+                           Change VLAN
+                        </a>
+
+                        <a href="#" 
+                           class="btn btn-info"
+                           onclick="openVoiceModal()">
+                           Change VOICE
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ Results Container -->
+            <div id="resultContainer" class="mt-3"></div>
+        </form>
+
+        <div class="container mt-3">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Scrollable Container -->
+                    <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; border-radius: 5px;">
+                        <table class="table table-striped table-hover mb-0" id="mainTable">
+                            <thead class="table-dark" style="position: sticky; top: 0; z-index: 1;">
+                                <tr>
+                                    <th><input type="checkbox" id="selectAll"></th>
+                                    <th>Station</th>
+                                    <th>Port</th>
+                                    <th>Interface</th>
+                                    <th>Floor</th>
+                                    <th>Info2</th>
+                                </tr>
+                            </thead>
+                            <tbody id="main-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ✅ Total Count Result -->
+        <div class="container mt-3">
+            <div class="row">
+                <div class="col-md-12">
+                    <p class="text-end" id="resultCount">Total Results: 0</p>  <!-- ✅ Display total results -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ✅ Confirmation Modal -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to process the selected rows?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmBtn">Yes, Proceed</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ✅✅✅✅  VLAN Modal -->
+        <div class="modal fade" id="vlanModal" tabindex="-1" aria-labelledby="vlanModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="vlanModalLabel">Change VLAN</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mt-3">
+                    <div class="form-group">
+                        <label for="vlanDropdown">Select VLAN:</label>
+                        <select class="form-select" id="vlanDropdown">
+                            <option value="">Select a VLAN</option>
+                            {% for v in vlan %}
+                                <option value="{{ v.vlan }}">{{ v.vlan }} - {{ v.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Hidden input field to store the selected VLAN -->
+                    <input type="hidden" id="selectedVlan" name="selectedVlan">
+                    <div class="form-group mt-3">
+                        <label for="customInput">Enter Value:</label>
+                        <input type="text" class="form-control" id="customInput" placeholder="Enter value here">
+                    </div>
+                </div>
+                <p class="mt-3">Are you sure you want to change the VLAN for the selected rows?</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="vlanConfirmBtn">Yes, Proceed</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ✅✅✅✅ Voice Modal -->
+        <div class="modal fade" id="voiceModal" tabindex="-1" aria-labelledby="voiceModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="voiceModalLabel">Change Voice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mt-3">
+                    <div class="form-group">
+                        <label for="voiceDropdown">Select Voice:</label>
+                        <select class="form-select" id="voiceDropdown">
+                            <option value="">Select a Voice</option>
+                            {% for v in voice %}
+                                <option value="{{ v.voice }}">{{ v.voice }} - {{ v.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Hidden input field to store the selected Voice -->
+                    <input type="hidden" id="selectedVoice" name="selectedVoice">
+                    <div class="form-group mt-3">
+                        <label for="customInput">Enter Value:</label>
+                        <input type="text" class="form-control" id="customInput" placeholder="Enter value here">
+                    </div>
+                </div>
+                <p class="mt-3">Are you sure you want to change the Voice for the selected rows?</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="voiceConfirmBtn">Yes, Proceed</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- Toast for notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 5">
+  <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto">Notification</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="toastMessage">
+      Message here
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript Code -->
+<script>
+// Initialize modals
+let confirmModal;
+let vlanModal;
+let voiceModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap modals
+    confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    vlanModal = new bootstrap.Modal(document.getElementById('vlanModal'));
+    voiceModal = new bootstrap.Modal(document.getElementById('voiceModal'));
+    
+    // Setup VLAN functionality
+    setupModalFunctionality('vlan');
+    
+    // Setup Voice functionality
+    setupModalFunctionality('voice');
+    
+    // Initialize form submission handler
+    initializeFormHandler();
+    
+    // Initialize checkbox handlers
+    initializeCheckboxHandlers();
+});
+
+// Function to set up modal functionality (reusable for both VLAN and Voice)
+function setupModalFunctionality(type) {
+    const dropdown = document.getElementById(`${type}Dropdown`);
+    const selectedInput = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`);
+    const customInput = document.getElementById(`${type}Modal`).querySelector("#customInput");
+    const confirmBtn = document.getElementById(`${type}ConfirmBtn`);
+    
+    // Initially disable custom input
+    if (customInput) {
+        customInput.disabled = true;
+    }
+    
+    // Handle dropdown change
+    if (dropdown) {
+        dropdown.addEventListener("change", function() {
+            const selectedValue = dropdown.value;
+            console.log(`${type.toUpperCase()} dropdown changed: ${selectedValue}`);
+            
+            if (selectedValue) {
+                // Remove spaces and get the first 3 characters
+                const cleanedValue = selectedValue.replace(/\s/g, '').substring(0, 3);
+                selectedInput.value = cleanedValue;
+                console.log(`Selected ${type.toUpperCase()} (First 3 characters):`, cleanedValue);
+                
+                // Check if the selected value is '000'
+                if (selectedValue === '000') {
+                    // Enable the custom input
+                    customInput.disabled = false;
+                    customInput.focus(); // Optional: focus on the input for better UX
+                } else {
+                    // Disable and clear the custom input for any other selection
+                    customInput.disabled = true;
+                    customInput.value = '';
+                }
+            }
+        });
+    }
+    
+    // Handle confirmation button
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", function() {
+            if (type === 'vlan') {
+                changeVlan();
+                vlanModal.hide();
+            } else if (type === 'voice') {
+                changeVoice();
+                voiceModal.hide();
+            }
+        });
+    }
+}
+
+// Function to initialize form submission handler
+function initializeFormHandler() {
+    document.getElementById('dataForm').onsubmit = function(event) {
+        event.preventDefault();  // Prevent default form submission
+
+        const formData = new FormData(this);
+
+        // Convert FormData to JSON for compatibility with FastAPI
+        const jsonData = {};
+        formData.forEach((value, key) => {
+            jsonData[key] = value;
+        });
+
+        // Send JSON data via Fetch API
+        fetch('/searchdb', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+
+            // Display the total results count
+            const resultCount = document.getElementById("resultCount");     
+            resultCount.textContent = `Total Results: ${data.total_results}`;
+
+            const tableBody = document.getElementById('main-table');
+            tableBody.innerHTML = '';  // Clear previous results
+
+            // Populate table with new results
+            if (data.results.length > 0) {
+                data.results.forEach((row, index) => {
+                    const tr = document.createElement('tr');
+
+                    // Add a checkbox with unique ID
+                    tr.innerHTML = `
+                        <td><input type="checkbox" class="row-checkbox" data-index="${index}"></td>
+                        <td>${row.station}</td>
+                        <td>${row.port}</td>
+                        <td>${row.interface}</td>
+                        <td>${row.floor}</td>
+                        <td>${row.info2}</td>
+                    `;
+
+                    tableBody.appendChild(tr);
+                });
+            } else {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center">No records found.</td></tr>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('❌ Error fetching results.', 'danger');
+        });
+    };
+}
+
+// Function to initialize checkbox handlers
+function initializeCheckboxHandlers() {
+    // Event listener for "Select All" checkbox using event delegation
+    document.addEventListener('change', function(event) {
+        if (event.target.id === 'selectAll') {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = event.target.checked);
+        }
+    });
+}
+
+// Function to handle confirmation dialog
+function confirmFirst(action, actionName) {
+    // Get selected rows
+    const selectedRows = getSelectedRows();
+    
+    if (selectedRows.length === 0) {
+        showToast('⚠️ No rows selected.', 'warning');
+        return;
+    }
+    
+    // Update the modal title and content
+    document.getElementById("confirmModalLabel").textContent = `Confirm ${actionName}`;
+    document.getElementById("confirmModal").querySelector(".modal-body").textContent = 
+        `Are you sure you want to ${actionName.toLowerCase()} for ${selectedRows.length} selected row(s)?`;
+
+    // Set the action to be executed on confirmation
+    document.getElementById("confirmBtn").onclick = function() {
+        action();  // Execute the provided action
+        confirmModal.hide();  // Hide the modal after confirming
+    };
+
+    // Show the modal
+    confirmModal.show();
+}
+
+// Function to open VLAN modal
+function openVlanModal() {
+    openModal('vlan');
+}
+
+// Function to open VOICE modal
+function openVoiceModal() {
+    openModal('voice');
+}
+
+// Generic function to open modal
+function openModal(type) {
+    const selectedRows = getSelectedRows();
+    
+    if (selectedRows.length === 0) {
+        showToast('⚠️ No rows selected.', 'warning');
+        return;
+    }
+    
+    // Reset the form fields
+    document.getElementById(`${type}Dropdown`).value = "";
+    document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`).value = "";
+    document.getElementById(`${type}Modal`).querySelector("#customInput").value = "";
+    
+    // Show the modal
+    if (type === 'vlan') {
+        vlanModal.show();
+    } else if (type === 'voice') {
+        voiceModal.show();
+    }
+}
+
+// Function to change VLAN
+function changeVlan() {
+    processChange('vlan', '/change_vlan');
+}
+
+// Function to change Voice
+function changeVoice() {
+    processChange('voice', '/change_voice');
+}
+
+// Generic function to process changes (VLAN or Voice)
+function processChange(type, endpoint) {
+    const selectedRows = getSelectedRows();
+    const selectedValue = document.getElementById(`selected${type.charAt(0).toUpperCase() + type.slice(1)}`).value;
+    const customValue = document.getElementById(`${type}Modal`).querySelector("#customInput").value;
+    
+    if (!selectedValue) {
+        showToast(`⚠️ Please select a ${type.toUpperCase()}.`, 'warning');
+        return;
+    }
+    
+    console.log(`Changing ${type.toUpperCase()} for selected rows:`, selectedRows);
+    console.log(`${type.toUpperCase()}:`, selectedValue, "Custom value:", customValue);
+    
+    // Get username and password from the DOM
+    const username = "{{ username }}";
+    const password = "{{ password }}";
+    
+    // Prepare request body
+    const requestBody = {
+        rows: selectedRows,
+        username: username,
+        password: password
+    };
+    
+    // Add type-specific field
+    requestBody[type] = selectedValue;
+    requestBody.customValue = customValue;
+    
+    // Send the selected rows and value to the server
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Server Response:', data);
+        showToast(`✅ ${type.toUpperCase()} changed successfully: ${data.message}`, 'success');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast(`❌ Failed to change ${type.toUpperCase()}.`, 'danger');
+    });
+}
+
+// Function to clear port
+function clearport() {
+    const selectedRows = getSelectedRows();
+    
+    console.log("Processing selected rows:", selectedRows);
+    
+    // Get username and password from the DOM
+    const username = "{{ username }}";
+    const password = "{{ password }}";
+    
+    // Send the selected rows to the server
+    fetch('/clearport', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            rows: selectedRows,
+            username: username,
+            password: password
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Server Response:', data);
+        showToast(`✅ Ports cleared successfully: ${data.message}`, 'success');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('❌ Failed to clear ports.', 'danger');
+    });
+}
+
+// Function to show toast notification
+function showToast(message, type) {
+    const toastEl = document.getElementById('liveToast');
+    const toastBody = document.getElementById('toastMessage');
+    
+    // Set message and color based on type
+    toastBody.textContent = message;
+    toastEl.className = `toast bg-${type} text-white`;
+    
+    // Show the toast
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+}
+
+// Function to clear search fields
+function clearSearch() {
+    // Select all input fields within the form
+    const form = document.getElementById("dataForm");
+    const inputs = form.querySelectorAll("input");
+    
+    // Loop through each input and clear its value
+    inputs.forEach(input => {
+        input.value = '';
+    });
+    
+    console.log("Form cleared.");
+}
+
+// Function to get selected rows
+function getSelectedRows() {
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    const selectedRows = [];
+
+    checkboxes.forEach(cb => {
+        const row = cb.closest('tr');  // Get the closest row element
+        
+        // Extract row data
+        const rowData = {
+            station: row.children[1].textContent,
+            port: row.children[2].textContent,
+            interface: row.children[3].textContent,
+            floor: row.children[4].textContent,
+            info2: row.children[5].textContent
+        };
+
+        selectedRows.push(rowData);
+    });
+
+    console.log('Selected Rows:', selectedRows);
+    return selectedRows;
+}
+</script>
+</body>
+</html>

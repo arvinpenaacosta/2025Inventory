@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Container with Tables</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+
+    <!-- Main Tab Container -->
+    <ul class="nav nav-tabs" id="mainTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main">Main Tab</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="task-tab" data-bs-toggle="tab" data-bs-target="#task">Task Tab</button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- ✅ Main Tab Content -->
+        <div class="tab-pane fade show active" id="main">
+
+            <!-- input box -->
+            <div class="container mt-3">
+                <div class="row">
+
+                    <div class="col-md-4">
+                        <div class="form-floating mb-1">
+                            <input type="email" class="form-control" id="floatingInput1" placeholder="name@example.com">
+                            <label for="floatingInput1">Station</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-floating mb-1">
+                            <input type="email" class="form-control" id="floatingInput1" placeholder="name@example.com">
+                            <label for="floatingInput1">IP Port</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-floating mb-1">
+                            <input type="email" class="form-control" id="floatingInput2" placeholder="name@example.com">
+                            <label for="floatingInput2">Interface</label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="container mt-3">
+                <div class="row">
+
+                    <div class="col-md-4">
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="floatingInput1" placeholder="name@example.com">
+                            <label for="floatingInput1">Floor</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="floatingInput1" placeholder="name@example.com">
+                            <label for="floatingInput1">Location</label>
+                        </div>
+                    </div>
+
+                    <!-- Buttons with matched height -->
+                    <div class="col-md-4 d-flex gap-2">
+                        <button class="btn btn-primary w-100" style="height: 58px;" onclick="processSearch()">Search</button>
+                        <button class="btn btn-success w-100" style="height: 58px;" onclick="processRows()">Process</button>
+                    </div>
+
+                </div>
+            </div>
+            <!-- input box -->
+
+<div class="container mt-3">
+    <div class="row">
+        <div class="col-12">
+            <!-- Scrollable Container -->
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; border-radius: 5px;">
+                <table class="table table-striped table-hover mb-0" id="mainTable">
+                    <thead class="table-dark" style="position: sticky; top: 0; z-index: 1;">
+                        <tr>
+                            <th><input type="checkbox" id="selectAll"></th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="main-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+            <!-- Pagination Controls -->
+            <div class="container mt-3">
+                <div class="row align-items-center">
+                    <!-- Rows Per Page -->
+                    <div class="col-md-6 d-flex align-items-center">
+                        <label for="rowsPerPage" class="form-label me-2">Rows per page:</label>
+                        <select id="rowsPerPage" class="form-select w-auto">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 d-flex justify-content-end align-items-center">
+                        <span id="paginationInfo" class="me-3">Showing 1-10 of 12 entries</span>
+                        <nav aria-label="Table pagination">
+                            <ul class="pagination m-0" id="pagination">
+                                <li class="page-item disabled" id="prevPage">
+                                    <a class="page-link" href="#" tabindex="-1">Previous</a>
+                                </li>
+                                <!-- Page buttons will be added dynamically -->
+                                <li class="page-item" id="nextPage">
+                                    <a class="page-link" href="#">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ✅ Task Tab Content -->
+        <div class="tab-pane fade" id="task">
+            <div class="row">
+
+                <!-- Left Container -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5>Task Table</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered" id="taskTable">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="selectAllTask"></th>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <!-- Copied rows will be added here -->
+                                </tbody>
+                            </table>
+                            <button class="btn btn-danger mt-2" onclick="clearTaskTable()">Clear Table</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Container -->
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5>Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="nav nav-tabs" id="subTab" role="tablist">
+                                <li class="nav-item">
+                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#clearPort">Clear Port</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#clearSticky">Clear Sticky</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#changeVlan">Change VLAN</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#changeVoice">Change Voice</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#showVlanVoice">Show VLAN</button>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content mt-3">
+                                <div class="tab-pane fade show active" id="clearPort">
+                                    <button class="btn btn-warning" onclick="showSelectedRows()">Show Selected Rows</button>
+                                </div>
+
+                                <div class="tab-pane fade" id="clearSticky">
+                                    <button class="btn btn-warning" onclick="showSelectedRows()">Show Selected Rows</button>
+                                </div>
+
+                                <div class="tab-pane fade" id="changeVlan">
+                                    <select class="form-select w-auto" id="vlanSelect" onchange="toggleInput('vlanSelect', 'vlanInput')">
+                                        <option value="10">VLAN 10</option>
+                                        <option value="20">VLAN 20</option>
+                                        <option value="custom">Custom</option>
+                                    </select>
+                                    <input type="text" id="vlanInput" class="form-control mt-2" placeholder="Custom VLAN" disabled>
+                                    <button class="btn btn-success mt-2" onclick="showSelectedRows()">Apply VLAN</button>
+                                </div>
+
+                                <div class="tab-pane fade" id="changeVoice">
+                                    <select class="form-select w-auto" id="voiceSelect" onchange="toggleInput('voiceSelect', 'voiceInput')">
+                                        <option value="100">Voice 100</option>
+                                        <option value="200">Voice 200</option>
+                                        <option value="custom">Custom</option>
+                                    </select>
+                                    <input type="text" id="voiceInput" class="form-control mt-2" placeholder="Custom Voice" disabled>
+                                    <button class="btn btn-success mt-2" onclick="showSelectedRows()">Apply Voice</button>
+                                </div>
+
+                                <div class="tab-pane fade" id="showVlanVoice">
+                                    <button class="btn btn-info" onclick="showSelectedRows()">Show VLAN/Voice</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- End of Right Container -->
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const mainData = [
+        { id: 1, name: "Device A", details: "Details A" },
+        { id: 2, name: "Device B", details: "Details B" },
+        { id: 3, name: "Device C", details: "Details C" },
+        { id: 4, name: "Device 1A", details: "Details 1A" },
+        { id: 5, name: "Device 1B", details: "Details 1B" },
+        { id: 6, name: "Device 1C", details: "Details 1C" },
+        { id: 7, name: "Device 2A", details: "Details 2A" },
+        { id: 8, name: "Device 2B", details: "Details 2B" },
+        { id: 9, name: "Device 2C", details: "Details 2C" },
+        { id: 10, name: "Device 3A", details: "Details 3A" },
+        { id: 11, name: "Device 3B", details: "Details 3B" },
+        { id: 12, name: "Device 3C", details: "Details 3C" }
+    ];
+    
+    // Pagination variables
+    let currentPage = 1;
+    let rowsPerPage = 10;
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set up event listeners
+        document.getElementById('rowsPerPage').addEventListener('change', function() {
+            rowsPerPage = parseInt(this.value);
+            currentPage = 1; // Reset to first page
+            renderTable();
+            renderPagination();
+        });
+        
+        // Initialize pagination
+        renderTable();
+        renderPagination();
+        
+        // Set up toggle input function
+        window.toggleInput = function(selectId, inputId) {
+            const select = document.getElementById(selectId);
+            const input = document.getElementById(inputId);
+            input.disabled = select.value !== 'custom';
+            if (select.value !== 'custom') {
+                input.value = '';
+            }
+        };
+    });
+    
+    // Calculate total pages
+    function getTotalPages() {
+        return Math.ceil(mainData.length / rowsPerPage);
+    }
+    
+    // Render pagination controls
+    function renderPagination() {
+        const totalPages = getTotalPages();
+        const paginationContainer = document.getElementById('pagination');
+        const pageItems = Array.from(paginationContainer.querySelectorAll('.page-item'));
+        
+        // Keep the previous and next buttons
+        const prevPageItem = pageItems.find(item => item.id === 'prevPage');
+        const nextPageItem = pageItems.find(item => item.id === 'nextPage');
+        
+        // Clear existing page number buttons
+        paginationContainer.innerHTML = '';
+        paginationContainer.appendChild(prevPageItem);
+        
+        // Add page number buttons
+        for (let i = 1; i <= totalPages; i++) {
+            const pageItem = document.createElement('li');
+            pageItem.classList.add('page-item');
+            if (i === currentPage) {
+                pageItem.classList.add('active');
+            }
+            
+            const pageLink = document.createElement('a');
+            pageLink.classList.add('page-link');
+            pageLink.href = '#';
+            pageLink.textContent = i;
+            pageLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentPage = i;
+                renderTable();
+                renderPagination();
+            });
+            
+            pageItem.appendChild(pageLink);
+            paginationContainer.appendChild(pageItem);
+        }
+        
+        paginationContainer.appendChild(nextPageItem);
+        
+        // Update previous/next button states
+        prevPageItem.classList.toggle('disabled', currentPage === 1);
+        nextPageItem.classList.toggle('disabled', currentPage === totalPages);
+        
+        // Set up event listeners for prev/next buttons
+        prevPageItem.querySelector('.page-link').addEventListener('click', function(e) {
+            if (currentPage > 1) {
+                e.preventDefault();
+                currentPage--;
+                renderTable();
+                renderPagination();
+            } else {
+                e.preventDefault(); // Prevent navigation when disabled
+            }
+        });
+        
+        nextPageItem.querySelector('.page-link').addEventListener('click', function(e) {
+            if (currentPage < totalPages) {
+                e.preventDefault();
+                currentPage++;
+                renderTable();
+                renderPagination();
+            } else {
+                e.preventDefault(); // Prevent navigation when disabled
+            }
+        });
+        
+        // Update pagination info text
+        const startIndex = (currentPage - 1) * rowsPerPage + 1;
+        const endIndex = Math.min(startIndex + rowsPerPage - 1, mainData.length);
+        document.getElementById('paginationInfo').textContent = 
+            `Showing ${startIndex}-${endIndex} of ${mainData.length} entries`;
+    }
+
+    // Render Main Tab rows with pagination
+    function renderTable() {
+        const mainTable = document.getElementById("main-table");
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = Math.min(startIndex + rowsPerPage, mainData.length);
+        const currentPageData = mainData.slice(startIndex, endIndex);
+        
+        mainTable.innerHTML = currentPageData.map((row, index) => `
+            <tr>
+                <td><input type="checkbox" class="row-checkbox" data-index="${startIndex + index}"></td>
+                <td>${row.id}</td>
+                <td>${row.name}</td>
+                <td>${row.details}</td>
+            </tr>
+        `).join("");
+        
+        // Reset "Select All" checkbox
+        document.getElementById('selectAll').checked = false;
+    }
+
+    function processRows() {
+        const mainTable = document.querySelectorAll('#mainTable tbody tr');
+        const taskTableBody = document.querySelector('#taskTable tbody');
+
+        mainTable.forEach(row => {
+            const checkbox = row.querySelector('.row-checkbox');
+            if (checkbox.checked) {
+                const clone = row.cloneNode(true);
+                clone.querySelector('.row-checkbox').checked = false;
+                taskTableBody.appendChild(clone);
+                checkbox.checked = false;
+            }
+        });
+
+        document.getElementById('task-tab').click();
+        updateSelectAllTaskCheckbox();
+    }
+
+    function clearTaskTable() {
+        document.querySelector('#taskTable tbody').innerHTML = '';
+        document.getElementById('selectAllTask').checked = false; // Reset "Select All" in taskTable
+        document.getElementById('main-tab').click();
+    }
+
+    function showSelectedRows() {
+        const selectedRows = Array.from(document.querySelectorAll('#taskTable tbody tr'))
+            .filter(row => row.querySelector('.row-checkbox').checked)
+            .map(row => row.cells[1].textContent + " | " + row.cells[2].textContent + " | " + row.cells[3].textContent)
+            .join("\n") || "No rows selected.";
+
+        alert(selectedRows);
+    }
+    
+    function updateSelectAllTaskCheckbox() {
+        const checkboxes = document.querySelectorAll('#taskTable tbody .row-checkbox');
+        const selectAll = document.getElementById('selectAllTask');
+        if (checkboxes.length > 0) {
+            selectAll.checked = [...checkboxes].every(checkbox => checkbox.checked);
+        } else {
+            selectAll.checked = false;
+        }
+    }
+
+    // "Select All" functionality for both tables
+    document.addEventListener('click', function(event) {
+        if (event.target.id === 'selectAll') {
+            // Main Table: Select/Deselect all rows
+            const isChecked = event.target.checked;
+            document.querySelectorAll('#mainTable tbody .row-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        } else if (event.target.id === 'selectAllTask') {
+            // Task Table: Select/Deselect all rows
+            const isChecked = event.target.checked;
+            document.querySelectorAll('#taskTable tbody .row-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+        }
+    });
+
+    // Auto-toggle "Select All" if any row is manually checked/unchecked
+    document.addEventListener('change', function(event) {
+        if (event.target.classList.contains('row-checkbox')) {
+            if (event.target.closest('#mainTable')) {
+                updateSelectAllCheckbox('mainTable', 'selectAll');
+            } else if (event.target.closest('#taskTable')) {
+                updateSelectAllCheckbox('taskTable', 'selectAllTask');
+            }
+        }
+    });
+
+    function updateSelectAllCheckbox(tableId, selectAllId) {
+        const checkboxes = document.querySelectorAll(`#${tableId} tbody .row-checkbox`);
+        const selectAll = document.getElementById(selectAllId);
+        selectAll.checked = checkboxes.length > 0 && [...checkboxes].every(checkbox => checkbox.checked);
+    }
+</script>
+
+
+</body>
+</html>

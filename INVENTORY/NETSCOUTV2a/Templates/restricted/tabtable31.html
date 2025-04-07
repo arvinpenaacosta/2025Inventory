@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Container with Tables</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+
+<div class="container mx-auto bg-white p-6 rounded-lg shadow-lg">
+    <h2 class="text-center text-2xl font-bold mb-6">Tab Container with Tables</h2>
+
+    <!-- Main Tab Container -->
+    <div class="flex border-b mb-4">
+        <button class="p-2 px-4 bg-blue-500 text-white rounded-t-lg" onclick="showTab('main')">Main Tab</button>
+        <button class="p-2 px-4 bg-gray-300 rounded-t-lg" onclick="showTab('task')">Task Tab</button>
+    </div>
+
+    <div id="main-tab" class="tab-content">
+        <!-- Main Tab -->
+        <div class="flex justify-between items-center mb-4">
+            <label for="rowsPerPage" class="text-gray-600">Rows per page:</label>
+            <select id="rowsPerPage" class="border p-2 rounded">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+                <option value="25">25</option>
+            </select>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse border border-gray-300">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="p-3"><input type="checkbox" id="selectAll"></th>
+                        <th class="p-3">ID</th>
+                        <th class="p-3">Name</th>
+                        <th class="p-3">Details</th>
+                    </tr>
+                </thead>
+                <tbody id="mainTable" class="bg-white">
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3"><input type="checkbox" class="row-checkbox"></td>
+                        <td class="p-3">1</td>
+                        <td class="p-3">Item A</td>
+                        <td class="p-3">Detail 1</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3"><input type="checkbox" class="row-checkbox"></td>
+                        <td class="p-3">2</td>
+                        <td class="p-3">Item B</td>
+                        <td class="p-3">Detail 2</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3"><input type="checkbox" class="row-checkbox"></td>
+                        <td class="p-3">3</td>
+                        <td class="p-3">Item C</td>
+                        <td class="p-3">Detail 3</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button onclick="processRows()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Process</button>
+    </div>
+
+    <!-- Task Tab -->
+    <div id="task-tab" class="tab-content hidden">
+        <div class="flex gap-6">
+            <!-- Left Container -->
+            <div class="w-2/3">
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h5 class="text-lg font-bold mb-2">Task Table</h5>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-300">
+                            <thead class="bg-gray-200">
+                                <tr>
+                                    <th class="p-3"><input type="checkbox" id="selectAllTask"></th>
+                                    <th class="p-3">ID</th>
+                                    <th class="p-3">Name</th>
+                                    <th class="p-3">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="taskTable" class="bg-white">
+                                <!-- Copied rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button onclick="clearTaskTable()" class="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Clear Table</button>
+                </div>
+            </div>
+
+            <!-- Right Container -->
+            <div class="w-1/3">
+                <div class="bg-white p-4 rounded-lg shadow-md">
+                    <h5 class="text-lg font-bold mb-4">Actions</h5>
+                    
+                    <button class="block w-full bg-yellow-500 text-white p-2 mb-2 rounded hover:bg-yellow-600">Clear Port</button>
+                    <button class="block w-full bg-green-500 text-white p-2 mb-2 rounded hover:bg-green-600">Clear Sticky</button>
+
+                    <h5 class="text-lg font-bold mt-4">VLAN/Voice</h5>
+                    <input type="number" placeholder="Custom VLAN" class="border p-2 w-full rounded mb-2">
+                    <input type="number" placeholder="Custom Voice" class="border p-2 w-full rounded mb-2">
+                    <button class="block w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Apply VLAN</button>
+                    <button class="block w-full bg-purple-500 text-white p-2 mt-2 rounded hover:bg-purple-600">Apply Voice</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById(`${tab}-tab`).classList.remove('hidden');
+    }
+
+    function processRows() {
+        const mainTable = document.querySelectorAll('#mainTable tbody tr');
+        const taskTableBody = document.querySelector('#taskTable');
+
+        mainTable.forEach(row => {
+            const checkbox = row.querySelector('.row-checkbox');
+            if (checkbox.checked) {
+                const clone = row.cloneNode(true);
+                clone.querySelector('.row-checkbox').checked = false;
+                taskTableBody.appendChild(clone);
+                checkbox.checked = false;
+            }
+        });
+
+        showTab('task');
+        updateSelectAllCheckbox('taskTable', 'selectAllTask');
+    }
+
+    function clearTaskTable() {
+        document.querySelector('#taskTable').innerHTML = '';
+        document.getElementById('selectAllTask').checked = false;
+    }
+
+    function updateSelectAllCheckbox(tableId, selectAllId) {
+        const checkboxes = document.querySelectorAll(`#${tableId} tbody .row-checkbox`);
+        const selectAll = document.getElementById(selectAllId);
+        selectAll.checked = checkboxes.length > 0 && [...checkboxes].every(checkbox => checkbox.checked);
+    }
+
+    document.addEventListener('change', (event) => {
+        if (event.target.id === 'selectAll') {
+            document.querySelectorAll('#mainTable tbody .row-checkbox')
+                .forEach(checkbox => checkbox.checked = event.target.checked);
+        }
+
+        if (event.target.id === 'selectAllTask') {
+            document.querySelectorAll('#taskTable .row-checkbox')
+                .forEach(checkbox => checkbox.checked = event.target.checked);
+        }
+    });
+</script>
+
+</body>
+</html>

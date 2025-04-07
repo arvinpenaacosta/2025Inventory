@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAROUSEL V2 with Swipe</title>
+  
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">   
+
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to bottom, #333, #555);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .container-V {
+        width: 300px;
+        height: 80%;
+        max-height: 400px;
+        margin: auto;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .carousel-V {
+        position: relative;
+        width: 300px;
+        height: 400px;
+        perspective: 500px;
+      }
+
+      .carousel-inner-V {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform-style: preserve-3d;
+        transition: transform 0.5s ease-in-out;
+      }
+
+      .card-V {
+        position: absolute;
+        width: 250px;
+        height: 50px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        transform-origin: center;
+        transition: box-shadow 0.3s ease, transform 0.3s ease, border 0.3s ease;
+        background: transparent;
+        border: 2px solid transparent;
+        color: rgb(98, 107, 98);
+        user-select: none;
+      }
+
+      .card-V.focus-V {
+        box-shadow: 0 0 20px 5px rgba(0, 255, 0, 0.5);
+        border-color: lime;
+        transform: scale(1.1);
+        color: lime;
+      }
+
+      .todo-container {
+        margin-bottom: 20px;
+        text-align: center;
+        color: white;
+      }
+
+      .input-container {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+      }
+
+      input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #cccccc;
+        border-radius: 4px;
+      }
+
+      button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #218838;
+      }
+    </style>
+
+
+    <!-- FLOOR -->
+    <style>
+        .container-X {
+            height: 60px;
+            width: 300px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .carousel-X {
+            position: relative;
+            width: 400px;
+            height: 90px;
+            perspective: 1000px;
+        }
+
+        .carousel-inner-X {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .card-X {
+            position: absolute;
+            width: 80px;
+            height: 50px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            transform-origin: center;
+            transition: box-shadow 0.3s ease, transform 0.3s ease, border 0.3s ease;
+            background: transparent;
+            border: 2px solid transparent;
+            color: rgba(61, 65, 61, 0.473);
+        }
+
+        .card-X.focus-X {
+            box-shadow: 0 0 20px 5px rgba(0, 255, 234, 0.662);
+            border-color: rgb(0, 255, 242);
+            transform: scale(1.1);
+            color: lime;
+        }
+    </style>
+
+    <!-- PIN -->
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: black;
+            color: lime;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+    
+        /* Container and Layout */
+        .container-Pin { /* ok */
+            width: 320px; /* background border */
+            height: 70px; /* background border */
+            background: rgba(239, 241, 239, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+            width: 180px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        
+        /* Input Styles */
+        .outside-inputPin {
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 20px;
+            padding: 5px;
+            border: 2px solid lime;
+            border-radius: 5px;
+            background: black;
+            color: lime;
+            height: 50px;
+            box-sizing: border-box;
+            text-align: center;
+            padding-right: 40px;
+        }
+        
+        .manPin-button {
+            position: absolute;
+            right: 0;
+            top: 25px;
+            transform: translateY(-50%);
+            font-size: 25px;
+            color: lime;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding-right: 15px;
+        }
+        
+        .bi-search {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            border: 2px solid lime;
+            border-radius: 5px;
+            background: black;
+            color: lime;
+            cursor: pointer;
+            font-size: 25px;
+        }
+    
+        /* Modal Styles */
+        .modalPin { /* ok */
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        
+        .modalPin.active { /* ok */
+            display: flex;
+        }
+        
+        .modalPin-content { /* ok */
+            width: 230px;
+            height:450px;
+            background: rgba(239, 241, 239, 0.1);
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            position: relative;
+        }
+        
+        .modalPin-content .container-Pin {
+            width: 100%;
+            background: none;
+            box-shadow: none;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        /* Card and Button Styles */
+        .card-pin, .action-button {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            background: rgba(226, 237, 227, 0.231);
+            border: 2px solid lime;
+            color: lime;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+        
+        .card-pin:active, .action-button:active {
+            transform: scale(0.95);
+            background: #eeff00;
+            color: black;
+        }
+        
+        .action-button {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        /* Output Styles */
+        .output {
+            height:30px;
+            grid-column: span 3;
+            text-align: center;
+            background: black;
+            border: 2px solid lime;
+            border-radius: 10px;
+            padding: 10px;
+            color: lime;
+            font-size: 24px;
+        }
+        
+        /* Modal Button Styles */
+        .modalPin-button {
+            font-size: 16px;
+            padding: 10px 20px;
+            background: lime;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: black;
+        }
+        
+        .modalPin-button:hover {
+            background: darkgreen;
+            color: white;
+        }
+
+        #pin-display {
+            font-size: 2em;
+            text-align: center;
+            color: #ff00ff; /* Matches the color in your image */
+            border: 2px solid #00ff00; /* Matches the green border in your image */
+            padding: 0; /* Remove extra padding */
+            line-height: 1.5em; /* Adjust this value to position the text vertically */
+            position: relative;
+            height: 50px; /* Adjust the height as needed */
+            display: flex;
+            align-items: flex-start; /* Align content to the top */
+            justify-content: center; /* Center text horizontally */
+        }
+    </style>
+
+
+
+
+
+
+    <!-- ALL CONTAINER -->
+    <style>
+          .stack-container {
+              display: flex;
+              margin-top:-100px;
+              flex-direction: column;
+              gap: 10px; /* Space between stacked items */
+              align-items: center; /* Center the stacked items */
+              justify-content: center; /* Align vertically centered */
+          }
+    </style>
+
+
+</head>
+<body>
+<div class="stack-container">
+
+  <!-- manual--> 
+  <div class="todo-container">
+    <div class="input-container">
+      <input type="text" id="todo-input" placeholder="Enter card text..." />
+      <button id="add-btn">Add</button>
+      <button id="add-btn2">Add2</button>
+    </div>
+  </div>
+
+
+  <!-- FLOOR --> 
+  <div class="container-X">
+      <div class="carousel-X" id="carousel-container-X">
+        <div class="carousel-inner-X" id="carousel-X">
+          <div class="card-X">UG</div>
+          <div class="card-X">5</div>
+          <div class="card-X">6</div>
+          <div class="card-X">7</div>
+          <div class="card-X">8</div>
+          <div class="card-X">9</div>
+          <div class="card-X">10</div>
+          <div class="card-X">11</div>
+        </div>
+      </div>
+  </div>
+
+  <!-- Port --> 
+  <div class="container-Pin">
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          class="outside-inputPin" 
+          id="pin-input" 
+          placeholder="Enter Port">
+        
+        <button 
+          class="manPin-button" 
+          id="open-modalPin">
+          <i class="bi bi-calculator-fill"></i>
+        </button>
+      </div>
+      <button 
+        class="bi bi-search" 
+        id="search-Pin">
+      </button>
+  </div>
+    
+  <!-- Port Modal --> 
+  <div class="modalPin" id="PIN-modal">
+      <div class="modalPin-content">
+        <div class="container-Pin">
+          <div class="output" id="pin-display"></div>
+          <div class="card-pin" data-value="1">1</div>
+          <div class="card-pin" data-value="2">2</div>
+          <div class="card-pin" data-value="3">3</div>
+          <div class="card-pin" data-value="4">4</div>
+          <div class="card-pin" data-value="5">5</div>
+          <div class="card-pin" data-value="6">6</div>
+          <div class="card-pin" data-value="7">7</div>
+          <div class="card-pin" data-value="8">8</div>
+          <div class="card-pin" data-value="9">9</div>
+          <div class="card-pin" data-value="0">0</div>
+  
+          <button class="action-button" id="clearPin-button">Clear</button>
+          <button class="action-button" id="submitPin-button">Go</button>
+        </div>
+      </div>
+  </div>
+    
+
+
+  <!-- QUERY RESULT -->
+  <div class="container-V">
+    <div class="carousel-V" id="carousel-container-V">
+      <div class="carousel-inner-V" id="carousel-V">
+        
+        <!-- Placeholder for dynamically added cards -->
+
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+ <!-- SCRIPTS -->
+
+  <!-- FLOOR -->
+  <script>
+      const carouselX = document.getElementById('carousel-X');
+      const carouselContainerX = document.getElementById('carousel-container-X');
+      const cardsX = document.querySelectorAll('.card-X');
+      const totalCardsX = cardsX.length;
+      const angleStepX = 360 / totalCardsX;
+      let currentAngleX = 0;
+      let currentIndexX = 0;
+
+      let startX = 0;
+      let endX = 0;
+      let isDraggingX = false;
+
+      // Arrange cards in a circular horizontal layout
+      cardsX.forEach((cardX, index) => {
+      const angle = index * angleStepX;
+      cardX.style.transform = `rotateY(${angle}deg) translateZ(120px)`;
+      });
+
+      // Update focus card
+      function updateFocusX() {
+      cardsX.forEach((cardX, index) => {
+          if (index === currentIndexX) {
+          cardX.classList.add('focus-X');
+          } else {
+          cardX.classList.remove('focus-X');
+          }
+      });
+      }
+
+      // Handle swipe gestures and mouse drag
+      function handleSwipeOrDragX() {
+      const swipeDistanceX = endX - startX;
+
+      if (swipeDistanceX > 50) {
+          // Swipe or drag right
+          currentAngleX += angleStepX;
+          currentIndexX = (currentIndexX - 1 + totalCardsX) % totalCardsX;
+      } else if (swipeDistanceX < -50) {
+          // Swipe or drag left
+          currentAngleX -= angleStepX;
+          currentIndexX = (currentIndexX + 1) % totalCardsX;
+      }
+
+      carouselX.style.transform = `rotateY(${currentAngleX}deg)`;
+      updateFocusX();
+      }
+
+      // Touch event listeners
+      carouselContainerX.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      });
+
+      carouselContainerX.addEventListener('touchmove', (e) => {
+      endX = e.touches[0].clientX;
+      });
+
+      carouselContainerX.addEventListener('touchend', () => {
+      handleSwipeOrDragX();
+      });
+
+      // Mouse drag event listeners
+      carouselContainerX.addEventListener('mousedown', (e) => {
+      isDraggingX = true;
+      startX = e.clientX;
+      });
+
+      carouselContainerX.addEventListener('mousemove', (e) => {
+      if (isDraggingX) {
+          endX = e.clientX;
+      }
+      });
+
+      carouselContainerX.addEventListener('mouseup', () => {
+      if (isDraggingX) {
+          isDraggingX = false;
+          handleSwipeOrDragX();
+      }
+      });
+
+      carouselContainerX.addEventListener('mouseleave', () => {
+      if (isDraggingX) {
+          isDraggingX = false;
+      }
+      });
+
+      // Mouse wheel event for desktop scrolling, only within container-X
+      carouselContainerX.addEventListener('wheel', (e) => {
+      // Check if mouse is within the container-X bounds
+      const rect = carouselContainerX.getBoundingClientRect();
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      if (mouseX >= rect.left && mouseX <= rect.right && mouseY >= rect.top && mouseY <= rect.bottom) {
+          e.preventDefault();
+          if (e.deltaY > 0) {
+          // Scroll right
+          currentAngleX -= angleStepX;
+          currentIndexX = (currentIndexX + 1) % totalCardsX;
+          } else if (e.deltaY < 0) {
+          // Scroll left
+          currentAngleX += angleStepX;
+          currentIndexX = (currentIndexX - 1 + totalCardsX) % totalCardsX;
+          }
+
+          carouselX.style.transform = `rotateY(${currentAngleX}deg)`;
+          updateFocusX();
+      }
+      }, { passive: false });
+
+      // Set initial focus
+      updateFocusX();
+  </script>
+
+
+    <!-- PIN -->
+    <script>
+        // Get the search button element
+        const searchPinButton = document.getElementById('search-Pin');
+
+
+        const pinDisplay = document.getElementById('pin-display');
+        const pinInput = document.getElementById('pin-input');
+        const clearPinButton = document.getElementById('clearPin-button');
+        const submitPinButton = document.getElementById('submitPin-button');
+        const openmodalPinButton = document.getElementById('open-modalPin');
+        const modalPin = document.getElementById('PIN-modal');
+        let pin = '';
+
+        // Handle number button clicks
+        document.querySelectorAll('.card-pin').forEach(card => {
+            card.addEventListener('click', () => {
+                const value = card.dataset.value;
+                pin += value;
+                pinDisplay.textContent = pin; // Display the entered value
+                });
+            });
+
+            // Clear button functionality
+            clearPinButton.addEventListener('click', () => {
+            pin = '';
+            pinDisplay.textContent = '';
+        });
+
+      // GO Pin Button Clicked 
+        submitPinButton.addEventListener('click', () => {
+            alert(`keypad Go Clicked`);
+            pinInput.value = pin; // Pass value to the input field
+            pin = '';
+            pinDisplay.textContent = '';
+
+            const focusedCardX = document.querySelector('.card-X.focus-X');
+            const focusedValueX = focusedCardX ? focusedCardX.textContent : 'No card selected';
+
+            // Get the current value in the input field
+            const currentInputValue = pinInput.value;
+
+            modalPin.classList.remove('active'); // Close modalPin
+
+            // Create an alert with the information
+            alert(`Focused Horizontal Carousel Value: ${focusedValueX}\nCurrent Input Value: ${currentInputValue}`);
+
+            sendFindPortRequest(focusedValueX, currentInputValue);
+        });
+
+
+        // Open modalPin button
+        openmodalPinButton.addEventListener('click', () => {
+            modalPin.classList.add('active');
+        });
+
+        // Close modalPin on clicking outside
+        modalPin.addEventListener('click', (e) => {
+            if (e.target === modalPin) {
+                modalPin.classList.remove('active');
+            }
+        });
+
+        // Allow manual editing in input field
+        pinInput.addEventListener('input', (e) => {
+        pin = e.target.value;
+        });
+
+        // Add global keydown event listener
+        document.addEventListener('keydown', (e) => {
+        // Check if the Escape key is pressed
+        if (e.key === 'Escape') {
+        // Clear the input field and PIN display
+        pinInput.value = '';
+        pin = '';
+        pinDisplay.textContent = '';
+        }
+
+        // Check if the Enter key is pressed
+        if (e.key === 'Enter') {
+        // Alert the current input value
+        if (pinInput.value) {
+            alert('Entered Value: ' + pinInput.value);
+        }
+        }
+        });
+
+
+      // Magnifying Glass CLicked 
+        searchPinButton.addEventListener('click', async () => {
+            alert(`Magnifiying Glass Clicked`);
+            // Find the currently focused horizontal carousel card
+            const focusedCardX = document.querySelector('.card-X.focus-X');
+            const focusedValueX = focusedCardX ? focusedCardX.textContent : 'No card selected';
+
+            // Get the current value in the input field
+            const currentInputValue = pinInput.value;
+            
+            // Create an alert with the information
+            alert(`Focused Horizontal Carousel Value: ${focusedValueX}\nCurrent Input Value: ${currentInputValue}`);
+            
+            
+            sendFindPortRequest(focusedValueX, currentInputValue);
+        });
+
+
+
+    
+
+    </script>
+
+
+  <!-- VERTICAL -->
+
+<script>
+    document.getElementById('add-btn2').addEventListener('click', () => {
+
+      alert('add-btn2 CLICKED...')
+
+      sendFindPortRequest("6", "123");
+    
+    });
+
+
+    // Function to send the POST request and handle the response
+async function sendFindPortRequest(floor, port) {
+  try {
+    const response = await fetch('/findport', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      body: new URLSearchParams({ floor: floor, port: port })
+    });
+
+    if (!response.ok) {
+      console.error('Server error:', response.status);
+      return;
+    }
+
+    const data = await response.json(); // Parse the JSON response
+    console.log('Server Response:', data);
+
+    alert(data.ports.length);
+
+    // Get the carousel element
+    const carousel = document.getElementById('carousel-V');
+    carousel.innerHTML = ''; // Clear existing cards
+
+    // Handle the ports data and display it in a carousel
+    if (data.ports && data.ports.length > 0) {
+      
+      data.ports.forEach(portData => {
+        const newCard = document.createElement('div');
+        newCard.classList.add('card-V');
+        newCard.textContent = `${portData.station} | ${portData.port} | ${portData.interface}`;
+        newCard.dataset.value = portData.id;
+        carousel.appendChild(newCard);
+      });
+
+    } else {
+      alert('No ports data found');
+
+      const newCard = document.createElement('div');
+      newCard.classList.add('card-V');
+      newCard.textContent = `No ports data found`;
+      carousel.appendChild(newCard);
+    }
+
+    updateCards(); // Call after all new content is added
+
+  } catch (error) {
+    console.error('Request failed:', error);
+  }
+}
+
+
+
+
+
+</script>
+
+
+
+
+ <!-- VERTICAL -->
+<script>
+
+    document.getElementById('add-btn').addEventListener('click', () => {
+      const input = document.getElementById('todo-input');
+      const carousel = document.getElementById('carousel-V');
+      const task = input.value.trim();
+
+      if (task !== '') {
+        const newCard = document.createElement('div');
+        newCard.classList.add('card-V');
+        newCard.textContent = task;
+        newCard.dataset.value = task;
+        carousel.appendChild(newCard);
+        input.value = '';
+        updateCards();
+      }
+    });
+
+    const carouselV = document.getElementById('carousel-V');
+    const carouselContainerV = document.getElementById('carousel-container-V');
+    let currentAngleV = 0;
+    let currentIndexV = 0;
+
+    // Swipe and Drag Variables
+    let startY = 0;
+    let isDragging = false;
+</script>
+
+<script>
+    function updateCards() {
+      //console.log("Card on-focused: ",currentIndexV,currentAngleV );
+      
+      //currentAngleV = 0;
+      //currentIndexV = 0;
+
+      const cardsV = document.querySelectorAll('.card-V');
+      const totalcardsV = cardsV.length;
+      const angleStepV = 360 / totalcardsV;
+
+      cardsV.forEach((cardV, index) => {
+        const angle = index * angleStepV;
+        cardV.style.transform = `rotateX(${angle}deg) translateZ(120px)`;
+      });
+
+      updateFocusV();
+    }
+
+
+
+
+    function updateFocusV() {
+      console.log("Card on-focused: ",currentIndexV,currentAngleV );
+      const cardsV = document.querySelectorAll('.card-V');
+      const totalCards = cardsV.length;
+
+      cardsV.forEach((cardV, index) => {
+        if (index === currentIndexV) {
+          cardV.classList.add('focus-V');
+        } else {
+          cardV.classList.remove('focus-V');
+        }
+      });
+    }
+
+    function navigateCarousel(direction) {
+      const cardsV = document.querySelectorAll('.card-V');
+      const totalcardsV = cardsV.length;
+      const angleStepV = 360 / totalcardsV;
+
+      if (direction === 'next') {
+        currentAngleV += angleStepV;
+        currentIndexV = (currentIndexV - 1 + totalcardsV) % totalcardsV;
+      } else if (direction === 'prev') {
+        currentAngleV -= angleStepV;
+        currentIndexV = (currentIndexV + 1) % totalcardsV;
+      }
+
+      console.log("Card on-focused: ",currentIndexV,currentAngleV );
+      
+      carouselV.style.transform = `rotateX(${currentAngleV}deg)`;
+      updateFocusV();
+    }
+
+
+
+    // Wheel Navigation (also reversed)
+    carouselContainerV.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      navigateCarousel(e.deltaY > 0 ? 'prev' : 'next');
+    });
+
+    // Touch and Drag Events
+    carouselContainerV.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      isDragging = true;
+    });
+
+    carouselContainerV.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      const currentY = e.touches[0].clientY;
+      const diffY = startY - currentY;
+
+      if (Math.abs(diffY) < 50) {
+        navigateCarousel(diffY < 0 ? 'prev' : 'next');
+        isDragging = false;
+      }
+    });
+
+    carouselContainerV.addEventListener('touchend', () => {
+      isDragging = false;
+    });
+
+    // Mouse Drag Events (for desktop)
+    let mouseStartY = 0;
+    let isMouseDragging = false;
+
+    carouselContainerV.addEventListener('mousedown', (e) => {
+      mouseStartY = e.clientY;
+      isMouseDragging = true;
+    });
+
+    carouselContainerV.addEventListener('mousemove', (e) => {
+      if (!isMouseDragging) return;
+      const currentY = e.clientY;
+      const diffY = mouseStartY - currentY;
+
+      if (Math.abs(diffY) < 50) {
+        navigateCarousel(diffY < 0 ? 'prev' : 'next');
+        isMouseDragging = false;
+      }
+    });
+
+    carouselContainerV.addEventListener('mouseup', () => {
+      isMouseDragging = false;
+    });
+
+    carouselContainerV.addEventListener('mouseleave', () => {
+      isMouseDragging = false;
+    });
+
+    updateCards();
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tab Container with Tables</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<style>
+    body {
+        padding-top: 20px; /* Adjust this value to create space below the navbar */
+    }
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #343a40; /* Dark background like navbar */
+        color: white;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 14px;
+    }
+</style>
+
+<body class="bg-light">
+
+<!-- ✅ Header -->
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">{{ pageheader }}</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+
+            <li class="nav-item">{{ username }}{{ password }}</li>
+            <li class="nav-item"><a class="nav-link" href="/">Back to Main</a></li>
+            <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+</header>
+
+
+<!-- ✅ Below HEADER  -->
+<div class="container mt-5">
+
+    <!-- Main Tab Container -->
+    <ul class="nav nav-tabs mt-8" id="mainTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="main-tab" data-bs-toggle="tab" data-bs-target="#main">Main Tab</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="task-tab" data-bs-toggle="tab" data-bs-target="#task">Task Tab</button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- ✅ Main Tab Content -->
+
+
+        <div class="tab-pane fade show active" id="main">
+            <form id="dataForm" method="POST" action="/submit">
+                
+                <!-- ✅ Inline Input Fields -->
+                <div class="container mt-3">
+                    <div class="row g-2 align-items-center"> 
+                        
+                        <!-- All inputs in a single row -->
+                        <div class="col-md-2">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="stationInput" name="station" placeholder="P-456">
+                                <label for="stationInput">Station</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="ipportInput" name="ip_port" placeholder="10.16.0.80">
+                                <label for="ipportInput">IP Port</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="interfaceInput" name="interface" placeholder="G1/0/28">
+                                <label for="interfaceInput">Interface</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="floorInput" name="floor" placeholder="P2">
+                                <label for="floorInput">Floor</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-2">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="locationInput" name="info2" placeholder="Washington">
+                                <label for="locationInput">Location</label>
+                            </div>
+                        </div>
+
+                    <div class="col d-flex gap-2 align-items-stretch" >
+                        <button type="submit" 
+                                class="btn btn-primary w-100 form-control px-0" style="height: 56px;"
+                                onclick="processSearch()">Search</button>
+                        <button type="button" 
+                                class="btn btn-warning w-100 form-control px-0" style="height: 56px;"
+                                onclick="clearSearch()">Clear Search</button>
+                    </div
+
+
+
+
+
+                    </div>
+                </div>
+
+                <!-- ✅ Buttons in the next row -->
+                <div class="container mt-3">
+                    <div class="row g-2">
+                        <div class="col-md-12 d-flex gap-2 justify-content-center">
+                            
+                            <button type="button" class="btn btn-success" onclick="confirmFirst(clearport, 'Clear Port')">Clear Port1</button>
+                            <button type="button" class="btn btn-success" onclick="confirmFirst(clearsticky, 'Clear Sticky Port')">Clear Sticky</button>
+                            <button type="button" class="btn btn-success" onclick="confirmFirst(changeVlan, 'Change VLAN')">Change VLAN</button>
+                            <button type="button" class="btn btn-success" onclick="confirmFirst(changeVoice, 'Change Voice')">Change Voice</button>
+                            <button type="button" class="btn btn-success" onclick="confirmFirst(showStatus, 'Show Interface Status')">Show Status</button>
+
+
+
+                            
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✅ Results Container -->
+                <div id="resultContainer" class="mt-3"></div>
+
+            </form>
+
+
+            <div class="container mt-3">
+                <div class="row">
+                    <div class="col-12">
+                        <!-- Scrollable Container -->
+                        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ccc; border-radius: 5px;">
+                            <table class="table table-striped table-hover mb-0" id="mainTable">
+                                <thead class="table-dark" style="position: sticky; top: 0; z-index: 1;">
+                                    <tr>
+                                        <th><input type="checkbox" id="selectAll"></th>
+
+                                        <th>Station</th>
+                                        <th>Port</th>
+                                        <th>Interface</th>
+                                        <th>Floor</th>
+                                        <th>Info2</th>
+
+                                    </tr>
+                                </thead>
+
+                                <tbody id="main-table"></tbody>
+
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ✅ Total Count Result -->
+            <div class="container mt-3">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p class="text-end" id="resultCount">Total Results: 0</p>  <!-- ✅ Display total results -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- ✅ Toast Container -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="myToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+                <div class="toast-header">
+                    <strong id="toast-title" class="me-auto">Notification</strong>
+                    <small>Just now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id="toast-body">
+                    Your message goes here.
+                </div>
+            </div>
+        </div>
+
+        <!-- ✅ Confirmation Modal -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                Are you sure you want to process the selected rows?
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmBtn">Yes, Proceed</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+    </div>
+</div>
+
+
+
+<script>
+    // ✅ Function to clear all input fields
+    function clearSearch() {
+        // Select all input fields within the form
+        const form = document.getElementById("dataForm");
+        const inputs = form.querySelectorAll("input");
+
+        // Loop through each input and clear its value
+        inputs.forEach(input => {
+            input.value = '';
+        });
+
+        console.log("Form cleared.");
+    }
+
+    function showToast(message, type = 'info') {
+        const toastElement = document.getElementById('myToast');
+        const toastTitle = document.getElementById('toast-title');
+        const toastBody = document.getElementById('toast-body');
+
+        // ✅ Set toast message and style
+        toastBody.textContent = message;
+
+        // ✅ Style according to the type
+        switch (type) {
+            case 'success':
+                toastElement.classList.remove('bg-danger', 'bg-warning', 'bg-info');
+                toastElement.classList.add('bg-success', 'text-white');
+                toastTitle.textContent = '✅ Success';
+                break;
+            case 'danger':
+                toastElement.classList.remove('bg-success', 'bg-warning', 'bg-info');
+                toastElement.classList.add('bg-danger', 'text-white');
+                toastTitle.textContent = '❌ Error';
+                break;
+            case 'warning':
+                toastElement.classList.remove('bg-success', 'bg-danger', 'bg-info');
+                toastElement.classList.add('bg-warning', 'text-dark');
+                toastTitle.textContent = '⚠️ Warning';
+                break;
+            default:
+                toastElement.classList.remove('bg-success', 'bg-danger', 'bg-warning');
+                toastElement.classList.add('bg-info', 'text-white');
+                toastTitle.textContent = 'ℹ️ Info';
+        }
+
+        // ✅ Display the toast
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+    }
+
+
+
+
+</script>
+<script>
+    document.getElementById('dataForm').onsubmit = function(event) {
+        event.preventDefault();  // Prevent default form submission
+
+        const formData = new FormData(this);
+
+        // 🔥 Convert FormData to JSON for compatibility with FastAPI
+        const jsonData = {};
+        formData.forEach((value, key) => {
+            jsonData[key] = value;
+        });
+
+        // ✅ Send JSON data via Fetch API
+        fetch('/searchdb', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+
+            // ✅ Display the total results count
+            const resultCount = document.getElementById("resultCount");     
+            resultCount.textContent = `Total Results: ${data.total_results}`;
+
+            const tableBody = document.getElementById('main-table');
+            tableBody.innerHTML = '';  // Clear previous results
+
+            // ✅ Populate table with new results
+            if (data.results.length > 0) {
+                data.results.forEach((row, index) => {
+                    const tr = document.createElement('tr');
+
+                    // ✅ Add a checkbox with unique ID
+                    tr.innerHTML = `
+                        <td><input type="checkbox" class="row-checkbox" data-index="${index}"></td>
+                        <td>${row.station}</td>
+                        <td>${row.port}</td>
+                        <td>${row.interface}</td>
+                        <td>${row.floor}</td>
+                        <td>${row.info2}</td>
+                    `;
+
+                    tableBody.appendChild(tr);
+                });
+            } else {
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center">No records found.</td></tr>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error fetching results.');
+        });
+    };
+
+    // ✅ Event listener for "Select All" checkbox using event delegation
+    document.addEventListener('change', function(event) {
+        if (event.target.id === 'selectAll') {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = event.target.checked);
+        }
+    });
+
+    // ✅ Function to get selected rows
+    function getSelectedRows() {
+        const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+        const selectedRows = [];
+
+        checkboxes.forEach(cb => {
+            const row = cb.closest('tr');  // Get the closest row element
+            
+            // ✅ Extract row data
+            const rowData = {
+                station: row.children[1].textContent,
+                port: row.children[2].textContent,
+                interface: row.children[3].textContent,
+                floor: row.children[4].textContent,
+                info2: row.children[5].textContent
+            };
+
+            selectedRows.push(rowData);
+        });
+
+        console.log('Selected Rows:', selectedRows);
+        return selectedRows;
+    }
+
+
+
+
+
+    // ✅ Function to display confirmation modal and run the provided function after confirmation
+    function confirmFirst(actionFunction, buttonLabel) {
+        const selectedRows = getSelectedRows();
+
+        if (selectedRows.length === 0) {
+            showToast('⚠️ No rows selected.', 'warning');
+            return;
+        }
+
+        console.log("Selected rows for confirmation:", selectedRows);
+
+        // ✅ Update the modal title with the button label
+        const modalTitle = document.getElementById('confirmModalLabel');
+        modalTitle.textContent = buttonLabel;
+
+        // Show the confirmation modal
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        confirmModal.show();
+
+        // Remove previous event listeners to avoid duplication
+        const confirmBtn = document.getElementById('confirmBtn');
+        confirmBtn.replaceWith(confirmBtn.cloneNode(true));  
+        const newConfirmBtn = document.getElementById('confirmBtn');
+
+        // Attach the new event listener
+        newConfirmBtn.addEventListener('click', () => {
+            confirmModal.hide();       // Hide the modal
+            actionFunction();          // Execute the passed function after confirmation
+        });
+    }
+
+
+
+
+
+    function clearport() {
+        const selectedRows = getSelectedRows();
+
+        if (selectedRows.length === 0) {
+            showToast('⚠️ No rows selected.', 'warning');
+            return;
+        }
+
+        console.log("Processing selected rows:", selectedRows);
+
+        // ✅ Send the selected rows to the server
+        fetch('/clearport', {  
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rows: selectedRows })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Server Response:', data);
+            
+            // ✅ Display success message in toast
+            showToast(`✅ Rows processed successfully: ${data.message}`, 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            // ✅ Display error message in toast
+            showToast('❌ Failed to process rows.', 'danger');
+        });
+    }
+
+    function clearsticky() {
+        const selectedRows = getSelectedRows();
+
+        if (selectedRows.length === 0) {
+            showToast('⚠️ No rows selected.', 'warning');
+            return;
+        }
+
+        console.log("Processing selected rows:", selectedRows);
+
+        // ✅ Send the selected rows to the server
+        fetch('/clearsticky', {  
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rows: selectedRows })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Server Response:', data);
+            
+            // ✅ Display success message in toast
+            showToast(`✅ Rows processed successfully: ${data.message}`, 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            // ✅ Display error message in toast
+            showToast('❌ Failed to process rows.', 'danger');
+        });
+    }
+
+    function changeVlan() {
+        const selectedRows = getSelectedRows();
+
+        if (selectedRows.length === 0) {
+            showToast('⚠️ No rows selected.', 'warning');
+            return;
+        }
+
+        console.log("Processing selected rows:", selectedRows);
+
+        // ✅ Send the selected rows to the server
+        fetch('/changeVlan', {  
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rows: selectedRows })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Server Response:', data);
+            
+            // ✅ Display success message in toast
+            showToast(`✅ Rows processed successfully: ${data.message}`, 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            // ✅ Display error message in toast
+            showToast('❌ Failed to process rows.', 'danger');
+        });
+    }
+
+    function changeVoice() {
+        const selectedRows = getSelectedRows();
+
+        if (selectedRows.length === 0) {
+            showToast('⚠️ No rows selected.', 'warning');
+            return;
+        }
+
+        console.log("Processing selected rows:", selectedRows);
+
+        // ✅ Send the selected rows to the server
+        fetch('/changeVoice', {  
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rows: selectedRows })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Server Response:', data);
+            
+            // ✅ Display success message in toast
+            showToast(`✅ Rows processed successfully: ${data.message}`, 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            // ✅ Display error message in toast
+            showToast('❌ Failed to process rows.', 'danger');
+        });
+    }
+
+    function showStatus() {
+        const selectedRows = getSelectedRows();
+
+        if (selectedRows.length === 0) {
+            showToast('⚠️ No rows selected.', 'warning');
+            return;
+        }
+
+        console.log("Processing selected rows:", selectedRows);
+
+        // ✅ Send the selected rows to the server
+        fetch('/showStatus', {  
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rows: selectedRows })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Server Response:', data);
+            
+            // ✅ Display success message in toast
+            showToast(`✅ Rows processed successfully: ${data.message}`, 'success');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+
+            // ✅ Display error message in toast
+            showToast('❌ Failed to process rows.', 'danger');
+        });
+    }
+
+
+
+
+
+
+
+
+
+
+
+    </script>
+
+
+
+<footer class="footer">
+    <p>&copy; 2024 Your Website Name. All rights reserved.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Floor Dropdown</title>
+
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #121212; /* Dark background */
+  color: #fff;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container-floor {
+  display: flex;
+  flex-direction: row; /* Align label and select horizontally */
+  align-items: center; /* Vertically center the items */
+  gap: 0; /* Remove the gap between label and dropdown */
+  text-align: left;
+  width: 100%; /* Ensures the container-floor takes up full width */
+  max-width: 600px; /* Limiting container-floor width for larger screens */
+}
+
+label {
+  font-size: 18px;
+  white-space: nowrap; /* Prevents label text from wrapping */
+  margin-right: 5px; /* Adds a small space between label and dropdown */
+}
+
+select {
+  background-color: #333;
+  color:Lime;
+  border: 2px solid rgba(50, 205, 50, 0.7); /* Green border */
+  box-shadow: 0 0 8px 2px rgba(50, 205, 50, 0.7); /* Green box shadow */
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 5px;
+  flex-shrink: 0; /* Prevents shrinking */
+  width: 200px; /* Adjust dropdown width */
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  label {
+    font-size: 16px;
+  }
+
+  select {
+    font-size: 14px;
+    width: 100%; /* Make the dropdown take full width on small screens */
+  }
+}
+
+    }
+
+
+</style>
+
+</head>
+<body>
+  <div class="container-floor">
+    <label for="opt-floor">Select Floor:</label>
+    <select id="opt-floor" name="opt-floor">
+      <option value="UG">UG</option>
+      <option value="P2">P2</option>
+      <option value="5F">5F</option>
+      <option value="6F">6F</option>
+      <option value="7F">7F</option>
+      <option value="8F">8F</option>
+      <option value="9F">9F</option>
+      <option value="10F">10F</option>
+      <option value="11F">11F</option>
+    </select>
+  </div>
+</body>
+</html>
