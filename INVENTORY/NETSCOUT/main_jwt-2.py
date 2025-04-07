@@ -16,17 +16,18 @@ from auth.authentication import authenticate, authenticate_netmiko, authenticate
 
 
 # import datetime
-from pydantic import BaseModel
+# from pydantic import BaseModel
 from datetime import datetime
 from dotenv import load_dotenv
 from pprint import pprint
 from tabulate import tabulate
 
-
 from io import BytesIO
 from typing import Optional, List
 
 
+#from netmiko import ConnectHandler
+from auth.netmikomanager import NetworkDeviceManager, FormData, Row, ChangeVlanRequest, ChangeVoiceRequest, RequestData
 
 
 SECRET_KEY = "your-secret-key"  # Replace with a strong secret key
@@ -35,18 +36,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Set token expiration as needed
 
 print(ACCESS_TOKEN_EXPIRE_MINUTES)
 
-
 # Database file path
 DB_FILE = os.getenv("DB_FILE", "db/epmap.db")  # Default to 'db/entries.db' if not specified
 
-
 # Header file path
-PAGE_HEADER = os.getenv("PAGE_HEADER", "Linkrunner Tool Web App - Version 2")  # Default to 'Page Footer' if not specified
+PAGE_HEADER = os.getenv("PAGE_HEADER", "Linkrunner Web Tool App - Version 2")  # Default to 'Page Footer' if not specified
 
 # Footer file path
 PAGE_FOOTER = os.getenv("PAGE_FOOTER", "© 2025 DevApps by Arvin. All Rights Reserved.")  # Default to 'Page Footer' if not specified
-
-
 
 
 app = FastAPI()
@@ -92,45 +89,6 @@ def init_db():
 @app.on_event("startup")
 def on_startup():
     init_db()
-##################################################################
-
-
-# ===================================================================================================
-# Pydantic model for item data
-class FormData(BaseModel):
-    station: str
-    port: str
-    interface: str
-    floor: str
-    info1: str
-    info2: str
-    trans_time: str
-    alterby: str
-
-# Model for each row
-class Row(BaseModel):
-    station: str
-    port: str
-    interface: str
-    floor: str
-    info2: str
-
-# Model for the VLAN change request
-class ChangeVlanRequest(BaseModel):
-    rows: List[Row]
-    vlan: str
-    customValue: Optional[str] = None
-    username: str
-    password: str
-
-# Model for the VLAN change request
-class ChangeVoiceRequest(BaseModel):
-    rows: List[Row]
-    voice: str
-    customValue: Optional[str] = None
-    username: str
-    password: str
-
 
 ##################################################################
 def get_vlan():
@@ -151,6 +109,8 @@ def get_vlan():
         print(f"Error fetching VLAN data: {str(e)}")
         # Return empty list in case of error
         return []
+
+
 ##################################################################
 def get_voice():
     try:
@@ -170,8 +130,6 @@ def get_voice():
         print(f"Error fetching VOICE data: {str(e)}")
         # Return empty list in case of error
         return []
-##################################################################
-
 
 
 
@@ -204,9 +162,18 @@ async def get_current_user(request: Request):
 
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token3")
+
 ##################################################################
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+        # Redirect to login page if not authenticated
+        return RedirectResponse(url="/?error=you got expired.", status_code=303)
+    return templates.TemplateResponse("welcome.html", {"request": request, "error": str(exc.detail)})
 
 
+
+##################################################################
 # ✅load Welcome Page - if Authenticated redirect to Dashboard
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
@@ -218,11 +185,11 @@ async def read_index(request: Request):
             return RedirectResponse(url="/dashboard")
         except HTTPException:
             # Token is invalid, proceed to render login page
-            return templates.TemplateResponse("welcome_aim.html", {"request": request, "error": erro, "pageheader": PAGE_HEADER, "pagefooter": PAGE_FOOTER})
+            return templates.TemplateResponse("welcome_aim2.html", {"request": request, "error": erro, "pageheader": PAGE_HEADER, "pagefooter": PAGE_FOOTER})
 
-    return templates.TemplateResponse("welcome_aim.html", {"request": request, "error": error,  "pageheader": PAGE_HEADER, "pagefooter": PAGE_FOOTER})
+    return templates.TemplateResponse("welcome_aim2.html", {"request": request, "error": error,  "pageheader": PAGE_HEADER, "pagefooter": PAGE_FOOTER})
 
-
+##################################################################
 # ✅Login / Logout / Authorization Handler
 @app.post("/login", response_class=HTMLResponse)
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
@@ -230,7 +197,6 @@ async def login(request: Request, username: str = Form(...), password: str = For
     #auth_result = authenticate(username, password) #authenticate using LDAP3
     #auth_result = authenticate_netmiko(username, password) #authenticate using NETMIKO
     auth_result = authenticate_dummy(username, password) #authenticate using dummy
-
 
 
     if auth_result is True:
@@ -242,22 +208,15 @@ async def login(request: Request, username: str = Form(...), password: str = For
         error_message = "Can't connect to server to validate user." if auth_result == "Can't connect to server to validate user." else "Invalid username or password"
         return RedirectResponse(url=f"/?error={error_message}", status_code=303)
 
-
+##################################################################
 @app.get("/logout")
 async def logout(request: Request):
     response = RedirectResponse(url="/")
     response.delete_cookie("access_token")  # Clear JWT cookie
     return response
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    if exc.status_code == status.HTTP_401_UNAUTHORIZED:
-        # Redirect to login page if not authenticated
-        return RedirectResponse(url="/?error=you got expired.", status_code=303)
-    return templates.TemplateResponse("welcome.html", {"request": request, "error": str(exc.detail)})
 
-
-
+##################################################################
 # ✅ ALLOWED ENDPOINTS API
 # RESTRICTED API PAGES (CENTRAL MAIN PAGE DIRECTOR)
 @app.get("/dashboard", response_class=HTMLResponse)
@@ -283,6 +242,8 @@ async def read_items(
 
     username, password = current_user
 
+    # async def get_vlan()
+    # async def get_voice()
     vlan = get_vlan()
     voice = get_voice()
 
@@ -291,6 +252,7 @@ async def read_items(
         "username": username, 
         "password": password,
         "vlan": vlan,
+        "voice": voice,
         "pageheader": PAGE_HEADER, 
         "pagefooter": PAGE_FOOTER}
         )
@@ -304,6 +266,8 @@ async def read_items(
 
     username, password = current_user
 
+    # async def get_vlan()
+    # async def get_voice()
     vlan = get_vlan()
     voice = get_voice()
 
@@ -365,7 +329,7 @@ def query_mapping_db(station, ip_port, interface, floor, info2):
     return results
 
 
-# ✅ March30 - New
+# ✅ ================ function initializeFormHandler()
 @app.post("/searchdb")
 async def submit_formSearch(request: Request):
     """Handle JSON form submission."""
@@ -403,141 +367,127 @@ async def submit_formSearch(request: Request):
 
 
 
+# ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+# ✅ ================= function clearport()
+@app.post("/clearport")
+async def clear_port(request: Request):
+    try:
+        data = await request.json()
+        rows = data.get("rows", [])
+        username = data.get("username")
+        password = data.get("password")
 
-# ✅
+        if not username or not password:
+            raise HTTPException(status_code=400, detail="Username and password are required.")
+
+        '''  
+        # ✅ Print only rows, username, and password in JSON format
+        print("[REQUEST DEBUG - CLEAR PORT] Incoming Data:\n", json.dumps({
+            "rows": rows,
+            "username": username,
+            "password": password  # ⚠️ Be cautious logging passwords in production
+        }, indent=4))
+        '''
+
+        manager = NetworkDeviceManager(username=username, password=password)
+        result_message = manager.process_and_clear_ports(rows)
+
+        return JSONResponse(content={"message": "✅ All Selected Ports Cleared Successfully.", "details": result_message})
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
+
+
+# ✅ =================== function clearsticky()
 @app.post("/clearsticky")
 async def process_rows(request: Request):
-    data = await request.json()
-    rows = data.get("rows", [])
+    try:
+        data = await request.json()
+        rows = data.get("rows", [])
+        username = data.get("username")
+        password = data.get("password")
 
-    username = data.get("username", "N/A")  # Extract username
-    password = data.get("password", "N/A")  # Extract password
+        if not username or not password:
+            raise HTTPException(status_code=400, detail="Username and password are required.")
 
-    # ✅ Call CISCO NETMIKO CLEAR PORT
-    result_message = process_selected_rows(rows, username, password)
+        '''    
+        # ✅ Print only rows, username, and password in JSON format
+        print("[REQUEST DEBUG - CLEAR STICKY] Incoming Data:\n", json.dumps({
+            "rows": rows,
+            "username": username,
+            "password": password  # ⚠️ Be cautious logging passwords in production
+        }, indent=4))
+        '''
 
-    # ✅ Respond with success message
-    return JSONResponse(content={"message": result_message})
+        manager = NetworkDeviceManager(username=username, password=password)
+        result_message = manager.process_and_clear_sticky_interface(rows)
 
-
-
-# ✅
-@app.post("/clearport")
-async def process_rows(request: Request):
-    data = await request.json()
-    rows = data.get("rows", [])
-
-    username = data.get("username", "N/A")  # Extract username
-    password = data.get("password", "N/A")  # Extract password
-
-    # ✅ Call CISCO NETMIKO CLEAR PORT
-    result_message = process_selected_rows(rows, username, password)
-
-    # ✅ Respond with success message
-    return JSONResponse(content={"message": result_message})
+        return JSONResponse(content={"message": "✅ All ports cleared successfully.", "details": result_message})
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
 
 
-# ✅
+# ✅ =================== function changeVlan()
 @app.post("/change_vlan")
 async def change_vlan(request: ChangeVlanRequest):
-    # Extract rows from the request
-    rows = request.rows
-    
-    
-    # Now you can process each row
-    for row in rows:
-        print(f"Processing: Station {row.station}, Port {row.port}, Interface {row.interface}")
-        # Perform your VLAN change operations here
-     
-    print(f"Backend Changing to VLAN:  {request.vlan}")
-    print(f"Backend Changing to VLAN:  {request.customValue}")
-    print(f"Backend Changing to VLAN:  {request.username}")
-    print(f"Backend Changing to VLAN:  {request.password}")   
+    try:
+
+        rows = [row.dict() for row in request.rows]
+        vlan = request.customValue if request.vlan == "000" else request.vlan
+
+        '''
+        print("[REQUEST DEBUG - VLAN] Incoming Data:\n", json.dumps({
+            "rows": [row.dict() for row in request.rows],  # Convert each Row model to dict
+            "username": request.username,
+            "password": request.password,  # ⚠️ Be cautious logging passwords in production
+            "vlan": vlan,
+        }, indent=4))
+        '''
+
+        manager = NetworkDeviceManager(username=request.username, password=request.password)
+        result_message = manager.process_and_changeVlans(rows,vlan)
+
+        # Return success response
+        return {"message": f"VLAN {vlan} applied to {len(rows)} ports"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
 
 
-    print(f"\n********************************************")
-    # Define headers
-    headers = ["Station", "Port", "Interface", "Floor", "Info2"]
-
-    # Correct the table_data formatting
-    table_data = [[row.station, row.port, row.interface, row.floor, row.info2] for row in rows]
-
-    # Print the formatted table
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
-
-
-    # Return success response
-    return {"message": f"VLAN {request.vlan} applied to {len(rows)} ports"}
-
-
-
-# ✅ Extracted Function to Process Rows
-def process_selected_rows(rows, username, password):
-    """
-    This function handles the processing of rows.
-    Extracts and prints the 'Port' value from each row immediately during the loop.
-    """
-    if not rows:
-        return "No rows received."
-    print(f"\n********************************************")
-    # ✅ Print the Port value during each iteration
-    for idx, row in enumerate(rows, start=1):
-        port_value = row.get("port", "N/A")  # Extract port safely with .get()-case sensitive
-        interface_value = row.get("interface", "N/A")  # Extract port safely with .get()-case sensitive
-
-        print(f"🔹 {idx} -> {username} ->  {password} -> {port_value} ->  {interface_value}")  # Print per loop iteration
-
-
-    print(f"\n********************************************")
-    headers = ["Station", "Port", "Interface", "Floor", "Info2"]  # Table headers
-    table_data = [list(row.values()) for row in rows]
-
-    # Print the credentials and table
-    print(f"👤 Username517: {username}")
-    print(f"🔑 Password: {password}")
-    print("\n🚀 Processing Rows in Table Format:")
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
-
-
-    return f"{len(rows)} rows processed successfully."
-
-
-
-
-# ✅
+# ✅ ==================== function changeVoice()
 @app.post("/change_voice")
 async def change_voice(request: ChangeVoiceRequest):
-    # Extract rows from the request
-    rows = request.rows
-    
-    
-    # Now you can process each row
-    for row in rows:
-        print(f"Processing: Station {row.station}, Port {row.port}, Interface {row.interface}")
-        # Perform your VLAN change operations here
-     
-    print(f"Backend Changing to Voice:  {request.voice}")
-    print(f"Backend Changing to Voice:  {request.customValue}")
-    print(f"Backend Changing to Voice:  {request.username}")
-    print(f"Backend Changing to Voice:  {request.password}")   
+    try:
+
+        rows = [row.dict() for row in request.rows]
+        voice = request.customValue if request.voice == "000" else request.voice
+
+        '''
+        print("[REQUEST DEBUG - VOICE] Incoming Data:\n", json.dumps({
+            "rows": [row.dict() for row in request.rows],  # Convert each Row model to dict
+            "username": request.username,
+            "password": request.password,  # ⚠️ Be cautious logging passwords in production
+            "voice": voice,
+        }, indent=4))
+        '''
+
+        
+
+        manager = NetworkDeviceManager(username=request.username, password=request.password)
+        result_message = manager.process_and_changeVoices(rows, voice)
+
+        # Return success response
+        return {"message": f"VOICE {voice} applied to {len(rows)} ports"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
+# ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 
 
-    print(f"\n********************************************")
-    # Define headers
-    headers = ["Station", "Port", "Interface", "Floor", "Info2"]
-
-    # Correct the table_data formatting
-    table_data = [[row.station, row.port, row.interface, row.floor, row.info2] for row in rows]
-
-    # Print the formatted table
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
 
 
-    # Return success response
-    return {"message": f"VOICE {request.voice} applied to {len(rows)} ports"}
-
-
-# ✅
+# 🚀 *******************************************
 @app.post("/showStatus")
 async def process_rows(request: Request):
     data = await request.json()
@@ -555,10 +505,6 @@ async def process_rows(request: Request):
 
     # ✅ Respond with success message
     return JSONResponse(content={"message": f"{len(rows)} rows processed successfully."})
-
-
-
-
 
 
 

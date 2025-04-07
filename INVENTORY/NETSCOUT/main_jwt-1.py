@@ -22,11 +22,11 @@ from dotenv import load_dotenv
 from pprint import pprint
 from tabulate import tabulate
 
-
 from io import BytesIO
 from typing import Optional, List
 
 
+from netmiko import ConnectHandler
 
 
 SECRET_KEY = "your-secret-key"  # Replace with a strong secret key
@@ -35,18 +35,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Set token expiration as needed
 
 print(ACCESS_TOKEN_EXPIRE_MINUTES)
 
-
 # Database file path
 DB_FILE = os.getenv("DB_FILE", "db/epmap.db")  # Default to 'db/entries.db' if not specified
 
-
 # Header file path
-PAGE_HEADER = os.getenv("PAGE_HEADER", "NetScout Web App - Version 2")  # Default to 'Page Footer' if not specified
+PAGE_HEADER = os.getenv("PAGE_HEADER", "Linkrunner Web Tool App - Version 2")  # Default to 'Page Footer' if not specified
 
 # Footer file path
 PAGE_FOOTER = os.getenv("PAGE_FOOTER", "© 2025 DevApps by Arvin. All Rights Reserved.")  # Default to 'Page Footer' if not specified
-
-
 
 
 app = FastAPI()
@@ -92,45 +88,6 @@ def init_db():
 @app.on_event("startup")
 def on_startup():
     init_db()
-##################################################################
-
-
-# ===================================================================================================
-# Pydantic model for item data
-class FormData(BaseModel):
-    station: str
-    port: str
-    interface: str
-    floor: str
-    info1: str
-    info2: str
-    trans_time: str
-    alterby: str
-
-# Model for each row
-class Row(BaseModel):
-    station: str
-    port: str
-    interface: str
-    floor: str
-    info2: str
-
-# Model for the VLAN change request
-class ChangeVlanRequest(BaseModel):
-    rows: List[Row]
-    vlan: str
-    customValue: Optional[str] = None
-    username: str
-    password: str
-
-# Model for the VLAN change request
-class ChangeVoiceRequest(BaseModel):
-    rows: List[Row]
-    voice: str
-    customValue: Optional[str] = None
-    username: str
-    password: str
-
 
 ##################################################################
 def get_vlan():
@@ -172,7 +129,368 @@ def get_voice():
         print(f"Error fetching VOICE data: {str(e)}")
         # Return empty list in case of error
         return []
-##################################################################
+
+
+
+
+
+
+# Pydantic model ===================================================================================================
+class FormData(BaseModel):
+    station: str
+    port: str
+    interface: str
+    floor: str
+    info1: str
+    info2: str
+    trans_time: str
+    alterby: str
+
+
+# Model for each row
+class Row(BaseModel):
+    station: str
+    port: str
+    interface: str
+    floor: str
+    info2: str
+
+
+# Model for the VLAN change request
+class ChangeVlanRequest(BaseModel):
+    rows: List[Row]
+    vlan: str
+    customValue: Optional[str] = None
+    username: str
+    password: str
+
+# Model for the VOICE change request
+class ChangeVoiceRequest(BaseModel):
+    rows: List[Row]
+    voice: str
+    customValue: Optional[str] = None
+    username: str
+    password: str
+
+
+class RequestData(BaseModel):
+    rows: list
+    username: str
+    password: str
+
+
+
+# ===================================================================================================
+class NetworkDeviceManager:
+    base_ip = "10.16.0."
+
+    def __init__(self, username: str, password: str, base_ip: str = None):
+        self.username = username
+        self.password = password
+        self.connection = None
+        self.current_ip = None
+        if base_ip:
+            self.base_ip = base_ip
+
+    def connect(self, port: str):
+        ip = f"{self.base_ip}{port}"
+        
+        if ip != self.current_ip:
+            if self.connection:
+                print(f"\n📴 Cleaning up before switching from {self.current_ip}")
+                try:
+                    self.connection.send_command("end")
+                except Exception as e:
+                    print(f"⚠️ Could not send 'end' to {self.current_ip}: {e}")
+                self.connection.disconnect()
+                self.connection = None
+                self.current_ip = None
+            
+
+            print(f"\n🔌 Connecting : {self.username}@{ip}...")
+            try:
+                self.connection = ConnectHandler(
+                    device_type='cisco_ios',
+                    ip=ip,
+                    username=self.username,
+                    password=self.password
+                )
+                self.current_ip = ip
+                print(f"✅ Connected to {ip}")
+            except Exception as e:
+                print(f"❌ Failed to connect : {self.username}@{ip}: {e}")
+                self.connection = None
+                return str(e)
+        
+        return self.connection
+
+
+    # CLEAR PORT  ++++++++++++++++++++++++++++++++++++++++++++++
+    # ✅🔥 PROCESS AND CLEAR PORT SECURITY 🔥
+    def process_and_clear_ports(self, rows: List[dict]):
+        results = []
+        last_ip = None
+        
+        for row in rows:
+            ip = f"{self.base_ip}{row['port']}"
+            
+            # Check if we need to connect to a new device
+            if ip != last_ip:
+                # Disconnect from previous device if connected
+                if self.connection:
+                    print(f"\n🔌 Disconnecting from {self.current_ip}")
+                    self.connection.disconnect()
+                    self.connection = None
+                
+                # Connect to new device
+                error = self.connect(row['port'])
+                if error:
+                    results.append({"device": ip, "status": f"❌ Connection failed: {error}"})
+                    continue
+                last_ip = ip
+            
+            # Clear interface directly (inline implementation of clear_interface)
+            interface = row['interface']
+            if not self.connection:
+                results.append({"device": ip, "interface": interface, "status": "⚠️ No active connection."})
+                continue
+                
+            print(f"⚡ Clearing {interface} configuration...")
+            commands = [
+                f"interface {interface}",
+                "shutdown",
+                "no shutdown"
+            ]
+
+            output = self.connection.send_config_set(commands)
+            print(f"✔️ Port {interface} cleared successfully.")
+            
+            results.append({"device": ip, "interface": interface, "status": output})
+        
+        # ✅ Final cleanup after all rows are processed
+        if self.connection:
+            self.connection.send_command("end")  # Exits config mode (if applicable)
+
+            print(f"\n🔌 Disconnecting from {self.current_ip}")
+            self.connection.disconnect()
+            self.connection = None
+        
+        return results
+
+
+    # CLEAR PORT STICKY  ++++++++++++++++++++++++++++++++++++++++++++++
+    # ✅🔥 PROCESS AND CLEAR STICKY PORT 🔥
+    def process_and_clear_sticky_interface(self, rows: List[dict]):
+        results = []
+        last_ip = None
+
+        for row in rows:
+            ip = f"{self.base_ip}{row['port']}"
+            interface = row['interface']
+            
+            # Check if we need to connect to a new device
+            if ip != last_ip:
+                # Disconnect from previous device if connected
+                if self.connection:
+                    print(f"\n🔌 Disconnecting from {self.current_ip}")
+                    self.connection.disconnect()
+                    self.connection = None
+                
+                # Connect to the new device
+                error = self.connect(row['port'])
+                if error:
+                    results.append({"device": ip, "status": f"❌ Connection failed: {error}"})
+                    continue
+                last_ip = ip
+            
+            # If no active connection, skip the interface processing
+            if not self.connection:
+                results.append({"device": ip, "interface": interface, "status": "⚠️ No active connection."})
+                continue
+            
+            # ⚠️ Clear sticky MAC address (Step 1)
+            print(f"⚡ Clearing sticky MAC address on {interface}...")
+            self.connection.send_command(f"clear port-security sticky interface {interface}")
+            print(f"✔️ Sticky MAC address cleared on {interface}.")
+            
+            # ⚠️ Apply Shutdown & No Shutdown commands (Step 2)
+            print(f"⚡ Reapplying configuration on {interface}...")
+            config_commands = [
+                f"interface {interface}",
+                "shutdown",
+                "no shutdown"
+            ]
+
+            try:
+                output = self.connection.send_config_set(commands)
+                print(f"✔️ Configuration applied to {interface} successfully - Clear Sticky.")
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": output
+                })
+            except Exception as e:
+                # Handle any command failure
+                print(f"❌ Failed Configuration applied to {interface} - Clear Sticky.")
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": f"❌ Command failure: {str(e)}"
+                })
+
+
+        # ✅ Final cleanup after all rows are processed
+        if self.connection:
+            self.connection.send_command("end")  # Exits config mode (if applicable)
+
+            print(f"\n🔌 Disconnecting from {self.current_ip}")
+            self.connection.disconnect()
+            self.connection = None
+        
+        return results
+
+
+    # CHANGE VLAN  ++++++++++++++++++++++++++++++++++++++++++++++
+    # ✅🔥 PROCESS AND CHANGE VLAN 🔥
+    def process_and_changeVlans(self, rows: list, vlan: str):
+        results = []
+        last_ip = None  # Track the previous IP
+
+        for row in rows:
+            ip = f"{self.base_ip}{row['port']}"
+            
+            # Check if we need to connect to a new device
+            if ip != last_ip:
+                # Disconnect from the previous device if connected
+                if self.connection:
+                    print(f"\n🔌 Disconnecting from previous device {self.current_ip}")
+                    self.connection.disconnect()
+                    self.connection = None
+                
+                # Connect to the new device
+                if not self.connect(row['port']):
+                    results.append({
+                        "device": ip,
+                        "interface": row['interface'],
+                        "status": "❌ Connection failed."
+                    })
+                    continue  # Skip to the next row if connection fails
+                last_ip = ip  # Update to the current IP
+            
+            # Proceed with changing the VLAN for the current interface
+            interface = row['interface']
+            print(f"⚡ Changing VLAN for interface {interface} to vlan {vlan}")
+            commands = [
+                f"interface {interface}",
+                f"switchport access vlan {vlan}",
+                "shutdown",
+                "no shutdown"
+            ]
+
+            try:
+                output = self.connection.send_config_set(commands)
+                print(f"✔️ VLAN {vlan} applied to interface {interface} successfully.")
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": output
+                })
+            except Exception as e:
+                # Handle any command failure
+                print(f"❌ Failed to apply VLAN {vlan} to interface {interface}: {str(e)}")
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": f"❌ Command failure: {str(e)}"
+                })
+        
+        # ✅ Final cleanup after all rows are processed
+        if self.connection:
+            try:
+                self.connection.send_command("end")  # Exits config mode (if applicable)
+                print(f"\n🔌 Disconnecting from {self.current_ip}")
+            except Exception as e:
+                print(f"⚠️ Could not send 'end' command: {str(e)}")
+
+            # Disconnect from the last device
+            self.connection.disconnect()
+            self.connection = Nonee
+
+        return results
+
+
+    # CHANGE VOICE  ++++++++++++++++++++++++++++++++++++++++++++++
+    # ✅🔥 PROCESS AND CHANGE VOICE 🔥
+    def process_and_changeVoices(self, rows: list, voice: str):
+        results = []
+        last_ip = None  # Track the previous IP
+
+        for row in rows:
+            ip = f"{self.base_ip}{row['port']}"
+            
+            # Check if we need to connect to a new device
+            if ip != last_ip:
+                # Disconnect from the previous device if connected
+                if self.connection:
+                    print(f"\n🔌 Disconnecting from previous device {self.current_ip}")
+                    self.connection.disconnect()
+                    self.connection = None
+                
+                # Connect to the new device
+                if not self.connect(row['port']):
+                    results.append({
+                        "device": ip,
+                        "interface": row['interface'],
+                        "status": "❌ Connection failed."
+                    })
+                    continue  # Skip to the next row if connection fails
+                last_ip = ip  # Update to the current IP
+            
+            # Proceed with changing the VOICE for the current interface
+            interface = row['interface']
+            print(f"⚡ Changing VOICE for interface {interface} to voice {voice}")
+            commands = [
+                f"interface {interface}",
+                f"switchport voice vlan {voice}",
+                "shutdown",
+                "no shutdown"
+            ]
+
+            try:
+                output = self.connection.send_config_set(commands)
+                print(f"✔️ VOICE {voice} applied to interface {interface} successfully.")
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": output
+                })
+            except Exception as e:
+                # Handle any command failure
+                print(f"❌ Failed to apply VOICE VLAN {voice} to interface {interface}: {str(e)}")
+
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": f"❌ Command failure: {str(e)}"
+                })
+        
+        # ✅ Final cleanup after all rows are processed
+        if self.connection:
+            try:
+                self.connection.send_command("end")  # Exits config mode (if applicable)
+                print(f"\n🔌 Disconnecting from {self.current_ip}")
+            except Exception as e:
+                print(f"⚠️ Could not send 'end' command: {str(e)}")
+
+            # Disconnect from the last device
+            self.connection.disconnect()
+            self.connection = Nonee
+
+        return results
+
+
+
+
 
 
 
@@ -234,7 +552,6 @@ async def login(request: Request, username: str = Form(...), password: str = For
     auth_result = authenticate_dummy(username, password) #authenticate using dummy
 
 
-
     if auth_result is True:
         access_token = create_access_token(data={"sub": username,"psub": password})
         response = RedirectResponse(url="/dashboard", status_code=303)
@@ -251,12 +568,17 @@ async def logout(request: Request):
     response.delete_cookie("access_token")  # Clear JWT cookie
     return response
 
+##################################################################
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     if exc.status_code == status.HTTP_401_UNAUTHORIZED:
         # Redirect to login page if not authenticated
         return RedirectResponse(url="/?error=you got expired.", status_code=303)
     return templates.TemplateResponse("welcome.html", {"request": request, "error": str(exc.detail)})
+
+##################################################################
+
+
 
 
 
@@ -273,46 +595,6 @@ async def dashboard(request: Request, current_user: tuple = Depends(get_current_
         "pagefooter": PAGE_FOOTER
         })
 
-
-#NEW ALLOWED - Accessing Restricted Page  ========================================
-@app.get("/digital", response_class=HTMLResponse)
-async def read_items(request: Request, current_user: tuple = Depends(get_current_user)):
-    username, password = current_user
-    #return templates.TemplateResponse("restricted/main_app_test.html", {
-    return templates.TemplateResponse("restricted/digital.html", {
-        "request": request, 
-        "username": username, 
-        "password": password,
-        "pageheader": PAGE_HEADER, 
-        "pagefooter": PAGE_FOOTER}
-        )
-
-#NEW ALLOWED - Accessing Restricted Page  ========================================
-@app.get("/analog", response_class=HTMLResponse)
-async def read_items(request: Request, current_user: tuple = Depends(get_current_user)):
-    username, password = current_user
-    #return templates.TemplateResponse("restricted/main_app_test.html", {
-    return templates.TemplateResponse("restricted/analog.html", {
-        "request": request, 
-        "username": username, 
-        "password": password,
-        "pageheader": PAGE_HEADER, 
-        "pagefooter": PAGE_FOOTER}
-        )
-
-
-#NEW ALLOWED - Accessing Restricted Page  ========================================
-@app.get("/main_app_test", response_class=HTMLResponse)
-async def read_items(request: Request, current_user: tuple = Depends(get_current_user)):
-    username, password = current_user
-    #return templates.TemplateResponse("restricted/main_app_test.html", {
-    return templates.TemplateResponse("restricted/time.html", {
-        "request": request, 
-        "username": username, 
-        "password": password,
-        "pageheader": PAGE_HEADER, 
-        "pagefooter": PAGE_FOOTER}
-        )
 
 
 
@@ -337,6 +619,7 @@ async def read_items(
         "username": username, 
         "password": password,
         "vlan": vlan,
+        "voice": voice,
         "pageheader": PAGE_HEADER, 
         "pagefooter": PAGE_FOOTER}
         )
@@ -451,136 +734,127 @@ async def submit_formSearch(request: Request):
 
 
 
+# ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
+# ✅ *******************************************
+@app.post("/clearport")
+async def clear_port(request: Request):
+    try:
+        data = await request.json()
+        rows = data.get("rows", [])
+        username = data.get("username")
+        password = data.get("password")
 
-# ✅
+        if not username or not password:
+            raise HTTPException(status_code=400, detail="Username and password are required.")
+
+        '''  
+        # ✅ Print only rows, username, and password in JSON format
+        print("[REQUEST DEBUG - CLEAR PORT] Incoming Data:\n", json.dumps({
+            "rows": rows,
+            "username": username,
+            "password": password  # ⚠️ Be cautious logging passwords in production
+        }, indent=4))
+        '''
+
+        manager = NetworkDeviceManager(username=username, password=password)
+        result_message = manager.process_and_clear_ports(rows)
+
+        return JSONResponse(content={"message": "✅ All Selected Ports Cleared Successfully.", "details": result_message})
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
+
+
+# ✅ *******************************************
 @app.post("/clearsticky")
 async def process_rows(request: Request):
-    data = await request.json()
-    rows = data.get("rows", [])
+    try:
+        data = await request.json()
+        rows = data.get("rows", [])
+        username = data.get("username")
+        password = data.get("password")
 
-    username = data.get("username", "N/A")  # Extract username
-    password = data.get("password", "N/A")  # Extract password
+        if not username or not password:
+            raise HTTPException(status_code=400, detail="Username and password are required.")
 
-    # ✅ Call CISCO NETMIKO CLEAR PORT
-    result_message = process_selected_rows(rows, username, password)
+        '''    
+        # ✅ Print only rows, username, and password in JSON format
+        print("[REQUEST DEBUG - CLEAR STICKY] Incoming Data:\n", json.dumps({
+            "rows": rows,
+            "username": username,
+            "password": password  # ⚠️ Be cautious logging passwords in production
+        }, indent=4))
+        '''
 
-    # ✅ Respond with success message
-    return JSONResponse(content={"message": result_message})
+        manager = NetworkDeviceManager(username=username, password=password)
+        result_message = manager.process_and_clear_sticky_interface(rows)
 
-
-
-# ✅
-@app.post("/clearport")
-async def process_rows(request: Request):
-    data = await request.json()
-    rows = data.get("rows", [])
-
-    username = data.get("username", "N/A")  # Extract username
-    password = data.get("password", "N/A")  # Extract password
-
-    # ✅ Call CISCO NETMIKO CLEAR PORT
-    result_message = process_selected_rows(rows, username, password)
-
-    # ✅ Respond with success message
-    return JSONResponse(content={"message": result_message})
+        return JSONResponse(content={"message": "✅ All ports cleared successfully.", "details": result_message})
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
 
 
-# ✅
+# ✅ *******************************************
 @app.post("/change_vlan")
 async def change_vlan(request: ChangeVlanRequest):
-    # Extract rows from the request
-    rows = request.rows
-    
-    
-    # Now you can process each row
-    for row in rows:
-        print(f"Processing: Station {row.station}, Port {row.port}, Interface {row.interface}")
-        # Perform your VLAN change operations here
-     
-    print(f"Backend Changing to VLAN:  {request.vlan}")
-    print(f"Backend Changing to VLAN:  {request.customValue}")
-    print(f"Backend Changing to VLAN:  {request.username}")
-    print(f"Backend Changing to VLAN:  {request.password}")   
+    try:
+
+        rows = [row.dict() for row in request.rows]
+        vlan = request.customValue if request.vlan == "000" else request.vlan
+
+        '''
+        print("[REQUEST DEBUG - VLAN] Incoming Data:\n", json.dumps({
+            "rows": [row.dict() for row in request.rows],  # Convert each Row model to dict
+            "username": request.username,
+            "password": request.password,  # ⚠️ Be cautious logging passwords in production
+            "vlan": vlan,
+        }, indent=4))
+        '''
+
+        manager = NetworkDeviceManager(username=request.username, password=request.password)
+        result_message = manager.process_and_changeVlans(rows,vlan)
+
+        # Return success response
+        return {"message": f"VLAN {vlan} applied to {len(rows)} ports"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
 
 
-    print(f"\n********************************************")
-    # Define headers
-    headers = ["Station", "Port", "Interface", "Floor", "Info2"]
-
-    # Correct the table_data formatting
-    table_data = [[row.station, row.port, row.interface, row.floor, row.info2] for row in rows]
-
-    # Print the formatted table
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
-
-
-    # Return success response
-    return {"message": f"VLAN {request.vlan} applied to {len(rows)} ports"}
-
-# ✅
+# ✅ *******************************************
 @app.post("/change_voice")
 async def change_voice(request: ChangeVoiceRequest):
-    # Extract rows from the request
-    rows = request.rows
-    
-    
-    # Now you can process each row
-    for row in rows:
-        print(f"Processing: Station {row.station}, Port {row.port}, Interface {row.interface}")
-        # Perform your VLAN change operations here
-     
-    print(f"Backend Changing to Voice:  {request.voice}")
-    print(f"Backend Changing to Voice:  {request.customValue}")
-    print(f"Backend Changing to Voice:  {request.username}")
-    print(f"Backend Changing to Voice:  {request.password}")   
+    try:
 
+        rows = [row.dict() for row in request.rows]
+        voice = request.customValue if request.voice == "000" else request.voice
 
-    print(f"\n********************************************")
-    # Define headers
-    headers = ["Station", "Port", "Interface", "Floor", "Info2"]
+        '''
+        print("[REQUEST DEBUG - VOICE] Incoming Data:\n", json.dumps({
+            "rows": [row.dict() for row in request.rows],  # Convert each Row model to dict
+            "username": request.username,
+            "password": request.password,  # ⚠️ Be cautious logging passwords in production
+            "voice": voice,
+        }, indent=4))
+        '''
 
-    # Correct the table_data formatting
-    table_data = [[row.station, row.port, row.interface, row.floor, row.info2] for row in rows]
+        
 
-    # Print the formatted table
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
+        manager = NetworkDeviceManager(username=request.username, password=request.password)
+        result_message = manager.process_and_changeVoices(rows, voice)
 
+        # Return success response
+        return {"message": f"VOICE {voice} applied to {len(rows)} ports"}
 
-    # Return success response
-    return {"message": f"VOICE {request.voice} applied to {len(rows)} ports"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
 
 
 
 
 
-
-
-
-
-
-
-# ✅
-@app.post("/changeVoice2")
-async def process_rows(request: Request):
-    data = await request.json()
-    rows = data.get("rows", [])
-
-    if not rows:
-        return JSONResponse(content={"message": "No rows received."}, status_code=400)
-
-    # ✅ Print the rows in table format
-    headers = ["Station", "Port", "Interface", "Floor", "Info2"]  # Table headers
-    table_data = [list(row.values()) for row in rows]
-
-    print("\n🚀 Received Rows in Table Format: CHANGE VOICE")
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
-
-    # ✅ Respond with success message
-    return JSONResponse(content={"message": f"{len(rows)} rows processed successfully."})
-
-
-
-# ✅
+# 🚀 *******************************************
 @app.post("/showStatus")
 async def process_rows(request: Request):
     data = await request.json()
@@ -598,38 +872,6 @@ async def process_rows(request: Request):
 
     # ✅ Respond with success message
     return JSONResponse(content={"message": f"{len(rows)} rows processed successfully."})
-
-
-
-# ✅ Extracted Function to Process Rows
-def process_selected_rows(rows, username, password):
-    """
-    This function handles the processing of rows.
-    Extracts and prints the 'Port' value from each row immediately during the loop.
-    """
-    if not rows:
-        return "No rows received."
-    print(f"\n********************************************")
-    # ✅ Print the Port value during each iteration
-    for idx, row in enumerate(rows, start=1):
-        port_value = row.get("port", "N/A")  # Extract port safely with .get()-case sensitive
-        interface_value = row.get("interface", "N/A")  # Extract port safely with .get()-case sensitive
-
-        print(f"🔹 {idx} -> {username} ->  {password} -> {port_value} ->  {interface_value}")  # Print per loop iteration
-
-
-    print(f"\n********************************************")
-    headers = ["Station", "Port", "Interface", "Floor", "Info2"]  # Table headers
-    table_data = [list(row.values()) for row in rows]
-
-    # Print the credentials and table
-    print(f"👤 Username517: {username}")
-    print(f"🔑 Password: {password}")
-    print("\n🚀 Processing Rows in Table Format:")
-    print(tabulate(table_data, headers=headers, tablefmt="grid"))
-
-
-    return f"{len(rows)} rows processed successfully."
 
 
 
