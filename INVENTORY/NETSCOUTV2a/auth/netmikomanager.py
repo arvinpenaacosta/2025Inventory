@@ -92,54 +92,69 @@ class NetworkDeviceManager:
     # ✅🔥 PROCESS AND CLEAR PORT SECURITY 🔥
     def process_and_clear_ports(self, rows: List[dict]):
         results = []
-        last_ip = None
-        
+        last_ip = None  # Track the previous IP
+
         for row in rows:
             ip = f"{self.base_ip}{row['port']}"
             
             # Check if we need to connect to a new device
             if ip != last_ip:
-                # Disconnect from previous device if connected
+                # Disconnect from the previous device if connected
                 if self.connection:
-                    print(f"\n🔌 Disconnecting from {self.current_ip}")
+                    print(f"\n🔌 Disconnecting from previous device {self.current_ip}")
                     self.connection.disconnect()
                     self.connection = None
                 
-                # Connect to new device
-                error = self.connect(row['port'])
-                if error:
-                    results.append({"device": ip, "status": f"❌ Connection failed: {error}"})
-                    continue
-                last_ip = ip
+                # Connect to the new device
+                if not self.connect(row['port']):
+                    results.append({
+                        "device": ip,
+                        "interface": row['interface'],
+                        "status": "❌ Connection failed."
+                    })
+                    continue  # Skip to the next row if connection fails
+                last_ip = ip  # Update to the current IP
             
-            # Clear interface directly (inline implementation of clear_interface)
+            # Proceed with clear port for the current interface
             interface = row['interface']
-            if not self.connection:
-                results.append({"device": ip, "interface": interface, "status": "⚠️ No active connection."})
-                continue
-                
-            print(f"⚡ Clearing {interface} configuration...")
+            print(f"⚡ Clear Port for interface {interface}")
             commands = [
                 f"interface {interface}",
                 "shutdown",
                 "no shutdown"
             ]
 
-            output = self.connection.send_config_set(commands)
-            print(f"✔️ Port {interface} cleared successfully.")
-            
-            results.append({"device": ip, "interface": interface, "status": output})
+            try:
+                output = self.connection.send_config_set(commands)
+                print(f"✔️ Clear Port applied to interface {interface} successfully.")
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": output
+                })
+            except Exception as e:
+                # Handle any command failure
+                print(f"❌ Failed to Clear Port to interface {interface}: {str(e)}")
+                print(f"❌ ==============================================================")
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": f"❌ Command failure: {str(e)}"
+                })
         
         # ✅ Final cleanup after all rows are processed
         if self.connection:
-            self.connection.send_command("end")  # Exits config mode (if applicable)
+            try:
+                self.connection.send_command("end")  # Exits config mode (if applicable)
+                print(f"\n🔌 Disconnecting from {self.current_ip}")
+            except Exception as e:
+                print(f"⚠️ Could not send 'end' command: {str(e)}")
 
-            print(f"\n🔌 Disconnecting from {self.current_ip}")
+            # Disconnect from the last device
             self.connection.disconnect()
             self.connection = None
-        
-        return results
 
+        return results
 
     # CLEAR PORT STICKY  ++++++++++++++++++++++++++++++++++++++++++++++
     # ✅🔥 PROCESS AND CLEAR STICKY PORT 🔥
@@ -153,32 +168,32 @@ class NetworkDeviceManager:
             
             # Check if we need to connect to a new device
             if ip != last_ip:
-                # Disconnect from previous device if connected
+                # Disconnect from the previous device if connected
                 if self.connection:
-                    print(f"\n🔌 Disconnecting from {self.current_ip}")
+                    print(f"\n🔌 Disconnecting from previous device {self.current_ip}")
                     self.connection.disconnect()
                     self.connection = None
                 
                 # Connect to the new device
-                error = self.connect(row['port'])
-                if error:
-                    results.append({"device": ip, "status": f"❌ Connection failed: {error}"})
-                    continue
-                last_ip = ip
+                if not self.connect(row['port']):
+                    results.append({
+                        "device": ip,
+                        "interface": row['interface'],
+                        "status": "❌ Connection failed."
+                    })
+                    continue  # Skip to the next row if connection fails
+                last_ip = ip  # Update to the current IP
             
-            # If no active connection, skip the interface processing
-            if not self.connection:
-                results.append({"device": ip, "interface": interface, "status": "⚠️ No active connection."})
-                continue
-            
+
+            interface = row['interface']      
             # ⚠️ Clear sticky MAC address (Step 1)
             print(f"⚡ Clearing sticky MAC address on {interface}...")
             self.connection.send_command(f"clear port-security sticky interface {interface}")
             print(f"✔️ Sticky MAC address cleared on {interface}.")
             
-            # ⚠️ Apply Shutdown & No Shutdown commands (Step 2)
-            print(f"⚡ Reapplying configuration on {interface}...")
-            config_commands = [
+            # Proceed with clear port for the current interface
+            print(f"⚡ Clear Port for interface {interface}")
+            commands = [
                 f"interface {interface}",
                 "shutdown",
                 "no shutdown"
@@ -212,7 +227,6 @@ class NetworkDeviceManager:
             self.connection = None
         
         return results
-
 
     # CHANGE VLAN  ++++++++++++++++++++++++++++++++++++++++++++++
     # ✅🔥 PROCESS AND CHANGE VLAN 🔥
@@ -279,10 +293,9 @@ class NetworkDeviceManager:
 
             # Disconnect from the last device
             self.connection.disconnect()
-            self.connection = Nonee
+            self.connection = None
 
         return results
-
 
     # CHANGE VOICE  ++++++++++++++++++++++++++++++++++++++++++++++
     # ✅🔥 PROCESS AND CHANGE VOICE 🔥
