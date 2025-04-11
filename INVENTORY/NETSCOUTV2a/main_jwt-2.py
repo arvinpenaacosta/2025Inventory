@@ -37,7 +37,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Set token expiration as needed
 print(ACCESS_TOKEN_EXPIRE_MINUTES)
 
 # Database file path
-DB_FILE = os.getenv("DB_FILE", "db/epmap.db")  # Default to 'db/entries.db' if not specified
+# DB_FILE = os.getenv("DB_FILE", "db/epmap.db")  # Default to 'db/entries.db' if not specified
+DB_FILE = os.getenv("DB_FILE", "C:/DevApps/pyProj/LIVE/NetscoutMate/db/epmap.db")
 
 # Header file path
 PAGE_HEADER = os.getenv("PAGE_HEADER", "Linkrunner Web Tool App - Version 2")  # Default to 'Page Footer' if not specified
@@ -195,8 +196,8 @@ async def read_index(request: Request):
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
     
     #auth_result = authenticate(username, password) #authenticate using LDAP3
-    #auth_result = authenticate_netmiko(username, password) #authenticate using NETMIKO
-    auth_result = authenticate_dummy(username, password) #authenticate using dummy
+    auth_result = authenticate_netmiko(username, password) #authenticate using NETMIKO
+    #auth_result = authenticate_dummy(username, password) #authenticate using dummy
 
 
     if auth_result is True:
