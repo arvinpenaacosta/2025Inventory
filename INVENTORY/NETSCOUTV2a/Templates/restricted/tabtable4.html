@@ -642,6 +642,15 @@ function clearsticky() {
 
 // Function to show toast notification
 function showToast(message, type) {
+    // Uncheck "Select All"
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+
+    // Uncheck all row checkboxes
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+
+
     const toastEl = document.getElementById('liveToast');
     const toastBody = document.getElementById('toastMessage');
     
@@ -653,6 +662,16 @@ function showToast(message, type) {
     const toast = new bootstrap.Toast(toastEl);
     toast.show();
 }
+
+
+
+
+
+
+
+
+
+
 
 // Function to clear search fields
 function clearSearch() {
