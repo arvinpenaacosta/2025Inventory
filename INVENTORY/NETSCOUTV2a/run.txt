@@ -11,3 +11,9 @@ uvicorn main_jwt-1:app --host 127.0.0.1 --port 8821 --reload --ssl-keyfile=certs
 
 modular import
 uvicorn main_jwt-2:app --host 127.0.0.1 --port 8821 --reload --ssl-keyfile=certs/server_unencrypted.key --ssl-certfile=certs/server.crt
+
+UPDATE: April 13, 2025
+
+main_jwt-2.py
+netmikomanager.py
+tabtable4.html
