@@ -1,6 +1,8 @@
 from netmiko import ConnectHandler
 from typing import List, Optional
 from pydantic import BaseModel
+from datetime import datetime
+
 
 # Pydantic models
 class FormData(BaseModel):
@@ -42,6 +44,15 @@ class RequestData(BaseModel):
     username: str
     password: str
 
+class RowUpdate(BaseModel):
+    id:int
+    station: str
+    port: str
+    interface: str
+    info2: str
+    floor: str
+
+
 # NetworkDeviceManager class definition
 class NetworkDeviceManager:
     base_ip = "10.16.0."
@@ -49,6 +60,8 @@ class NetworkDeviceManager:
     def __init__(self, username: str, password: str, base_ip: str = None):
         self.username = username
         self.password = password
+        self.log_file = "log_file.txt"  # Log file path
+        
         self.connection = None
         self.current_ip = None
         if base_ip:
@@ -88,73 +101,66 @@ class NetworkDeviceManager:
         return self.connection
 
 
+    # Log Transactions  ++++++++++++++++++++++++++++++++++++++++++++++
+    def log(self, message: str):
+        with open(self.log_file, "a") as f:
+            f.write(f"{message}\n")
+
     # CLEAR PORT  ++++++++++++++++++++++++++++++++++++++++++++++
     # ✅🔥 PROCESS AND CLEAR PORT SECURITY 🔥
     def process_and_clear_ports(self, rows: List[dict]):
         results = []
-        last_ip = None  # Track the previous IP
-
+        last_ip = None
+        
         for row in rows:
             ip = f"{self.base_ip}{row['port']}"
+
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.log(f"[{timestamp} | {self.username} | Clear Port] {row['floor']} | {row['station']} | {row['port']} | {row['interface']} | {row['info2']}")
             
             # Check if we need to connect to a new device
             if ip != last_ip:
-                # Disconnect from the previous device if connected
+                # Disconnect from previous device if connected
                 if self.connection:
-                    print(f"\n🔌 Disconnecting from previous device {self.current_ip}")
+                    print(f"\n🔌 Disconnecting from {self.current_ip}")
                     self.connection.disconnect()
                     self.connection = None
                 
-                # Connect to the new device
-                if not self.connect(row['port']):
-                    results.append({
-                        "device": ip,
-                        "interface": row['interface'],
-                        "status": "❌ Connection failed."
-                    })
-                    continue  # Skip to the next row if connection fails
-                last_ip = ip  # Update to the current IP
+                # Connect to new device
+                error = self.connect(row['port'])
+                if error:
+                    results.append({"device": ip, "status": f"❌ Connection failed: {error}"})
+                    continue
+                last_ip = ip
             
-            # Proceed with clear port for the current interface
+            # Clear interface directly (inline implementation of clear_interface)
             interface = row['interface']
-            print(f"⚡ Clear Port for interface {interface}")
+            if not self.connection:
+                results.append({"device": ip, "interface": interface, "status": "⚠️ No active connection."})
+                continue
+                
+            print(f"⚡ Clearing {interface} configuration...")
             commands = [
                 f"interface {interface}",
                 "shutdown",
                 "no shutdown"
             ]
 
-            try:
-                output = self.connection.send_config_set(commands)
-                print(f"✔️ Clear Port applied to interface {interface} successfully.")
-                results.append({
-                    "device": ip,
-                    "interface": interface,
-                    "status": output
-                })
-            except Exception as e:
-                # Handle any command failure
-                print(f"❌ Failed to Clear Port to interface {interface}: {str(e)}")
-                print(f"❌ ==============================================================")
-                results.append({
-                    "device": ip,
-                    "interface": interface,
-                    "status": f"❌ Command failure: {str(e)}"
-                })
+            output = self.connection.send_config_set(commands)
+            print(f"✔️ Port {interface} cleared successfully.")
+            
+            results.append({"device": ip, "interface": interface, "status": output})
         
         # ✅ Final cleanup after all rows are processed
         if self.connection:
-            try:
-                self.connection.send_command("end")  # Exits config mode (if applicable)
-                print(f"\n🔌 Disconnecting from {self.current_ip}")
-            except Exception as e:
-                print(f"⚠️ Could not send 'end' command: {str(e)}")
+            self.connection.send_command("end")  # Exits config mode (if applicable)
 
-            # Disconnect from the last device
+            print(f"\n🔌 Disconnecting from {self.current_ip}")
             self.connection.disconnect()
             self.connection = None
-
+        
         return results
+
 
     # CLEAR PORT STICKY  ++++++++++++++++++++++++++++++++++++++++++++++
     # ✅🔥 PROCESS AND CLEAR STICKY PORT 🔥
@@ -165,35 +171,38 @@ class NetworkDeviceManager:
         for row in rows:
             ip = f"{self.base_ip}{row['port']}"
             interface = row['interface']
+
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.log(f"[{timestamp} | {self.username} | Clear Sticky] {row['floor']} | {row['station']} | {row['port']} | {row['interface']} | {row['info2']}")
             
             # Check if we need to connect to a new device
             if ip != last_ip:
-                # Disconnect from the previous device if connected
+                # Disconnect from previous device if connected
                 if self.connection:
-                    print(f"\n🔌 Disconnecting from previous device {self.current_ip}")
+                    print(f"\n🔌 Disconnecting from {self.current_ip}")
                     self.connection.disconnect()
                     self.connection = None
                 
                 # Connect to the new device
-                if not self.connect(row['port']):
-                    results.append({
-                        "device": ip,
-                        "interface": row['interface'],
-                        "status": "❌ Connection failed."
-                    })
-                    continue  # Skip to the next row if connection fails
-                last_ip = ip  # Update to the current IP
+                error = self.connect(row['port'])
+                if error:
+                    results.append({"device": ip, "status": f"❌ Connection failed: {error}"})
+                    continue
+                last_ip = ip
             
-
-            interface = row['interface']      
+            # If no active connection, skip the interface processing
+            if not self.connection:
+                results.append({"device": ip, "interface": interface, "status": "⚠️ No active connection."})
+                continue
+            
             # ⚠️ Clear sticky MAC address (Step 1)
             print(f"⚡ Clearing sticky MAC address on {interface}...")
             self.connection.send_command(f"clear port-security sticky interface {interface}")
             print(f"✔️ Sticky MAC address cleared on {interface}.")
             
-            # Proceed with clear port for the current interface
-            print(f"⚡ Clear Port for interface {interface}")
-            commands = [
+            # ⚠️ Apply Shutdown & No Shutdown commands (Step 2)
+            print(f"⚡ Reapplying configuration on {interface}...")
+            config_commands = [
                 f"interface {interface}",
                 "shutdown",
                 "no shutdown"
@@ -228,6 +237,7 @@ class NetworkDeviceManager:
         
         return results
 
+
     # CHANGE VLAN  ++++++++++++++++++++++++++++++++++++++++++++++
     # ✅🔥 PROCESS AND CHANGE VLAN 🔥
     def process_and_changeVlans(self, rows: list, vlan: str):
@@ -236,7 +246,10 @@ class NetworkDeviceManager:
 
         for row in rows:
             ip = f"{self.base_ip}{row['port']}"
-            
+
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.log(f"[{timestamp} | {self.username} | Change VLAN] {row['floor']} | {row['station']} | {row['port']} | {row['interface']} | {row['info2']}")
+
             # Check if we need to connect to a new device
             if ip != last_ip:
                 # Disconnect from the previous device if connected
@@ -297,6 +310,7 @@ class NetworkDeviceManager:
 
         return results
 
+
     # CHANGE VOICE  ++++++++++++++++++++++++++++++++++++++++++++++
     # ✅🔥 PROCESS AND CHANGE VOICE 🔥
     def process_and_changeVoices(self, rows: list, voice: str):
@@ -305,7 +319,10 @@ class NetworkDeviceManager:
 
         for row in rows:
             ip = f"{self.base_ip}{row['port']}"
-            
+
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.log(f"[{timestamp} | {self.username} | Change Voice] {row['floor']} | {row['station']} | {row['port']} | {row['interface']} | {row['info2']}")
+
             # Check if we need to connect to a new device
             if ip != last_ip:
                 # Disconnect from the previous device if connected
@@ -365,3 +382,88 @@ class NetworkDeviceManager:
             self.connection = Nonee
 
         return results
+    
+
+
+
+
+    
+    
+    # ✅🔥 SHOW VLAN STATUS 🔥
+    def process_show_vlan_status(self, rows: List[dict]):
+        results = []
+        last_ip = None
+
+        for row in rows:
+            ip = f"{self.base_ip}{row['port']}"
+            interface = row['interface']
+
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.log(f"[{timestamp} | {self.username} | Show VLAN] {row['floor']} | {row['station']} | {row['port']} | {row['interface']} | {row['info2']}")
+
+
+            # Check if we need to connect to a new device
+            if ip != last_ip:
+                if self.connection:
+                    print(f"\n🔌 Disconnecting from {self.current_ip}")
+                    self.connection.disconnect()
+                    self.connection = None
+
+                # Connect to the new device
+                error = self.connect(row['port'])
+                if error:
+                    results.append({
+                        "device": ip,
+                        "interface": interface,
+                        "status": f"❌ Connection failed: {error}"
+                    })
+                    continue
+                last_ip = ip
+
+            # If still no connection
+            if not self.connection:
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": "⚠️ No active connection."
+                })
+                continue
+
+            # ✅ Show VLAN assignment on this interface
+            try:
+                print(f"🔍 Checking VLAN status on {interface}...")
+                command = f"show interfaces {interface} switchport | include Access Mode VLAN"
+                output = self.connection.send_command(command).strip()
+
+                if output:
+                    print(f"✔️ {interface}: {output}")
+                    results.append({
+                        "device": ip,
+                        "interface": interface,
+                        "status": output
+                    })
+                else:
+                    print(f"⚠️ {interface}: No VLAN info found.")
+                    results.append({
+                        "device": ip,
+                        "interface": interface,
+                        "status": "⚠️ No VLAN info returned."
+                    })
+
+            except Exception as e:
+                print(f"❌ Failed to check VLAN on {interface}")
+                results.append({
+                    "device": ip,
+                    "interface": interface,
+                    "status": f"❌ Command error: {str(e)}"
+                })
+
+        # Cleanup
+        if self.connection:
+            self.connection.send_command("end")
+            print(f"\n🔌 Disconnecting from {self.current_ip}")
+            self.connection.disconnect()
+            self.connection = None
+
+        return results
+
