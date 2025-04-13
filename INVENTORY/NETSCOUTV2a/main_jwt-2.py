@@ -27,7 +27,7 @@ from typing import Optional, List
 
 
 #from netmiko import ConnectHandler
-from auth.netmikomanager import NetworkDeviceManager, FormData, Row, ChangeVlanRequest, ChangeVoiceRequest, RequestData
+from auth.netmikomanager import NetworkDeviceManager, FormData, Row, ChangeVlanRequest, ChangeVoiceRequest, RequestData, RowUpdate
 
 
 SECRET_KEY = "your-secret-key"  # Replace with a strong secret key
@@ -37,8 +37,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60  # Set token expiration as needed
 print(ACCESS_TOKEN_EXPIRE_MINUTES)
 
 # Database file path
-# DB_FILE = os.getenv("DB_FILE", "db/epmap.db")  # Default to 'db/entries.db' if not specified
-DB_FILE = os.getenv("DB_FILE", "C:/DevApps/pyProj/LIVE/NetscoutMate/db/epmap.db")
+DB_FILE = os.getenv("DB_FILE", "db/epmap.db")  # Default to 'db/entries.db' if not specified
+# DB_FILE = os.getenv("DB_FILE", "C:/DevApps/pyProj/LIVE/NetscoutMate/db/epmap.db")
 
 # Header file path
 PAGE_HEADER = os.getenv("PAGE_HEADER", "Linkrunner Web Tool App - Version 2")  # Default to 'Page Footer' if not specified
@@ -54,7 +54,6 @@ app.mount("/statics", StaticFiles(directory="statics"), name="statics")
 
 # Initialize templates
 templates = Jinja2Templates(directory="templates")
-
 
 ##################################################################
 # Function to get a database connection
@@ -90,6 +89,26 @@ def init_db():
 @app.on_event("startup")
 def on_startup():
     init_db()
+
+##################################################################
+def get_floor():
+    try:
+        conn = get_db_connection()
+        
+        # Execute query to get VLAN data
+        query = "SELECT * FROM floors"
+        cursor = conn.cursor()
+        floor_rows = cursor.execute(query).fetchall()
+        floors = [dict(row) for row in floor_rows]
+        conn.close()
+        
+        return floors
+    
+    except Exception as e:
+        # Log the error
+        print(f"Error fetching Floor data: {str(e)}")
+        # Return empty list in case of error
+        return []
 
 ##################################################################
 def get_vlan():
@@ -196,8 +215,8 @@ async def read_index(request: Request):
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
     
     #auth_result = authenticate(username, password) #authenticate using LDAP3
-    auth_result = authenticate_netmiko(username, password) #authenticate using NETMIKO
-    #auth_result = authenticate_dummy(username, password) #authenticate using dummy
+    #auth_result = authenticate_netmiko(username, password) #authenticate using NETMIKO
+    auth_result = authenticate_dummy(username, password) #authenticate using dummy
 
 
     if auth_result is True:
@@ -243,8 +262,8 @@ async def read_items(
 
     username, password = current_user
 
-    # async def get_vlan()
-    # async def get_voice()
+    
+    floor = get_floor()
     vlan = get_vlan()
     voice = get_voice()
 
@@ -254,9 +273,34 @@ async def read_items(
         "password": password,
         "vlan": vlan,
         "voice": voice,
+        "floor": floor,
         "pageheader": PAGE_HEADER, 
         "pagefooter": PAGE_FOOTER}
         )
+
+
+@app.post("/update-row")
+async def update_row(data: RowUpdate):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+        UPDATE mapping
+        SET station = ?, port = ?, interface = ?, info2 = ?, floor = ?
+        WHERE id = ?
+        """
+        cursor.execute(query, (data.station, data.port, data.interface, data.info2, data.floor, data.id))
+        conn.commit()
+        conn.close()
+
+        return {"success": True}
+    except Exception as e:
+        print("Update error:", str(e))
+        return {"success": False, "error": str(e)}
+
+
+
 
 
 @app.get("/netscout5", response_class=HTMLResponse)
@@ -287,7 +331,7 @@ async def read_items(
 
 # ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 # ✅ Query function for `mapping` table
-def query_mapping_db(station, ip_port, interface, floor, info2):
+def query_mapping_db(id, station, ip_port, interface, floor, info2):
     """Query the SQLite `mapping` table using provided filters."""
 
     conn = get_db_connection()
@@ -339,6 +383,7 @@ async def submit_formSearch(request: Request):
     founddata = await request.json()
 
     # ✅ Extract form values
+    id = founddata.get("id")
     station = founddata.get("station")
     ip_port = founddata.get("ip_port")  # Using `ip_port` as `port` from frontend
     interface = founddata.get("interface")
@@ -347,6 +392,7 @@ async def submit_formSearch(request: Request):
 
     # Log the received data
     print("Searching with:", {
+        "id": id,
         "station": station,
         "ip_port": ip_port,
         "interface": interface,
@@ -355,7 +401,7 @@ async def submit_formSearch(request: Request):
     })
 
     # ✅ Query the `mapping` table
-    results = query_mapping_db(station, ip_port, interface, floor, info2)
+    results = query_mapping_db(id, station, ip_port, interface, floor, info2)
 
     # ✅ Return the results as JSON
     response_data = {
@@ -489,23 +535,44 @@ async def change_voice(request: ChangeVoiceRequest):
 
 
 # 🚀 *******************************************
-@app.post("/showStatus")
-async def process_rows(request: Request):
+@app.post("/showVlanStatus")
+async def process_showVlan(request: Request):
+    try:
+        data = await request.json()
+        rows = data.get("rows", [])
+        username = data.get("username")
+        password = data.get("password")
+
+        # Call the VLAN processing method
+        manager = NetworkDeviceManager(username=username, password=password)
+        result = manager.process_show_vlan_status(rows)
+
+        return JSONResponse(content={"message": "VLAN status fetched", "results": result})
+
+    except Exception as e:
+        return JSONResponse(
+            content={"error": f"An error occurred: {str(e)}"},
+            status_code=500
+        )
+
+
+
+
+# 🚀 *******************************************
+async def process_DataTable(request: Request):
     data = await request.json()
     rows = data.get("rows", [])
 
     if not rows:
         return JSONResponse(content={"message": "No rows received."}, status_code=400)
 
-    # ✅ Print the rows in table format
-    headers = ["Station", "Port", "Interface", "Floor", "Info2"]  # Table headers
+    headers = ["Station", "Port", "Interface", "Floor", "Info2"]
     table_data = [list(row.values()) for row in rows]
 
     print("\n🚀 Received Rows in Table Format: SHOW VLAN STATUS")
     print(tabulate(table_data, headers=headers, tablefmt="grid"))
 
-    # ✅ Respond with success message
-    return JSONResponse(content={"message": f"{len(rows)} rows processed successfully."})
+    return JSONResponse(content={"message": "Rows processed successfully."}, status_code=200)
 
 
 
