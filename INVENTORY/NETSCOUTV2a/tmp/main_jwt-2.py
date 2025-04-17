@@ -1,4 +1,4 @@
-
+# 17 April 2025
 import json
 import sqlite3
 import os
@@ -239,6 +239,8 @@ async def dashboard(request: Request, current_user: tuple = Depends(get_current_
 
 
 
+
+
 # ✅ March30 - New
 #NEW ALLOWED - Accessing Restricted Page  ========================================
 @app.get("/netscout4", response_class=HTMLResponse)
@@ -263,31 +265,6 @@ async def read_items(
         "pageheader": PAGE_HEADER, 
         "pagefooter": PAGE_FOOTER}
         )
-
-
-@app.get("/netscout5", response_class=HTMLResponse)
-async def read_items(
-        request: Request, 
-        current_user: tuple = Depends(get_current_user)
-    ):
-
-    username, password = current_user
-
-    # async def get_vlan()
-    # async def get_voice()
-    vlan = get_vlan()
-    voice = get_voice()
-
-    return templates.TemplateResponse("restricted/tabtable5.html", {
-        "request": request, 
-        "username": username, 
-        "password": password,
-        "vlan": vlan,
-        "voice": voice,
-        "pageheader": PAGE_HEADER, 
-        "pagefooter": PAGE_FOOTER}
-        )
-
 
 
 
@@ -335,7 +312,6 @@ def query_mapping_db(station, ip_port, interface, floor, info2):
 
     return results
 
-
 # ✅ ================ function initializeFormHandler()
 @app.post("/searchdb")
 async def submit_formSearch(request: Request):
@@ -371,7 +347,6 @@ async def submit_formSearch(request: Request):
     }
 
     return JSONResponse(content=response_data)
-
 
 
 # ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
@@ -478,8 +453,7 @@ async def change_voice(request: ChangeVoiceRequest):
             "voice": voice,
         }, indent=4))
         '''
-
-        
+       
 
         manager = NetworkDeviceManager(username=request.username, password=request.password)
         result_message = manager.process_and_changeVoices(rows, voice)
@@ -492,12 +466,9 @@ async def change_voice(request: ChangeVoiceRequest):
 # ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
 
 
-
-
-
 # ✅ ================= 
 @app.post("/showVlanStatus")
-async def clear_port(request: Request):
+async def show_vlan(request: Request):
     try:
         data = await request.json()
         rows = data.get("rows", [])
@@ -507,26 +478,22 @@ async def clear_port(request: Request):
         if not username or not password:
             raise HTTPException(status_code=400, detail="Username and password are required.")
 
- 
+        '''
         # ✅ Print only rows, username, and password in JSON format
-        print("[REQUEST DEBUG - CLEAR PORT] Incoming Data:\n", json.dumps({
+        print("[REQUEST DEBUG - SHOW VLAN] Incoming Data:\n", json.dumps({
             "rows": rows,
             "username": username,
             "password": password  # ⚠️ Be cautious logging passwords in production
         }, indent=4))
+        '''
 
-
-        #manager = NetworkDeviceManager(username=username, password=password)
-        #result_message = manager.process_and_clear_ports(rows)
-        result_message = "521...DONE..."
-
+        manager = NetworkDeviceManager(username=username, password=password)
+        result_message = manager.process_showVlan(rows)
 
         return JSONResponse(content={"message": "✅ Displaying VLAN Value Successfully.", "details": result_message})
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing devices: {str(e)}")
-
-
 
 
 # ✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅
