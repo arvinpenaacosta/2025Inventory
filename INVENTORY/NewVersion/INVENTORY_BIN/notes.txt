@@ -1,1 +1,8 @@
-notes
+pyinstaller --onefile --noconsole --add-data "devappData.json;." getPCinfo.py
+
+
+pyinstaller --onefile --noconsole admin_inv.py
+
+
+
+\\ltop1787\CrossINV\test
