@@ -1,0 +1,103 @@
+
+        /* Ensure the table container has a fixed height for vertical scrolling */
+        .dataTables_scrollBody {
+            max-height: 400px !important;
+        }
+        /* Style for the expand/collapse icon column */
+        td.details-control {
+            cursor: pointer;
+            text-align: center;
+            vertical-align: middle;
+            width: 30px;
+        }
+        /* Style for SVG icons */
+        td.details-control svg {
+            width: 16px;
+            height: 16px;
+            fill: #333;
+        }
+        tr.shown td.details-control .expand-icon {
+            display: none;
+        }
+        tr:not(.shown) td.details-control .collapse-icon {
+            display: none;
+        }
+        /* Style for child row table */
+        .child-table {
+            width: 100%;
+            margin-left: 50px;
+            border-collapse: collapse;
+        }
+        .child-table th,
+        .child-table td {
+            padding: 5px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        .child-table th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .child-table {
+                margin-left: 20px;
+            }
+            .dataTables_scrollBody {
+                max-height: 300px !important;
+            }
+            td.details-control svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
+        /* Bootstrap-specific table styling */
+        #example {
+            background-color: #fff;
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+        #example thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        #example tfoot th {
+            background-color: #f8f9fa;
+        }
+        #example input {
+            width: 100%;
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+        }
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #212529;
+            color: #f8f9fa;
+        }
+        body.dark-mode #example {
+            background-color: #343a40;
+        }
+        body.dark-mode #example thead th,
+        body.dark-mode #example tfoot th {
+            background-color: #495057;
+            border-bottom: 2px solid #6c757d;
+        }
+        body.dark-mode .child-table th {
+            background-color: #495057;
+        }
+        body.dark-mode .child-table th,
+        body.dark-mode .child-table td {
+            border: 1px solid #6c757d;
+        }
+        body.dark-mode .card {
+            background-color: #343a40;
+            border-color: #6c757d;
+        }
+        body.dark-mode td.details-control svg {
+            fill: #f8f9fa;
+        }
+        body.dark-mode .header-container {
+            background-color: #343a40;
+            border-bottom: 1px solid #6c757d;
+        }

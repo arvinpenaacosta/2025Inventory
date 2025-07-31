@@ -1,0 +1,872 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --bg-secondary: white;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --border-color: #e9ecef;
+            --table-bg: white;
+            --table-hover: #f8f9fa;
+            --table-stripe: #fbfbfb;
+            --header-bg: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            --control-bg: #f8f9fa;
+            --shadow: rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --bg-secondary: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --border-color: #333;
+            --table-bg: #2c2c2c;
+            --table-hover: #3c3c3c;
+            --table-stripe: #323232;
+            --header-bg: linear-gradient(45deg, #2c3e50 0%, #34495e 100%);
+            --control-bg: #2c2c2c;
+            --shadow: rgba(0,0,0,0.3);
+        }
+
+        body { 
+            background: var(--bg-primary);
+            min-height: 100vh;
+            padding: 20px 0;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .main-container {
+            max-width: 95%;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px var(--shadow);
+            overflow: hidden;
+        }
+        
+        .header-section {
+            background: var(--header-bg);
+            color: white;
+            padding: 20px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header-section h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 300;
+        }
+
+        .fixed-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1100;
+        }
+
+        .control-btn {
+            background: var(--header-bg);
+            border: none;
+            padding: 10px 12px;
+            border-radius: 25px;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--shadow);
+            min-width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+
+        .export-btn {
+            background: linear-gradient(45deg, #28a745 0%, #20c997 100%);
+        }
+
+        .export-btn:hover {
+            background: linear-gradient(45deg, #218838 0%, #1ba085 100%);
+        }
+        
+        .controls-section {
+            padding: 15px 30px;
+            background: var(--control-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        #loadDataBtn {
+            background: var(--header-bg);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        #loadDataBtn:hover {
+            transform: translateY(-2px);
+        }
+        
+        #loadStatus {
+            font-weight: 500;
+            padding: 8px 15px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .table-section {
+            padding: 0;
+            background: var(--bg-secondary);
+        }
+        
+        .table-wrapper {
+            position: relative;
+        }
+        
+        #inventoryTable {
+            margin: 0 !important;
+            width: 100% !important;
+            background: var(--table-bg);
+            color: var(--text-primary);
+        }
+        
+        #inventoryTable thead th {
+            background: var(--header-bg) !important;
+            color: white !important;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            border: none !important;
+            padding: 12px 8px;
+            font-size: 0.85rem;
+        }
+        
+        #inventoryTable tbody td {
+            padding: 10px 8px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            background: var(--table-bg);
+            color: var(--text-primary);
+        }
+        
+        #inventoryTable tbody tr:hover td {
+            background-color: var(--table-hover) !important;
+        }
+        
+        #inventoryTable tbody tr:nth-child(even) td {
+            background-color: var(--table-stripe);
+        }
+
+        .dataTables_wrapper {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .dataTables_length, .dataTables_filter {
+            padding: 15px 20px;
+            background: var(--bg-secondary);
+        }
+
+        .dataTables_length label,
+        .dataTables_filter label {
+            color: var(--text-primary);
+        }
+        
+        .dataTables_filter input {
+            border-radius: 15px;
+            border: 1px solid var(--border-color);
+            padding: 8px 15px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .dataTables_length select {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 4px;
+        }
+        
+        .dataTables_info, .dataTables_paginate {
+            padding: 15px 20px;
+            background: var(--control-bg);
+            color: var(--text-primary);
+        }
+        
+        .page-link {
+            border-radius: 15px !important;
+            margin: 0 2px;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+        
+        .page-link:hover, .page-item.active .page-link {
+            background: var(--header-bg);
+            border-color: transparent;
+            color: white;
+        }
+
+        .dataTables_scrollBody {
+            border: none !important;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Toast customization */
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .toast-header {
+            background: var(--control-bg);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .toast-body {
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .toast {
+            box-shadow: 0 0.5rem 1rem rgba(255, 255, 255, 0.1);
+        }
+
+        /* Summary section styles */
+        .summary-section {
+            padding: 20px 30px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .summary-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .summary-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .summary-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .summary-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .location-btn {
+            background: var(--header-bg) !important;
+            border: none !important;
+            color: white !important;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--shadow);
+            min-width: 120px;
+        }
+
+        .location-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+            color: white !important;
+        }
+
+        .location-badge {
+            background: #dc3545 !important;
+        }
+            .main-container {
+                max-width: 98%;
+                margin: 10px auto;
+            }
+            
+            .header-section h1 {
+                font-size: 1.5rem;
+            }
+
+            .fixed-controls {
+                top: 10px;
+                right: 10px;
+                gap: 8px;
+            }
+            
+            .control-btn {
+                padding: 8px 10px;
+                min-width: 40px;
+                height: 40px;
+            }
+            
+            .controls-section {
+                padding: 10px 15px;
+            }
+            
+            #inventoryTable thead th,
+            #inventoryTable tbody td {
+                padding: 6px 4px;
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Bootstrap Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1200;">
+        <div id="loadToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+            <div class="toast-header">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <strong class="me-auto">Data Loaded</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                <!-- Toast content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle and Export Buttons (Fixed Position) -->
+    <div class="fixed-controls">
+        <button class="control-btn" id="themeToggle" title="Toggle theme">
+            <i class="fas fa-moon"></i>
+        </button>
+        <button class="control-btn export-btn" id="exportXlsx" title="Export to Excel">
+            <i class="fas fa-file-excel"></i>
+        </button>
+        <button class="control-btn export-btn" id="exportCsv" title="Export to CSV">
+            <i class="fas fa-file-csv"></i>
+        </button>
+    </div>
+
+    <div class="main-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <h1><i class="fas fa-database"></i> Inventory Transaction Dashboard</h1>
+            <p class="mb-0">Real-time inventory data visualization</p>
+        </div>
+        
+        <!-- Status Section -->
+        <div class="controls-section">
+            <div class="controls">
+                <span id="loadStatus"></span>
+            </div>
+        </div>
+        
+        <!-- Table Section -->
+        <div class="table-section">
+            <div class="table-wrapper">
+                <table id="inventoryTable" class="table table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Floor</th>
+                            <th>Loc1</th>
+                            <th>Loc2</th>
+                            <th>Log User</th>
+                            <th>Hostname</th>
+                            <th>Ser Num</th>
+                            <th>Processor</th>
+                            <th>Windows Version</th>
+                            <th>Windows Display</th>
+                            <th>Model</th>
+                            <th>Total RAM</th>
+                            <th>RAM per Slot</th>
+                            <th>RAM Speed</th>
+                            <th>RAM Type</th>
+                            <th>IP Address</th>
+                            <th>MAC Address</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <div class="summary-header">
+                <h3><i class="fas fa-chart-bar"></i> Location Summary</h3>
+                <p class="mb-0">Device count by Location 1</p>
+            </div>
+            <div class="summary-content" id="locationSummary">
+                <!-- Location summary buttons will be generated here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Load the JavaScript data file -->
+    <script src="../report/DataIn.js"></script>
+    
+    <script>
+        let dataTable = null;
+        let currentTheme = 'light'; // Store theme preference in memory
+        
+        $(document).ready(function() {
+            // Initialize theme
+            initializeTheme();
+            
+            // Load data from JS file automatically
+            loadDataFromJS();
+            
+            // Theme toggle
+            $('#themeToggle').click(function() {
+                toggleTheme();
+            });
+
+            // Export buttons
+            $('#exportXlsx').click(function() {
+                exportToExcel();
+            });
+
+            $('#exportCsv').click(function() {
+                exportToCsv();
+            });
+        });
+
+        function initializeTheme() {
+            // Load theme from localStorage, default to 'light' if not found
+            try {
+                // In real environment, this will check localStorage:
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                currentTheme = savedTheme;
+                applyTheme(currentTheme);
+                console.log(`Theme loaded from localStorage: ${currentTheme}`);
+            } catch (error) {
+                // Fallback for environments without localStorage (like Claude artifacts)
+                console.warn('localStorage not available, using default light theme');
+                currentTheme = 'light';
+                applyTheme(currentTheme);
+            }
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(currentTheme);
+            
+            // Save theme preference to localStorage
+            try {
+                localStorage.setItem('theme', currentTheme);
+                console.log(`Theme changed to: ${currentTheme} and saved to localStorage`);
+            } catch (error) {
+                console.warn('localStorage not available, theme preference not saved');
+            }
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const icon = $('#themeToggle i');
+            icon.removeClass('fa-moon fa-sun');
+            icon.addClass(theme === 'light' ? 'fa-moon' : 'fa-sun');
+        }
+        
+        function loadDataFromJS() {
+            const status = $('#loadStatus');
+            
+            // Show loading state
+            status.html('<div class="text-info bg-light rounded"><i class="fas fa-spinner fa-spin"></i> Loading data...</div>');
+            
+            // Check if JavaScript data is available
+            if (typeof inventoryData !== 'undefined' && Array.isArray(inventoryData) && inventoryData.length > 0) {
+                setTimeout(() => {
+                    createDataTable(inventoryData);
+                    
+                    // Clear status section
+                    status.html('');
+                    
+                    // Show success toast
+                    showSuccessToast(inventoryData.length);
+                }, 500);
+            } else {
+                // Show error message
+                status.html(`<div class="text-danger bg-danger bg-opacity-10 rounded">
+                    <i class="fas fa-exclamation-triangle"></i> Failed to load data
+                    <br><small>Please ensure the JavaScript data file exists and contains valid inventory data</small>
+                </div>`);
+            }
+        }
+
+        function getDistinctLatestRecords(data) {
+            // Create a map to store the latest record for each serial number
+            const serialMap = new Map();
+            
+            // Process each record
+            data.forEach(record => {
+                const serialNumber = record.serial_number;
+                
+                // Skip records without serial numbers
+                if (!serialNumber || serialNumber.trim() === '') {
+                    return;
+                }
+                
+                // Parse timestamp for comparison (assuming format: YYYY-MM-DD HH:MM:SS or similar)
+                const currentTimestamp = new Date(record.timestamp);
+                
+                // If serial number doesn't exist in map or current record is newer
+                if (!serialMap.has(serialNumber)) {
+                    serialMap.set(serialNumber, record);
+                } else {
+                    const existingRecord = serialMap.get(serialNumber);
+                    const existingTimestamp = new Date(existingRecord.timestamp);
+                    
+                    // Keep the record with the latest timestamp
+                    if (currentTimestamp > existingTimestamp) {
+                        serialMap.set(serialNumber, record);
+                    }
+                }
+            });
+            
+            // Convert map values back to array and sort by ID
+            return Array.from(serialMap.values()).sort((a, b) => a.id - b.id);
+        }
+
+        function showSuccessToast(distinctCount, totalCount) {
+            // Set toast content - showing distinct count vs total count
+            const toastBody = document.getElementById('toastBody');
+            toastBody.innerHTML = `
+                <strong>Successfully loaded ${distinctCount.toLocaleString()} unique records</strong><br>
+                <small class="text-muted">
+                    ${totalCount ? `(${totalCount.toLocaleString()} total records filtered)` : ''}
+                </small>
+            `;
+            
+            // Show the toast
+            const toastElement = document.getElementById('loadToast');
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+        }
+        
+        function createDataTable(data) {
+            if (dataTable) {
+                dataTable.destroy();
+            }
+            
+            dataTable = $('#inventoryTable').DataTable({
+                data: data,
+                columns: [
+                    { data: 'id', className: 'text-center' },
+                    { data: 'floor', className: 'text-center' },
+                    { data: 'loc1' },
+                    { data: 'loc2' },
+                    { data: 'log_user' },
+                    { data: 'hostname' },
+                    { data: 'serial_number' },
+                    { data: 'processor' },
+                    { data: 'windows_version' },
+                    { data: 'windows_display_version' },
+                    { data: 'model' },
+                    { data: 'total_ram', className: 'text-end' },
+                    { data: 'ram_per_slot', className: 'text-end' },
+                    { data: 'ram_speed', className: 'text-end' },
+                    { data: 'ram_type', className: 'text-center' },
+                    { data: 'ip_address', className: 'text-center' },
+                    { data: 'mac_address', className: 'text-center font-monospace' },
+                    { data: 'timestamp', className: 'text-center' }
+                ],
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                responsive: true,
+                destroy: true,
+                scrollY: '400px',
+                scrollCollapse: true,
+                order: [[0, 'asc']],
+                language: {
+                    search: "Search:",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "No entries available",
+                    infoFiltered: "(filtered from _MAX_ total entries)",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Prev"
+                    }
+                },
+                dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>rt<"row"<"col-sm-6"i><"col-sm-6"p>>',
+                drawCallback: function() {
+                    // Ensure proper styling after each redraw
+                    $('.dataTables_paginate .page-link').each(function() {
+                        $(this).css({
+                            'background': 'var(--bg-secondary)',
+                            'color': 'var(--text-primary)',
+                            'border-color': 'var(--border-color)'
+                        });
+                    });
+                },
+                initComplete: function() {
+                    // Generate location summary after table is ready
+                    generateLocationSummary(data);
+                }
+            });
+        }
+
+        function generateLocationSummary(data) {
+            // Group data by Floor + Location 1 (floor + loc1)
+            const locationGroups = {};
+            
+            data.forEach(record => {
+                const floor = record.floor || 'Unknown';
+                const loc1 = record.loc1 || 'Unknown';
+                const combinedLocation = `${floor} - ${loc1}`;
+                
+                if (!locationGroups[combinedLocation]) {
+                    locationGroups[combinedLocation] = {
+                        count: 0,
+                        floor: floor,
+                        loc1: loc1
+                    };
+                }
+                locationGroups[combinedLocation].count++;
+            });
+            
+            // Sort locations by name
+            const sortedLocations = Object.keys(locationGroups).sort();
+            
+            // Generate summary buttons
+            const summaryContainer = document.getElementById('locationSummary');
+            summaryContainer.innerHTML = '';
+            
+            sortedLocations.forEach(location => {
+                const groupData = locationGroups[location];
+                const count = groupData.count;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn location-btn position-relative';
+                button.innerHTML = `
+                    ${location}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill location-badge">
+                        ${count}
+                        <span class="visually-hidden">${count} devices</span>
+                    </span>
+                `;
+                
+                // Add click handler to filter table by location (still filter by loc1 only)
+                button.addEventListener('click', function() {
+                    filterTableByLocation(groupData.loc1);
+                });
+                
+                summaryContainer.appendChild(button);
+            });
+        }
+
+        function filterTableByLocation(location) {
+            if (dataTable) {
+                // Filter the table by the selected location
+                dataTable.column(2).search(location === 'Unknown' ? '^$' : '^' + location + '$', true, false).draw();
+            }
+        }
+
+        function getFilteredData() {
+            if (!dataTable) return [];
+            
+            // Get the currently filtered/displayed data from DataTable
+            const filteredData = [];
+            const displayedRows = dataTable.rows({ filter: 'applied' }).data();
+            
+            // Convert DataTable rows to plain objects
+            for (let i = 0; i < displayedRows.length; i++) {
+                filteredData.push(displayedRows[i]);
+            }
+            
+            return filteredData;
+        }
+
+        function exportToExcel() {
+            const data = getFilteredData();
+            if (data.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            // Prepare data for Excel export
+            const exportData = data.map(row => ({
+                'ID': row.id,
+                'Floor': row.floor,
+                'Location 1': row.loc1,
+                'Location 2': row.loc2,
+                'Log User': row.log_user,
+                'Hostname': row.hostname,
+                'Serial Number': row.serial_number,
+                'Processor': row.processor,
+                'Windows Version': row.windows_version,
+                'Windows Display': row.windows_display_version,
+                'Model': row.model,
+                'Total RAM': row.total_ram,
+                'RAM per Slot': row.ram_per_slot,
+                'RAM Speed': row.ram_speed,
+                'RAM Type': row.ram_type,
+                'IP Address': row.ip_address,
+                'MAC Address': row.mac_address,
+                'Timestamp': row.timestamp
+            }));
+
+            // Create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Inventory Data');
+
+            // Generate filename with current date
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10);
+            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
+            const filename = `inventory_report_${dateStr}_${timeStr}.xlsx`;
+
+            // Save file
+            XLSX.writeFile(wb, filename);
+
+            // Show success message
+            showExportToast('Excel', filename, data.length);
+        }
+
+        function exportToCsv() {
+            const data = getFilteredData();
+            if (data.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            // Prepare CSV headers
+            const headers = [
+                'ID', 'Floor', 'Location 1', 'Location 2', 'Log User', 'Hostname', 
+                'Serial Number', 'Processor', 'Windows Version', 'Windows Display', 
+                'Model', 'Total RAM', 'RAM per Slot', 'RAM Speed', 'RAM Type', 
+                'IP Address', 'MAC Address', 'Timestamp'
+            ];
+
+            // Prepare CSV data
+            const csvData = data.map(row => [
+                row.id, row.floor, row.loc1, row.loc2, row.log_user, row.hostname,
+                row.serial_number, row.processor, row.windows_version, row.windows_display_version,
+                row.model, row.total_ram, row.ram_per_slot, row.ram_speed, row.ram_type,
+                row.ip_address, row.mac_address, row.timestamp
+            ]);
+
+            // Convert to CSV format
+            const csvContent = [headers, ...csvData]
+                .map(row => row.map(field => {
+                    // Escape quotes and wrap in quotes if contains comma, quote, or newline
+                    const stringField = String(field || '');
+                    if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+                        return '"' + stringField.replace(/"/g, '""') + '"';
+                    }
+                    return stringField;
+                }).join(','))
+                .join('\n');
+
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const now = new Date();
+                const dateStr = now.toISOString().slice(0, 10);
+                const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '-');
+                const filename = `inventory_report_${dateStr}_${timeStr}.csv`;
+                
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Show success message
+                showExportToast('CSV', filename, data.length);
+            }
+        }
+
+        function showExportToast(format, filename, recordCount) {
+            // Create a new toast for export notification
+            const toastContainer = document.querySelector('.toast-container');
+            const exportToastHtml = `
+                <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+                    <div class="toast-header">
+                        <i class="fas fa-download text-success me-2"></i>
+                        <strong class="me-auto">Export Complete</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        <strong>Successfully exported ${recordCount.toLocaleString()} records to ${format}</strong><br>
+                        <small class="text-muted">File: ${filename}</small>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to container
+            toastContainer.insertAdjacentHTML('beforeend', exportToastHtml);
+            
+            // Show the toast
+            const exportToastElement = toastContainer.lastElementChild;
+            const toast = new bootstrap.Toast(exportToastElement);
+            toast.show();
+            
+            // Remove toast element after it's hidden
+            exportToastElement.addEventListener('hidden.bs.toast', function() {
+                exportToastElement.remove();
+            });
+        }
+    </script>
+</body>
+</html>

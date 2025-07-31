@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Ticket Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(to right, #e0f7fa, #b2ebf2);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 90%;
+            margin: auto;
+            padding: 20px;
+            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            color: #000;
+        }
+        h1 {
+            text-align: center;
+        }
+        .chart {
+            width: 40%;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ticket Sales Performance Dashboard</h1>
+        <div id="chart1" class="chart"></div>
+        <div id="chart2" class="chart"></div>
+        <div id="chart3" class="chart"></div>
+        <div id="chart4" class="chart"></div>
+        <div id="chart5" class="chart"></div>
+    </div>
+
+    <!-- Updated path to DataIn.js -->
+    <script src="../report/DataIn.js"></script>
+
+    <script>
+        window.onload = () => {
+            if (typeof data === 'undefined') {
+                alert("No data found. Ensure 'report/DataIn.js' contains a variable named 'data'.");
+                return;
+            }
+
+            const floors = {};
+            const ramTotals = [];
+            const processorModels = {};
+            const winVersions = {};
+            const models = {};
+
+            data.forEach(d => {
+                floors[d.floor] = (floors[d.floor] || 0) + 1;
+                const ram = parseFloat(d.total_ram) || 0;
+                ramTotals.push(ram);
+                processorModels[d.processor] = (processorModels[d.processor] || 0) + 1;
+                winVersions[d.windows_display_version] = (winVersions[d.windows_display_version] || 0) + 1;
+                models[d.model] = (models[d.model] || 0) + 1;
+            });
+
+            Plotly.newPlot('chart1', [{
+                x: Object.keys(floors),
+                y: Object.values(floors),
+                type: 'bar'
+            }], { title: 'Tickets per Floor' });
+
+            Plotly.newPlot('chart2', [{
+                y: ramTotals,
+                type: 'box',
+                boxpoints: 'all',
+                jitter: 0.5
+            }], { title: 'Distribution of RAM Sizes (GB)' });
+
+            Plotly.newPlot('chart3', [{
+                labels: Object.keys(processorModels),
+                values: Object.values(processorModels),
+                type: 'pie'
+            }], { title: 'Processor Distribution' });
+
+            Plotly.newPlot('chart4', [{
+                x: Object.keys(winVersions),
+                y: Object.values(winVersions),
+                type: 'bar'
+            }], { title: 'Windows Display Versions' });
+
+            Plotly.newPlot('chart5', [{
+                labels: Object.keys(models),
+                values: Object.values(models),
+                type: 'pie'
+            }], { title: 'Device Model Breakdown' });
+        };
+    </script>
+</body>
+</html>
