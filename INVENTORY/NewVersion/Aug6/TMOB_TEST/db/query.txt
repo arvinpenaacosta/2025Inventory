@@ -1,0 +1,66 @@
+#Get All Data No Filter (RAW DATA)
+
+SELECT *
+FROM inventory
+ORDER BY 
+    -- Extract prefix for primary sort
+    CASE 
+        WHEN loc1 LIKE '%_%' AND SUBSTR(loc1, INSTR(loc1, '_') + 1) GLOB '[0-9]*'
+        THEN SUBSTR(loc1, 1, INSTR(loc1, '_'))
+        ELSE loc1
+    END,
+    -- Extract number for secondary sort
+    CASE 
+        WHEN loc1 LIKE '%_%' AND SUBSTR(loc1, INSTR(loc1, '_') + 1) GLOB '[0-9]*'
+        THEN CAST(SUBSTR(loc1, INSTR(loc1, '_') + 1) AS INTEGER)
+        ELSE 0
+    END,
+	
+	LOC2;
+
+
+==========================================================================
+#Get Non-DUPLICATE Serial Number
+
+WITH latest_inventory AS (
+    SELECT *
+    FROM (
+        SELECT *,
+               ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC) AS rn
+        FROM inventory
+        WHERE serial_number IS NOT NULL AND TRIM(serial_number) != ''
+    )
+    WHERE rn = 1
+)
+SELECT *
+FROM latest_inventory
+ORDER BY 
+    -- Extract prefix for primary sort
+    CASE 
+        WHEN loc1 LIKE '%_%' AND SUBSTR(loc1, INSTR(loc1, '_') + 1) GLOB '[0-9]*'
+        THEN SUBSTR(loc1, 1, INSTR(loc1, '_'))
+        ELSE loc1
+    END,
+    -- Extract number for secondary sort
+    CASE 
+        WHEN loc1 LIKE '%_%' AND SUBSTR(loc1, INSTR(loc1, '_') + 1) GLOB '[0-9]*'
+        THEN CAST(SUBSTR(loc1, INSTR(loc1, '_') + 1) AS INTEGER)
+        ELSE 0
+    END;
+
+
+==========================================================================
+#Get DUPLICATE Serial Number
+
+
+
+
+
+
+
+
+
+
+
+
+
