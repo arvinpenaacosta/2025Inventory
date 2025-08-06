@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Table with AG Grid and Row Selection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.2.2/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.2.2/styles/ag-theme-quartz.css">
+    <style>
+        .table-container {
+            max-height: 750px;
+            overflow-y: auto;
+            position: relative;
+            margin: 20px auto;
+            width: 98%;
+            max-width: 1600px;
+        }
+        .ag-theme-quartz .ag-header {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+            background-color: #f2f2f2 !important;
+        }
+        .ag-theme-quartz {
+            --ag-background-color: #fff;
+            --ag-header-background-color: #f2f2f2;
+            height: 750px;
+            width: 100%;
+        }
+        .search-container {
+            margin-bottom: 15px;
+            width: 98%;
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .table-header {
+            background-color: #e9ecef;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        .ag-theme-quartz .ag-cell {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            visibility: visible !important;
+        }
+        .ag-theme-quartz .ag-row {
+            visibility: visible !important;
+        }
+    </style>
+    <script src="../report/DataIn_2.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="table-header d-flex align-items-center justify-content-center">Data Table</div>
+        <div class="search-container d-flex align-items-center justify-content-center">
+            <input type="text" class="form-control me-2" id="globalSearch" placeholder="Search all columns..." oninput="onSearchInput()">
+            <button class="btn btn-primary me-2" onclick="exportData('selected')">Export Selected</button>
+            <button class="btn btn-primary" onclick="exportData('all')">Export All</button>
+        </div>
+        <div class="table-container">
+            <div id="dataTable" class="ag-theme-quartz"></div>
+        </div>
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="copyToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-body" id="toastMessage">Action completed!</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.2.2/dist/ag-grid-community.min.js"></script>
+    <script>
+        let gridOptions;
+        let toast;
+
+        window.onload = function() {
+            alert(window.QueryName);
+            // Set table header with QueryName from DataIn_2.js
+            const header = document.querySelector('.table-header');
+            header.textContent = `Data Table - ${window.QueryName || 'Unknown'}`;
+
+            const gridDiv = document.getElementById('dataTable');
+            toast = new bootstrap.Toast(document.getElementById('copyToast'));
+
+            if (!DataIn || DataIn.length === 0) {
+                gridDiv.innerHTML = '<p class="text-center">No data available</p>';
+                return;
+            }
+
+            // Generate columns dynamically from DataIn with specific widths
+            const keys = Object.keys(DataIn[0]);
+            const columnDefs = keys.map((key, index) => {
+                let width = 100;
+                if (key === 'id') width = 80;
+                else if (key === 'floor') width = 100;
+                else if (key === 'loc1') width = 120;
+                else if (key === 'loc2') width = 120;
+                else if (key === 'serial_number') width = 150;
+                else if (key === 'hostname') width = 150;
+                else width = 100 + (index * 20);
+
+                return {
+                    headerName: key.charAt(0).toUpperCase() + key.slice(1),
+                    field: key,
+                    sortable: true,
+                    filter: 'agTextColumnFilter',
+                    valueFormatter: params => params.value ?? 'N/A',
+                    pinned: index < 3 ? 'left' : null,
+                    width: width
+                };
+            });
+
+            // AG Grid configuration
+            gridOptions = {
+                columnDefs: columnDefs,
+                rowData: DataIn,
+                pagination: true,
+                paginationPageSize: 25,
+                paginationPageSizeSelector: [15, 25, 50],
+                domLayout: 'normal',
+                suppressHorizontalScroll: false,
+                defaultColDef: {
+                    flex: 1,
+                    minWidth: 100,
+                    resizable: true,
+                    enableCellTextSelection: true,
+                    ensureCellSelectable: true
+                },
+                rowSelection: 'multiple',
+                defaultCsvExportParams: {
+                    fileName: 'data_export.csv'
+                },
+                onSelectionChanged: params => {
+                    const selectedRows = params.api.getSelectedRows();
+                    console.log('Selected Rows:', selectedRows);
+                },
+                onCellDoubleClicked: params => {
+                    const value = params.value ?? 'N/A';
+                    navigator.clipboard.writeText(value).then(() => {
+                        console.log(`Copied to clipboard: ${value}`);
+                        document.getElementById('toastMessage').textContent = `Copied: ${value}`;
+                        toast.show();
+                    }).catch(err => {
+                        console.error('Failed to copy:', err);
+                        document.getElementById('toastMessage').textContent = 'Copy failed!';
+                        toast.show();
+                    });
+                },
+                getContextMenuItems: params => [
+                    'copy',
+                    'copyWithHeaders',
+                    'paste',
+                    'separator',
+                    'export'
+                ],
+                onGridReady: params => {
+                    params.api.setFilterModel(null);
+                    params.api.refreshCells();
+                }
+            };
+
+            // Initialize AG Grid
+            new agGrid.Grid(gridDiv, gridOptions);
+        };
+
+        // Global search function
+        window.onSearchInput = function() {
+            const searchInput = document.getElementById('globalSearch').value;
+            if (gridOptions && gridOptions.api) {
+                gridOptions.api.setGridOption('quickFilterText', searchInput);
+                const rowCount = gridOptions.api.getDisplayedRowCount();
+                if (rowCount === 0) {
+                    gridOptions.api.showNoRowsOverlay();
+                } else {
+                    gridOptions.api.hideOverlay();
+                }
+                console.log(`Displayed rows: ${rowCount}, Filter: "${searchInput}"`);
+            }
+        };
+
+        // Export function
+        window.exportData = function(type) {
+            if (!gridOptions || !gridOptions.api) {
+                console.error('Grid not initialized');
+                document.getElementById('toastMessage').textContent = 'Grid not initialized!';
+                toast.show();
+                return;
+            }
+
+            const isSelected = type === 'selected';
+            const params = {
+                fileName: `data_export_${type}.csv`,
+                onlySelected: isSelected,
+                exportedRows: type === 'all' ? 'all' : 'filteredAndSorted'
+            };
+
+            try {
+                gridOptions.api.exportDataAsCsv(params);
+                document.getElementById('toastMessage').textContent = `Exported ${type} as CSV`;
+                toast.show();
+                console.log(`Exported ${type} data as CSV`);
+            } catch (err) {
+                console.error('Export failed:', err);
+                document.getElementById('toastMessage').textContent = `Export failed: ${err.message}`;
+                toast.show();
+            }
+        };
+    </script>
+</body>
+</html>
