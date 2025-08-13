@@ -1,5 +1,6 @@
 .env
 ===============================================
+
 WPROGRAM=TMOB
 
 FILE_PATH=\\ltop8672\DevShared\INVENTORY\TMOB\db
@@ -29,6 +30,7 @@ BACKUP_FILE_PATH=\\ltop8672\DevShared\INVENTORY\TMOB\db
 BACKUP_FILE_SQLITE=NOC202B
 
 ============================================== Main App
+
 devappData.json
 
 getPCinfo.py
