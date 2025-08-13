@@ -6,12 +6,10 @@ import os
 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QVBoxLayout, QComboBox,
-    QPushButton
+    QPushButton, QMenuBar, QAction, QMessageBox
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
-
-from PyQt5.QtWidgets import QMessageBox
 
 from dotenv import load_dotenv
 
@@ -38,9 +36,21 @@ class LocationRecorder(QWidget):
         self.room_data = None
         self.answers = {}
 
+        # Create menu bar
+        self.menu_bar = QMenuBar(self)
+        help_menu = self.menu_bar.addMenu("Help")
+        
+        # Add About action
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about_dialog)
+        help_menu.addAction(about_action)
+
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
         self.setFixedSize(300, 400)
+
+        # Place menu bar at the top
+        self.layout.setMenuBar(self.menu_bar)
 
         self.floor_label = QLabel("Select Floor")
         self.floor_combo = QComboBox()
@@ -92,6 +102,17 @@ class LocationRecorder(QWidget):
         self.layout.addWidget(self.submit_btn)
 
         self.setLayout(self.layout)
+
+    def show_about_dialog(self):
+        """Display the About dialog with application information."""
+        about_text = (
+            "ePx Inventory Asset Recorder\n"
+            "Version: 1.0.0\n\n"
+            "Description: The ePx Inventory Location Recorder is a desktop application designed to streamline the process of collecting and managing inventory data for computer systems within an organization.\n\nIt gathers detailed system information, such as hardware specifications (processor, RAM, etc.), network details (IP and MAC addresses), and software details (OS version, Citrix information), and combines it with user-specified location data (floor, room, and seat). \n\nThe application allows users to select location details through an intuitive interface, review collected data in a summary table, and save it to a SQLite database for inventory tracking. \nOptional reboot functionality is provided post-save for system updates.\n"
+            "\nDeveloped by: Arvin Acosta \n"
+            "System Engineer, IT NOC, ePerformax © 2025"
+        )
+        QMessageBox.about(self, "About ePx Inventory Asset Recorder", about_text)
 
     def on_floor_change(self, index):
         self.room_combo.clear()
@@ -236,7 +257,7 @@ class LocationRecorder(QWidget):
         self.answers["location_code"] = self.generate_location_code()
         
         # Show only if certain conditions are met
-        if self.answers.get("debug_mode", 1):  # or any other condition
+        if self.answers.get("debug_mode", 0):  # or any other condition
             floor = self.answers.get("floor", "")
             d1 = self.answers.get("D1", "")
             e1 = self.answers.get("E1", "")
