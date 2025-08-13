@@ -3,11 +3,13 @@
 WPROGRAM=TMOB
 
 FILE_PATH=\\ltop8672\DevShared\INVENTORY\TMOB\db
+
 FILE_SQLITE=NOC2025A2x
 
 SQLITETABLE=inventory
 
 JS_PATH=\\ltop8672\DevShared\INVENTORY\TMOB\report
+
 JS_DATA=DataIn.js
 
 JSON_FILE="devappData.json"
