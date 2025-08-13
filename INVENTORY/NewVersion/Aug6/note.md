@@ -30,12 +30,17 @@ BACKUP_FILE_SQLITE=NOC202B
 
 ============================================== Main App
 devappData.json
+
 getPCinfo.py
+
 loc_entry.py
+
 system_info_module.py
 
 Note: 
+
   Create a "db" folder for sqlite database folder
+  
   Create a "report" folder
   
 =============================================== Suppliment App
