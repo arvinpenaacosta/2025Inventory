@@ -1,4 +1,4 @@
-# FileWatcher.py
+# FileListener.py (loop95.py)
 
 import os
 import sqlite3
@@ -575,4 +575,5 @@ def main():
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
+
     main()
