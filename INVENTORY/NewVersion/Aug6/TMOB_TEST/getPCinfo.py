@@ -1,4 +1,4 @@
-# GetPCInfo.py 
+# GetPCInfo.py  
 
 import threading
 import sys
@@ -526,3 +526,4 @@ if __name__ == "__main__":
     # No longer start system info collection immediately
 
     run_loc_entry()
+
