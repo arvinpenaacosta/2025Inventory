@@ -1,4 +1,4 @@
-# system_info_module.py
+# system_info_module.py 
 
 import os
 import socket
@@ -230,3 +230,4 @@ if __name__ == "__main__":
         print("✅ [system_info_module.py] System information collected and stored in memory\n")        
     except Exception as e:
         print(f"Error collecting system information: {e}")
+
