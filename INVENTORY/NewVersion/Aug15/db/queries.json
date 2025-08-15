@@ -1,0 +1,18 @@
+{
+  "queries": {
+    "Latest Inventory": {
+      "jsfile": "DataIn_1",
+      "description": "Extracts the latest inventory record for each serial number, sorted by floor, loc1, and loc2",
+      "query": "WITH latest_inventory AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY datetime(timestamp) DESC) AS rn FROM inventory) SELECT * FROM latest_inventory WHERE rn = 1 ORDER BY floor, CASE WHEN loc1 LIKE '%_%' AND SUBSTR(loc1, INSTR(loc1, '_') + 1) GLOB '[0-9]*' THEN SUBSTR(loc1, 1, INSTR(loc1, '_')) ELSE loc1 END, CASE WHEN loc1 LIKE '%_%' AND SUBSTR(loc1, INSTR(loc1, '_') + 1) GLOB '[0-9]*' THEN CAST(SUBSTR(loc1, INSTR(loc1, '_') + 1) AS INTEGER) ELSE 0 END, loc2"
+    },
+    "Inventory per Device": {
+      "jsfile": "DataIn_2",
+      "description": "Selects specific columns from inventory, sorted by hostname, serial_number, and timestamp",
+      "query": "SELECT id, floor, loc1, loc2, log_user, hostname, serial_number, processor, model, total_ram, ram_per_slot, ram_speed, ram_type, mac_address, timestamp FROM inventory ORDER BY hostname, serial_number, timestamp DESC"
+    }
+  }
+}
+
+
+
+
