@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Statistics</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding-top: 80px; /* Space for fixed header */
+        }
+        
+        /* Fixed Header Styles */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-container {
+            max-width: 1800px; /* CHANGED: Increased to match chartContainer max-width */
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .chart-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .chart-toggle:hover {
+            opacity: 0.8;
+        }
+        
+        .chart-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #4CAF50;
+        }
+        
+        .chart-toggle label {
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+            max-width: none; /* Remove max-width restriction */
+            margin: 0;
+            width: 100%;
+        }
+        
+        /* Chart Section Styles */
+        .chart-section {
+            transition: all 0.3s ease-in-out;
+            margin-bottom: 30px;
+            padding: 0 20px; /* Add horizontal padding */
+        }
+        
+        .chart-section.hidden {
+            display: none;
+        }
+        #stats {
+            margin-bottom: 20px;
+            padding: 15px 20px; /* Increase padding */
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            margin: 20px; /* Add margin for consistency */
+        }
+        #stats p {
+            margin: 0;
+            font-size: 16px;
+        }
+        #deviceCount {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+        .chartContainer {
+            width: 100%;
+            min-width: 1200px; /* CHANGED: Increased for even wider containers */
+            max-width: 1800px; /* CHANGED: Increased to allow wider charts */
+            margin: 30px auto; /* Center with increased spacing */
+            padding: 15px; /* Consistent with previous adjustment */
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow-x: auto; /* Allow horizontal scrolling if needed */
+        }
+        .chartContainer:last-of-type {
+            min-height: 600px; /* Extra height for RAM chart with grid legend */
+        }
+        .ram-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        .chart-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: flex-start;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .legend-item:hover {
+            background-color: #e8e8e8;
+        }
+        .legend-item.hidden {
+            opacity: 0.5;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+            margin-top: 2px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        .legend-text-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .legend-percentage {
+            font-weight: bold;
+            color: #666;
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+        .legend-text {
+            line-height: 1.2;
+        }
+        .chartCanvas {
+            width: 100% !important;
+            max-width: 100%; /* Ensure canvas fits within container */
+            height: auto !important;
+            max-height: 400px; /* Constrain height for better visibility */
+        }
+        h2 {
+            color: #333;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 22px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-title {
+                font-size: 20px;
+            }
+            
+            .chart-controls {
+                gap: 15px;
+            }
+            
+            .chart-toggle label {
+                font-size: 13px;
+            }
+            
+            body {
+                padding-top: 120px; /* More space for mobile header */
+            }
+            
+            .chartContainer {
+                min-width: 100%; /* Full width on smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Header -->
+    <header class="fixed-header">
+        <div class="header-container">
+            <h1 class="header-title">Device Statistics Dashboard</h1>
+            <div class="chart-controls">
+                <div class="chart-toggle">
+                    <input type="checkbox" id="toggleCitrix" checked onchange="toggleChartSection('citrix')">
+                    <label for="toggleCitrix">Citrix Versions</label>
+                </div>
+                <div class="chart-toggle">
+                    <input type="checkbox" id="toggleWindows" checked onchange="toggleChartSection('windows')">
+                    <label for="toggleWindows">Windows Versions</label>
+                </div>
+                <div class="chart-toggle">
+                    <input type="checkbox" id="toggleRam" checked onchange="toggleChartSection('ram')">
+                    <label for="toggleRam">RAM Configuration</label>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Stats Section -->
+        <div id="stats">
+            <p><strong>Total Distinct Devices:</strong> <span id="deviceCount">Calculating...</span></p>
+        </div>
+
+        <!-- Citrix Version Chart -->
+        <div id="citrixSection" class="chart-section">
+            <h2>Device Count by Location and Citrix Version (Latest Transactions)</h2>
+            <div class="chartContainer">
+                <div id="citrixLegend" class="chart-legend"></div>
+                <canvas id="citrixChart" class="chartCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Windows Version Chart -->
+        <div id="windowsSection" class="chart-section">
+            <h2>Device Count by Location and Windows Version/Display Version (Latest Transactions)</h2>
+            <div class="chartContainer">
+                <div id="windowsLegend" class="chart-legend"></div>
+                <canvas id="windowsChart" class="chartCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- RAM Configuration Chart -->
+        <div id="ramSection" class="chart-section">
+            <h2>Device Count by Location and RAM Configuration (Latest Transactions)</h2>
+            <div class="chartContainer">
+                <div id="ramLegend" class="ram-legend"></div>
+                <canvas id="ramChart" class="chartCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Data -->
+    <script src="data.js"></script>
+
+    <!-- Script 0: Chart Visibility Control -->
+    <script>
+        // Function to toggle chart section visibility
+        function toggleChartSection(chartType) {
+            const checkbox = document.getElementById(`toggle${chartType.charAt(0).toUpperCase() + chartType.slice(1)}`);
+            const section = document.getElementById(`${chartType}Section`);
+            
+            if (checkbox.checked) {
+                section.classList.remove('hidden');
+                // Trigger chart resize if it exists
+                if (window[`${chartType}Chart`]) {
+                    setTimeout(() => {
+                        window[`${chartType}Chart`].resize();
+                    }, 100);
+                }
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
+        // Initialize all sections as visible on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ensure all checkboxes start as checked and sections are visible
+            ['citrix', 'windows', 'ram'].forEach(chartType => {
+                const checkbox = document.getElementById(`toggle${chartType.charAt(0).toUpperCase() + chartType.slice(1)}`);
+                const section = document.getElementById(`${chartType}Section`);
+                
+                if (checkbox && section) {
+                    checkbox.checked = true;
+                    section.classList.remove('hidden');
+                }
+            });
+        });
+    </script>
+
+    <!-- Script 1: Data Validation and Error Handling -->
+    <script>
+        // Check if chartData exists and validate
+        if (typeof chartData === 'undefined') {
+            alert('Error: data.js not loaded or chartData not defined');
+            document.getElementById('deviceCount').textContent = 'Error: Data not loaded';
+            throw new Error('Data not loaded');
+        }
+        
+        if (!Array.isArray(chartData) || chartData.length === 0) {
+            alert('Error: Invalid or empty chart data');
+            document.getElementById('deviceCount').textContent = 'Error: Invalid data';
+            throw new Error('Invalid chart data');
+        }
+    </script>
+
+    <!-- Script 2: Total Distinct Devices Counter -->
+    <script>
+        (function() {
+            try {
+                const uniqueSerials = new Set(chartData.map(item => item.serial_number));
+                document.getElementById('deviceCount').textContent = uniqueSerials.size;
+            } catch (error) {
+                console.error('Error counting devices:', error);
+                document.getElementById('deviceCount').textContent = 'Error calculating count';
+            }
+        })();
+    </script>
+
+    <!-- Script 3: Data Processing Utilities -->
+    <script>
+        // Utility functions for data processing
+        const DataUtils = {
+            // Custom version comparison function for xx.xx.xx.xxx
+            compareVersions(a, b) {
+                const partsA = (a || '0.0.0.0').split('.').map(Number);
+                const partsB = (b || '0.0.0.0').split('.').map(Number);
+                for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+                    const numA = i < partsA.length ? partsA[i] : 0;
+                    const numB = i < partsB.length ? partsB[i] : 0;
+                    if (numA !== numB) return numB - numA; // Descending order
+                }
+                return 0;
+            },
+
+            // Custom RAM comparison function for total_ram (e.g., "16GB" -> 16)
+            compareRam(a, b) {
+                const ramA = parseFloat(a.match(/(\d+)/)?.[1] || 0);
+                const ramB = parseFloat(b.match(/(\d+)/)?.[1] || 0);
+                return ramB - ramA; // Descending order
+            },
+
+            // RAM type order comparison (newer to older)
+            compareRamType(a, b) {
+                const ramTypeOrder = ['DDR5', 'DDR4', 'DDR3', 'Unknown'];
+                
+                // Safely split and get RAM type (3rd element)
+                const partsA = a.split(',');
+                const partsB = b.split(',');
+                
+                const typeA = partsA.length > 2 ? partsA[2].trim() : 'Unknown';
+                const typeB = partsB.length > 2 ? partsB[2].trim() : 'Unknown';
+                
+                const indexA = ramTypeOrder.indexOf(typeA);
+                const indexB = ramTypeOrder.indexOf(typeB);
+                
+                // If different RAM types, sort by type order
+                if (indexA !== indexB) {
+                    const finalIndexA = indexA === -1 ? ramTypeOrder.length : indexA;
+                    const finalIndexB = indexB === -1 ? ramTypeOrder.length : indexB;
+                    return finalIndexA - finalIndexB;
+                }
+                
+                // If same RAM type, sort by total_ram
+                const totalRamA = partsA.length > 0 ? partsA[0].trim() : '';
+                const totalRamB = partsB.length > 0 ? partsB[0].trim() : '';
+                return this.compareRam(totalRamA, totalRamB);
+            },
+
+            // Find latest transaction for each serial number
+            getLatestTransactions(data) {
+                const latestTransactions = {};
+                data.forEach(item => {
+                    const serial = item.serial_number;
+                    const timestamp = new Date(item.timestamp);
+                    if (!latestTransactions[serial] || timestamp > new Date(latestTransactions[serial].timestamp)) {
+                        latestTransactions[serial] = item;
+                    }
+                });
+                return Object.values(latestTransactions);
+            },
+
+            // Color palette for charts
+            getColorPalette() {
+                return [
+                    'rgba(75, 192, 192, 0.6)',   // Teal
+                    'rgba(153, 102, 255, 0.6)',  // Purple
+                    'rgba(255, 159, 64, 0.6)',   // Orange
+                    'rgba(255, 99, 132, 0.6)',   // Red
+                    'rgba(54, 162, 235, 0.6)',   // Blue
+                    'rgba(255, 206, 86, 0.6)',   // Yellow
+                    'rgba(201, 203, 207, 0.6)',  // Grey
+                    'rgba(255, 192, 203, 0.6)',  // Pink
+                    'rgba(144, 238, 144, 0.6)',  // Light Green
+                    'rgba(221, 160, 221, 0.6)'   // Plum
+                ];
+            }
+        };
+
+        // Get latest transactions once for all charts
+        const latestTransactions = DataUtils.getLatestTransactions(chartData);
+    </script>
+
+    <!-- Script 4: Citrix Version Chart Data Processing -->
+    <script>
+        (function() {
+            try {
+                // Group by loc1 and citrix_version
+                const citrixVersionCounts = {};
+                latestTransactions.forEach(item => {
+                    const loc = item.loc1 || 'Unknown';
+                    const version = item.citrix_version || 'Unknown';
+                    if (!citrixVersionCounts[loc]) {
+                        citrixVersionCounts[loc] = {};
+                    }
+                    citrixVersionCounts[loc][version] = (citrixVersionCounts[loc][version] || 0) + 1;
+                });
+
+                // Get unique citrix versions, sorted appropriately
+                const citrixVersions = [...new Set(latestTransactions.map(item => item.citrix_version || 'Unknown'))]
+                    .sort(DataUtils.compareVersions);
+
+                // Prepare data for chart, sorted by loc1 ascending
+                const loc1Sorted = Object.keys(citrixVersionCounts).sort((a, b) => a.localeCompare(b));
+                window.citrixChartData = {
+                    locations: loc1Sorted,
+                    versions: citrixVersions,
+                    data: loc1Sorted.map(loc => ({
+                        loc1: loc,
+                        versions: citrixVersions.map(version => citrixVersionCounts[loc][version] || 0)
+                    }))
+                };
+            } catch (error) {
+                console.error('Error processing Citrix data:', error);
+                window.citrixChartData = null;
+            }
+        })();
+    </script>
+
+    <!-- Script 5: Citrix Version Chart Initialization -->
+    <script>
+        (function() {
+            if (!window.citrixChartData) {
+                document.getElementById('citrixChart').getContext('2d').fillText('Error loading Citrix chart data', 10, 50);
+                return;
+            }
+
+            try {
+                const colors = DataUtils.getColorPalette();
+                const citrixCtx = document.getElementById('citrixChart').getContext('2d');
+                
+                // Calculate total devices for percentage
+                const totalDevices = window.citrixChartData.data.reduce((total, location) => {
+                    return total + location.versions.reduce((sum, count) => sum + count, 0);
+                }, 0);
+                
+                // Create datasets with totals for percentage calculation
+                const datasets = window.citrixChartData.versions.map((version, index) => {
+                    const versionTotal = window.citrixChartData.data.reduce((sum, location) => sum + location.versions[index], 0);
+                    const percentage = totalDevices > 0 ? ((versionTotal / totalDevices) * 100).toFixed(1) : '0.0';
+                    
+                    return {
+                        label: version,
+                        data: window.citrixChartData.data.map(item => item.versions[index]),
+                        backgroundColor: colors[index % colors.length],
+                        borderColor: colors[index % colors.length].replace('0.6', '1'),
+                        borderWidth: 1,
+                        hidden: false,
+                        total: versionTotal,
+                        percentage: percentage
+                    };
+                });
+
+                // Create custom HTML legend
+                const legendContainer = document.getElementById('citrixLegend');
+                legendContainer.innerHTML = datasets.map((dataset, index) => `
+                    <div class="legend-item" data-index="${index}" onclick="toggleCitrixDataset(${index})">
+                        <div class="legend-color" style="background-color: ${dataset.backgroundColor}"></div>
+                        <div class="legend-text-container">
+                            <div class="legend-percentage">${dataset.percentage}%</div>
+                            <div class="legend-text">${dataset.label}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Store chart reference globally for legend interaction
+                window.citrixChart = new Chart(citrixCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: window.citrixChartData.locations,
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'x',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1, // Explicitly set to 1 for y-axis (Device Count) increments
+                                    callback: function(value) {
+                                        return Number.isInteger(value) ? value : null; // Ensure integer ticks
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Device Count'
+                                }
+                            },
+                            x: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Location (loc1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false // Hide default legend
+                            },
+                            title: {
+                                display: true,
+                                text: 'Citrix Version Distribution by Location'
+                            }
+                        }
+                    }
+                });
+
+                // Legend interaction function
+                window.toggleCitrixDataset = function(index) {
+                    const chart = window.citrixChart;
+                    const legendItem = document.querySelector(`#citrixLegend .legend-item[data-index="${index}"]`);
+                    
+                    if (chart.isDatasetVisible(index)) {
+                        chart.hide(index);
+                        legendItem.classList.add('hidden');
+                    } else {
+                        chart.show(index);
+                        legendItem.classList.remove('hidden');
+                    }
+                };
+
+            } catch (error) {
+                console.error('Error creating Citrix chart:', error);
+            }
+        })();
+    </script>
+
+    <!-- Script 6: Windows Version Chart Data Processing -->
+    <script>
+        (function() {
+            try {
+                // Group by loc1 and combined windows_version/windows_display_version
+                const windowsVersionCounts = {};
+                latestTransactions.forEach(item => {
+                    const loc = item.loc1 || 'Unknown';
+                    const winVersion = item.windows_version || 'Unknown';
+                    const winDisplay = item.windows_display_version || 'Unknown';
+                    const combinedVersion = `${winDisplay} (${winVersion})`;
+                    if (!windowsVersionCounts[loc]) {
+                        windowsVersionCounts[loc] = {};
+                    }
+                    windowsVersionCounts[loc][combinedVersion] = (windowsVersionCounts[loc][combinedVersion] || 0) + 1;
+                });
+
+                // Get unique windows versions, sorted appropriately
+                const windowsVersions = [...new Set(latestTransactions.map(item => {
+                    const winVersion = item.windows_version || 'Unknown';
+                    const winDisplay = item.windows_display_version || 'Unknown';
+                    return `${winDisplay} (${winVersion})`;
+                }))].sort((a, b) => {
+                    const versionA = a.match(/\(([^)]+)\)/)?.[1] || '0.0.0.0';
+                    const versionB = b.match(/\(([^)]+)\)/)?.[1] || '0.0.0.0';
+                    return DataUtils.compareVersions(versionA, versionB);
+                });
+
+                // Prepare data for chart
+                const loc1Sorted = Object.keys(windowsVersionCounts).sort((a, b) => a.localeCompare(b));
+                window.windowsChartData = {
+                    locations: loc1Sorted,
+                    versions: windowsVersions,
+                    data: loc1Sorted.map(loc => ({
+                        loc1: loc,
+                        versions: windowsVersions.map(version => windowsVersionCounts[loc][version] || 0)
+                    }))
+                };
+            } catch (error) {
+                console.error('Error processing Windows data:', error);
+                window.windowsChartData = null;
+            }
+        })();
+    </script>
+
+    <!-- Script 7: Windows Version Chart Initialization -->
+    <script>
+        (function() {
+            if (!window.windowsChartData) {
+                document.getElementById('windowsChart').getContext('2d').fillText('Error loading Windows chart data', 10, 50);
+                return;
+            }
+
+            try {
+                const colors = DataUtils.getColorPalette();
+                const windowsCtx = document.getElementById('windowsChart').getContext('2d');
+                
+                // Calculate total devices for percentage
+                const totalDevices = window.windowsChartData.data.reduce((total, location) => {
+                    return total + location.versions.reduce((sum, count) => sum + count, 0);
+                }, 0);
+                
+                // Create datasets with totals for percentage calculation
+                const datasets = window.windowsChartData.versions.map((version, index) => {
+                    const versionTotal = window.windowsChartData.data.reduce((sum, location) => sum + location.versions[index], 0);
+                    const percentage = totalDevices > 0 ? ((versionTotal / totalDevices) * 100).toFixed(1) : '0.0';
+                    
+                    return {
+                        label: version,
+                        data: window.windowsChartData.data.map(item => item.versions[index]),
+                        backgroundColor: colors[index % colors.length],
+                        borderColor: colors[index % colors.length].replace('0.6', '1'),
+                        borderWidth: 1,
+                        hidden: false,
+                        total: versionTotal,
+                        percentage: percentage
+                    };
+                });
+
+                // Create custom HTML legend
+                const legendContainer = document.getElementById('windowsLegend');
+                legendContainer.innerHTML = datasets.map((dataset, index) => `
+                    <div class="legend-item" data-index="${index}" onclick="toggleWindowsDataset(${index})">
+                        <div class="legend-color" style="background-color: ${dataset.backgroundColor}"></div>
+                        <div class="legend-text-container">
+                            <div class="legend-percentage">${dataset.percentage}%</div>
+                            <div class="legend-text">${dataset.label}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Store chart reference globally for legend interaction
+                window.windowsChart = new Chart(windowsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: window.windowsChartData.locations,
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'x',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1, // Explicitly set to 1 for y-axis (Device Count) increments
+                                    callback: function(value) {
+                                        return Number.isInteger(value) ? value : null; // Ensure integer ticks
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Device Count'
+                                }
+                            },
+                            x: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Location (loc1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false // Hide default legend
+                            },
+                            title: {
+                                display: true,
+                                text: 'Windows Version Distribution by Location'
+                            }
+                        }
+                    }
+                });
+
+                // Legend interaction function
+                window.toggleWindowsDataset = function(index) {
+                    const chart = window.windowsChart;
+                    const legendItem = document.querySelector(`#windowsLegend .legend-item[data-index="${index}"]`);
+                    
+                    if (chart.isDatasetVisible(index)) {
+                        chart.hide(index);
+                        legendItem.classList.add('hidden');
+                    } else {
+                        chart.show(index);
+                        legendItem.classList.remove('hidden');
+                    }
+                };
+
+            } catch (error) {
+                console.error('Error creating Windows chart:', error);
+            }
+        })();
+    </script>
+
+    <!-- Script 8: RAM Configuration Chart Data Processing -->
+    istry {
+                // Group by loc1 and combined total_ram/ram_per_slot/ram_type
+                const ramConfigCounts = {};
+                latestTransactions.forEach(item => {
+                    const loc = item.loc1 || 'Unknown';
+                    const totalRam = item.total_ram || 'Unknown';
+                    const ramPerSlot = item.ram_per_slot || 'Unknown';
+                    const ramType = item.ram_type || 'Unknown';
+                    const combinedRam = `${totalRam}, ${ramPerSlot}, ${ramType}`;
+                    
+                    if (!ramConfigCounts[loc]) {
+                        ramConfigCounts[loc] = {};
+                    }
+                    ramConfigCounts[loc][combinedRam] = (ramConfigCounts[loc][combinedRam] || 0) + 1;
+                });
+
+                // Get unique RAM configurations, sorted appropriately
+                const ramConfigs = [...new Set(latestTransactions.map(item => {
+                    const totalRam = item.total_ram || 'Unknown';
+                    const ramPerSlot = item.ram_per_slot || 'Unknown';
+                    const ramType = item.ram_type || 'Unknown';
+                    return `${totalRam}, ${ramPerSlot}, ${ramType}`;
+                }))];
+
+                // Sort RAM configurations safely
+                ramConfigs.sort((a, b) => {
+                    try {
+                        return DataUtils.compareRamType(a, b);
+                    } catch (error) {
+                        console.warn('Error comparing RAM types:', error, 'Items:', a, b);
+                        return a.localeCompare(b); // Fallback to string comparison
+                    }
+                });
+
+                // Prepare data for chart
+                const loc1Sorted = Object.keys(ramConfigCounts).sort((a, b) => a theCompare(b));
+                window.ramChartData = {
+                    locations: loc1Sorted,
+                    configs: ramConfigs,
+                    data: loc1Sorted.map(loc => ({
+                        loc1: loc,
+                        configs: ramConfigs.map(config => ramConfigCounts[loc][config] || 0)
+                    }))
+                };
+
+                console.log('RAM chart data processed successfully:', {
+                    locationsCount: window.ramChartData.locations.length,
+                    configsCount: window.ramChartData.configs.length,
+                    dataPointsCount: window.ramChartData.data.length
+                });
+
+            } catch (error) {
+                console.error('Error processing RAM data:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack,
+                    latestTransactionsCount: latestTransactions ? latestTransactions.length : 0
+                });
+                window.ramChartData = null;
+            }
+        })();
+    </script>
+
+    <!-- Script 9: RAM Configuration Chart Initialization -->
+    <script>
+        (function() {
+            if (!window.ramChartData) {
+                document.getElementById('ramChart').getContext('2d').fillText('Error loading RAM chart data', 10, 50);
+                return;
+            }
+
+            try {
+                const colors = DataUtils.getColorPalette();
+                const ramCtx = document.getElementById('ramChart').getContext('2d');
+                
+                // Create custom HTML legend
+                const legendContainer = document.getElementById('ramLegend');
+                const datasets = window.ramChartData.configs.map((config, index) => ({
+                    label: config,
+                    data: window.ramChartData.data.map(item => item.configs[index]),
+                    backgroundColor: colors[index % colors.length],
+                    borderColor: colors[index % colors.length].replace('0.6', '1'),
+                    borderWidth: 1,
+                    hidden: false
+                }));
+
+                // Generate HTML legend with formatted labels
+                legendContainer.innerHTML = datasets.map((dataset, index) => {
+                    const parts = dataset.label.split(',');
+                    const totalRam = parts[0] ? parts[0].trim() : '';
+                    const ramPerSlot = parts[1] ? parts[1].trim() : '';
+                    const ramType = parts[2] ? parts[2].trim() : '';
+                    
+                    const formattedLabel = `<strong>${totalRam}</strong>${ramPerSlot ? ', ' + ramPerSlot : ''}${ramType ? ', ' + ramType : ''}`;
+                    
+                    return `
+                        <div class="legend-item" data-index="${index}" onclick="toggleDataset(${index})">
+                            <div class="legend-color" style="background-color: ${dataset.backgroundColor}"></div>
+                            <span class="legend-text">${formattedLabel}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                // Store chart reference globally for legend interaction
+                window.ramChart = new Chart(ramCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: window.ramChartData.locations,
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'x',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1, // Explicitly set to 1 for y-axis (Device Count) increments
+                                    callback: function(value) {
+                                        return Number.isInteger(value) ? value : null; // Ensure integer ticks
+                                    }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Device Count'
+                                }
+                            },
+                            x: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Location (loc1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false // Hide default legend
+                            },
+                            title: {
+                                display: true,
+                                text: 'RAM Configuration Distribution by Location'
+                            }
+                        }
+                    }
+                });
+
+                // Legend interaction function
+                window.toggleDataset = function(index) {
+                    const chart = window.ramChart;
+                    const legendItem = document.querySelector(`.legend-item[data-index="${index}"]`);
+                    
+                    if (chart.isDatasetVisible(index)) {
+                        chart.hide(index);
+                        legendItem.classList.add('hidden');
+                    } else {
+                        chart.show(index);
+                        legendItem.classList.remove('hidden');
+                    }
+                };
+
+            } catch (error) {
+                console.error('Error creating RAM chart:', error);
+            }
+        })();
+    </script>
+</body>
+</html>

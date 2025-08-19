@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Statistics</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #stats {
+            margin-bottom: 20px;
+        }
+        #chartContainer {
+            width: 100%; /* Full width of parent */
+            max-width: 100%; /* Remove max-width restriction */
+            margin: 20px 0;
+        }
+        #locationChart {
+            width: 100% !important; /* Ensure canvas spans container */
+            height: auto; /* Maintain aspect ratio */
+        }
+    </style>
+</head>
+<body>
+    <h1>Device Statistics</h1>
+    <div id="stats">
+        <p>Total Distinct Devices: <span id="deviceCount">Calculating...</span></p>
+    </div>
+    <h2>Device Count by Location (Latest Transactions)</h2>
+    <div id="chartContainer">
+        <canvas id="locationChart"></canvas>
+    </div>
+
+    <!-- Load your JS data file -->
+    <script src="data.js"></script>
+
+    <!-- Script 1: Check and Load Data -->
+    <script>
+        // Check if chartData exists
+        if (typeof chartData === 'undefined') {
+            alert('Error: data.js not loaded or chartData not defined');
+            document.getElementById('deviceCount').textContent = 'Error: Data not loaded';
+        }
+    </script>
+
+    <!-- Script 2: Count Distinct Serial Numbers -->
+    <script>
+        // Count distinct serial numbers
+        const uniqueSerials = new Set(chartData.map(item => item.serial_number));
+        document.getElementById('deviceCount').textContent = uniqueSerials.size;
+    </script>
+
+    <!-- Script 3: Group by loc1 Based on Latest Transactions -->
+    <script>
+        // Find latest transaction for each serial number
+        const latestTransactions = {};
+        chartData.forEach(item => {
+            const serial = item.serial_number;
+            const timestamp = new Date(item.timestamp);
+            if (!latestTransactions[serial] || timestamp > new Date(latestTransactions[serial].timestamp)) {
+                latestTransactions[serial] = item;
+            }
+        });
+
+        // Group by loc1 and count unique serial numbers
+        const locationCounts = {};
+        Object.values(latestTransactions).forEach(item => {
+            const loc = item.loc1 || 'Unknown';
+            locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+        });
+
+        // Prepare data for chart, sorted by loc1 ascending
+        const chartDataSorted = Object.keys(locationCounts).map(loc => ({
+            loc1: loc,
+            count: locationCounts[loc]
+        })).sort((a, b) => a.loc1.localeCompare(b.loc1));
+    </script>
+
+    <!-- Script 4: Initialize Chart -->
+    <script>
+        // Initialize Chart.js Bar Chart
+        const ctx = document.getElementById('locationChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartDataSorted.map(item => item.loc1),
+                datasets: [{
+                    label: 'Device Count',
+                    data: chartDataSorted.map(item => item.count),
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'x', // Vertical bars
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1 // Y-axis increments by 1
+                        },
+                        title: {
+                            display: true,
+                            text: 'Device Count'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Location (loc1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false // Single dataset, no need for legend
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

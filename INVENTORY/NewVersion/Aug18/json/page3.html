@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Statistics</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #stats {
+            margin-bottom: 20px;
+        }
+        .chartContainer {
+            width: 100%; /* Full width of parent */
+            max-width: 100%; /* Remove max-width restriction */
+            margin: 20px 0;
+        }
+        .chartCanvas {
+            width: 100% !important; /* Ensure canvas spans container */
+            height: auto; /* Maintain aspect ratio */
+        }
+    </style>
+</head>
+<body>
+    <h1>Device Statistics</h1>
+    <div id="stats">
+        <p>Total Distinct Devices: <span id="deviceCount">Calculating...</span></p>
+    </div>
+    <h2>Device Count by Location and Citrix Version (Latest Transactions)</h2>
+    <div class="chartContainer">
+        <canvas id="citrixChart"></canvas>
+    </div>
+    <h2>Device Count by Location and Windows Version/Display Version (Latest Transactions)</h2>
+    <div class="chartContainer">
+        <canvas id="windowsChart"></canvas>
+    </div>
+    <h2>Device Count by Location and RAM Configuration (Latest Transactions)</h2>
+    <div class="chartContainer">
+        <canvas id="ramChart"></canvas>
+    </div>
+
+    <!-- Load your JS data file -->
+    <script src="data.js"></script>
+
+    <!-- Script 1: Check and Load Data -->
+    <script>
+        // Check if chartData exists
+        if (typeof chartData === 'undefined') {
+            alert('Error: data.js not loaded or chartData not defined');
+            document.getElementById('deviceCount').textContent = 'Error: Data not loaded';
+        }
+    </script>
+
+    <!-- Script 2: Count Distinct Serial Numbers -->
+    <script>
+        // Count distinct serial numbers
+        const uniqueSerials = new Set(chartData.map(item => item.serial_number));
+        document.getElementById('deviceCount').textContent = uniqueSerials.size;
+    </script>
+
+    <!-- Script 3: Group by loc1, citrix_version, windows_version/windows_display_version, and RAM fields Based on Latest Transactions -->
+    <script>
+        // Custom version comparison function for xx.xx.xx.xxx
+        function compareVersions(a, b) {
+            const partsA = (a || '0.0.0.0').split('.').map(Number);
+            const partsB = (b || '0.0.0.0').split('.').map(Number);
+            for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+                const numA = i < partsA.length ? partsA[i] : 0;
+                const numB = i < partsB.length ? partsB[i] : 0;
+                if (numA !== numB) return numB - numA; // Descending order
+            }
+            return 0;
+        }
+
+        // Custom RAM comparison function for total_ram (e.g., "16GB" -> 16)
+        function compareRam(a, b) {
+            const ramA = parseFloat(a.match(/(\d+)/)?.[1] || 0);
+            const ramB = parseFloat(b.match(/(\d+)/)?.[1] || 0);
+            return ramB - ramA; // Descending order
+        }
+
+        // Define RAM type order (newer to older)
+        const ramTypeOrder = ['DDR5', 'DDR4', 'DDR3', 'Unknown'];
+        function compareRamType(a, b) {
+            const typeA = a.split(',')[2].trim();
+            const typeB = b.split(',')[2].trim();
+            const indexA = ramTypeOrder.indexOf(typeA);
+            const indexB = ramTypeOrder.indexOf(typeB);
+            if (indexA !== indexB) return indexA - indexB; // Sort by RAM type order
+            // If same RAM type, sort by total_ram
+            const totalRamA = a.split(',')[0].trim();
+            const totalRamB = b.split(',')[0].trim();
+            return compareRam(totalRamA, totalRamB);
+        }
+
+        // Find latest transaction for each serial number
+        const latestTransactions = {};
+        chartData.forEach(item => {
+            const serial = item.serial_number;
+            const timestamp = new Date(item.timestamp);
+            if (!latestTransactions[serial] || timestamp > new Date(latestTransactions[serial].timestamp)) {
+                latestTransactions[serial] = item;
+            }
+        });
+
+        // Group by loc1 and citrix_version
+        const citrixVersionCounts = {};
+        Object.values(latestTransactions).forEach(item => {
+            const loc = item.loc1 || 'Unknown';
+            const version = item.citrix_version || 'Unknown';
+            if (!citrixVersionCounts[loc]) {
+                citrixVersionCounts[loc] = {};
+            }
+            citrixVersionCounts[loc][version] = (citrixVersionCounts[loc][version] || 0) + 1;
+        });
+
+        // Group by loc1 and combined windows_version/windows_display_version
+        const windowsVersionCounts = {};
+        Object.values(latestTransactions).forEach(item => {
+            const loc = item.loc1 || 'Unknown';
+            const winVersion = item.windows_version || 'Unknown';
+            const winDisplay = item.windows_display_version || 'Unknown';
+            const combinedVersion = `${winDisplay} (${winVersion})`;
+            if (!windowsVersionCounts[loc]) {
+                windowsVersionCounts[loc] = {};
+            }
+            windowsVersionCounts[loc][combinedVersion] = (windowsVersionCounts[loc][combinedVersion] || 0) + 1;
+        });
+
+        // Group by loc1 and combined total_ram/ram_per_slot/ram_type
+        const ramConfigCounts = {};
+        Object.values(latestTransactions).forEach(item => {
+            const loc = item.loc1 || 'Unknown';
+            const totalRam = item.total_ram || 'Unknown';
+            const ramPerSlot = item.ram_per_slot || 'Unknown';
+            const ramType = item.ram_type || 'Unknown';
+            const combinedRam = `${totalRam}, ${ramPerSlot}, ${ramType}`;
+            if (!ramConfigCounts[loc]) {
+                ramConfigCounts[loc] = {};
+            }
+            ramConfigCounts[loc][combinedRam] = (ramConfigCounts[loc][combinedRam] || 0) + 1;
+        });
+
+        // Get unique version values, sorted appropriately
+        const citrixVersions = [...new Set(Object.values(latestTransactions).map(item => item.citrix_version || 'Unknown'))]
+            .sort(compareVersions);
+        const windowsVersions = [...new Set(Object.values(latestTransactions).map(item => {
+            const winVersion = item.windows_version || 'Unknown';
+            const winDisplay = item.windows_display_version || 'Unknown';
+            return `${winDisplay} (${winVersion})`;
+        }))]
+            .sort((a, b) => {
+                const versionA = a.match(/\(([^)]+)\)/)?.[1] || '0.0.0.0';
+                const versionB = b.match(/\(([^)]+)\)/)?.[1] || '0.0.0.0';
+                return compareVersions(versionA, versionB);
+            });
+        const ramConfigs = [...new Set(Object.values(latestTransactions).map(item => {
+            const totalRam = item.total_ram || 'Unknown';
+            const ramPerSlot = item.ram_per_slot || 'Unknown';
+            const ramType = item.ram_type || 'Unknown';
+            return `${totalRam}, ${ramPerSlot}, ${ramType}`;
+        }))]
+            .sort(compareRamType);
+
+        // Prepare data for charts, sorted by loc1 ascending
+        const loc1Sorted = Object.keys(citrixVersionCounts).sort((a, b) => a.localeCompare(b));
+        const citrixChartData = loc1Sorted.map(loc => ({
+            loc1: loc,
+            versions: citrixVersions.map(version => citrixVersionCounts[loc][version] || 0)
+        }));
+        const windowsChartData = loc1Sorted.map(loc => ({
+            loc1: loc,
+            versions: windowsVersions.map(version => windowsVersionCounts[loc][version] || 0)
+        }));
+        const ramChartData = loc1Sorted.map(loc => ({
+            loc1: loc,
+            versions: ramConfigs.map(config => ramConfigCounts[loc][config] || 0)
+        }));
+    </script>
+
+    <!-- Script 4: Initialize Stacked Bar Charts -->
+    <script>
+        // Define color palette for versions
+        const colors = [
+            'rgba(75, 192, 192, 0.6)', // Teal
+            'rgba(153, 102, 255, 0.6)', // Purple
+            'rgba(255, 159, 64, 0.6)', // Orange
+            'rgba(255, 99, 132, 0.6)', // Red
+            'rgba(54, 162, 235, 0.6)', // Blue
+            'rgba(255, 206, 86, 0.6)', // Yellow
+            'rgba(201, 203, 207, 0.6)' // Grey
+        ];
+
+        // Initialize Citrix Version Chart
+        const citrixCtx = document.getElementById('citrixChart').getContext('2d');
+        new Chart(citrixCtx, {
+            type: 'bar',
+            data: {
+                labels: citrixChartData.map(item => item.loc1),
+                datasets: citrixVersions.map((version, index) => ({
+                    label: version,
+                    data: citrixChartData.map(item => item.versions[index]),
+                    backgroundColor: colors[index % colors.length],
+                    borderColor: colors[index % colors.length].replace('0.6', '1'),
+                    borderWidth: 1
+                }))
+            },
+            options: {
+                indexAxis: 'x', // Vertical bars
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1 // Y-axis increments by 1
+                        },
+                        title: {
+                            display: true,
+                            text: 'Device Count'
+                        }
+                    },
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Location (loc1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true, // Show legend for citrix_version
+                        position: 'top'
+                    }
+                }
+            }
+        });
+
+        // Initialize Windows Version/Display Version Chart
+        const windowsCtx = document.getElementById('windowsChart').getContext('2d');
+        new Chart(windowsCtx, {
+            type: 'bar',
+            data: {
+                labels: windowsChartData.map(item => item.loc1),
+                datasets: windowsVersions.map((version, index) => ({
+                    label: version,
+                    data: windowsChartData.map(item => item.versions[index]),
+                    backgroundColor: colors[index % colors.length],
+                    borderColor: colors[index % colors.length].replace('0.6', '1'),
+                    borderWidth: 1
+                }))
+            },
+            options: {
+                indexAxis: 'x', // Vertical bars
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1 // Y-axis increments by 1
+                        },
+                        title: {
+                            display: true,
+                            text: 'Device Count'
+                        }
+                    },
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Location (loc1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true, // Show legend for windows_version/windows_display_version
+                        position: 'top'
+                    }
+                }
+            }
+        });
+
+        // Initialize RAM Configuration Chart
+        const ramCtx = document.getElementById('ramChart').getContext('2d');
+        new Chart(ramCtx, {
+            type: 'bar',
+            data: {
+                labels: ramChartData.map(item => item.loc1),
+                datasets: ramConfigs.map((config, index) => ({
+                    label: config,
+                    data: ramChartData.map(item => item.versions[index]),
+                    backgroundColor: colors[index % colors.length],
+                    borderColor: colors[index % colors.length].replace('0.6', '1'),
+                    borderWidth: 1
+                }))
+            },
+            options: {
+                indexAxis: 'x', // Vertical bars
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1 // Y-axis increments by 1
+                        },
+                        title: {
+                            display: true,
+                            text: 'Device Count'
+                        }
+                    },
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Location (loc1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true, // Show legend for RAM configuration
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
