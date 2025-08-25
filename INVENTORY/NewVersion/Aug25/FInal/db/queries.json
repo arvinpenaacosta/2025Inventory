@@ -1,0 +1,37 @@
+{
+  "queries": {
+    "Latest Inventory": {
+      "html": "Link_1, [Latest Inventory]",
+      "jsfile": "DataIn_1",
+      "description": "Extracts the latest inventory record for each serial number, sorted by floor, loc1, and loc2",
+      "query": "WITH latest_inventory AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY datetime(timestamp) DESC) AS rn FROM inventory) SELECT * FROM latest_inventory WHERE rn = 1 ORDER BY floor, loc1, loc2"
+    },
+    "Inventory per Device": {
+      "html": "Link_2, [Latest Inventory2]",
+      "jsfile": "DataIn_2",
+      "description": "Selects specific columns from inventory, sorted by hostname, serial_number, and timestamp",
+      "query": "SELECT id, floor, loc1, loc2, log_user, hostname, serial_number, processor, model, total_ram, ram_per_slot, ram_speed, ram_type, mac_address, timestamp FROM inventory ORDER BY hostname, serial_number, timestamp DESC"
+    },
+    "Citrix Workspace 25.3.10.69": {
+      "html": "Link_3, [Latest Inventory3]",
+      "jsfile": "DataIn_3",
+      "description": "Extracts the latest inventory record for each serial number where Citrix version is 25.3.10.69",
+      "query": "WITH latest_inventory AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY datetime(timestamp) DESC) AS rn FROM inventory WHERE serial_number IS NOT NULL AND serial_number != '' AND citrix_version = '25.3.10.69') SELECT floor, loc1, loc2, hostname, serial_number, citrix_version, windows_version AS OS, windows_display_version AS Version, model, total_ram,  log_user, timestamp FROM latest_inventory WHERE rn = 1 ORDER BY loc1, loc2"
+    },
+    "(PROGRAM) Asset Total Count ": {
+      "html": "value1",
+      "jsfile": "DashValue1",
+      "description": "The query returns the latest inventory assets count per location (loc1) and floor.",
+      "query": "WITH LatestRecords AS ( SELECT ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC) AS rn FROM inventory WHERE serial_number IS NOT NULL AND serial_number != '') SELECT COUNT(*) AS total_count FROM LatestRecords WHERE rn = 1"
+    },
+    "Asset Count per Location (Loc1)": {
+      "html": "Graph_1",
+      "jsfile": "Graph_1",
+      "description": "The query returns the latest inventory assets count per location (loc1) and floor.",
+      "query": "SELECT floor, loc1, COUNT(*) AS transaction_count FROM inventory i WHERE serial_number IS NOT NULL AND serial_number != '' AND timestamp = (SELECT MAX(timestamp) FROM inventory WHERE serial_number = i.serial_number) GROUP BY floor, loc1 ORDER BY floor, loc1"
+    }
+  }
+
+}
+
+

@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Statistics</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- AG Grid CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.2.2/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.2.2/styles/ag-theme-quartz.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding-top: 80px; /* Space for fixed header */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        /* Fixed Header Styles */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .chart-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        .chart-toggle:hover {
+            opacity: 0.8;
+        }
+        
+        .chart-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #4CAF50;
+        }
+        
+        .chart-toggle input[type="checkbox"]:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .chart-toggle input[type="checkbox"]:disabled + label {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+            max-width: none;
+            margin: 0;
+            width: 100%;
+        }
+        
+        /* Chart Section Styles */
+        .chart-section {
+            transition: all 0.3s ease-in-out;
+            margin-bottom: 30px;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-section.hidden {
+            display: none;
+        }
+        #stats {
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            margin: 20px;
+        }
+        #stats p {
+            margin: 0;
+            font-size: 16px;
+        }
+        #deviceCount {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+        .chartContainer {
+            width: 100%;
+            max-width: 100%;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-height: 400px; /* Reduced height for all chart containers */
+            flex-grow: 1; /* Allow chart to grow within section */
+        }
+        .ram-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 8px;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        .chart-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: flex-start;
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .legend-item:hover {
+            background-color: #e8e8e8;
+        }
+        .legend-item.active {
+            background-color: #d0e7ff;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+            margin-top: 2px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        .legend-text-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .legend-percentage {
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+        .legend-text {
+            line-height: 1.2;
+        }
+        .chartCanvas {
+            width: 100% !important;
+            height: auto;
+            max-height: 600px; /* Increased height for chart canvases */
+        }
+        h2 {
+            color: #333;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 22px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        /* Table Styles */
+        .table-container {
+            max-height: 750px;
+            overflow-y: auto;
+            position: relative;
+            margin: 20px auto;
+            width: 98vw; /* Maximize table width to screen */
+            max-width: 100%; /* Ensure it doesn't exceed screen */
+        }
+        .ag-theme-quartz .ag-header {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+            background-color: #f2f2f2 !important;
+        }
+        .ag-theme-quartz {
+            --ag-background-color: #fff;
+            --ag-header-background-color: #f2f2f2;
+            height: 750px;
+            width: 100%;
+            max-width: 100%; /* Ensure grid fills container */
+        }
+        .search-container {
+            margin-bottom: 15px;
+            width: 98vw; /* Match table width */
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+            gap: 10px;
+        }
+        .search-container .form-control {
+            flex: 1;
+            min-width: 200px;
+        }
+        .search-container .btn-group {
+            flex-shrink: 0;
+        }
+        .table-header {
+            background-color: #e9ecef;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 1.25rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        .ag-theme-quartz .ag-cell {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -moz-user-select: text !important;
+            visibility: visible !important;
+        }
+        .ag-theme-quartz .ag-row {
+            visibility: visible !important;
+        }
+        .footer {
+            background-color: #f2f2f2;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+            z-index: 1000;
+        }
+        /* Button styles */
+        .btn-export {
+            transition: transform 0.2s ease;
+        }
+        .btn-export:hover {
+            transform: scale(1.05);
+        }
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        body.dark-mode .table-header {
+            background-color: #2c2c2c;
+            color: #ffffff;
+        }
+        body.dark-mode .ag-theme-quartz {
+            --ag-background-color: #2c2c2c;
+            --ag-header-background-color: #1a1a1a;
+            --ag-foreground-color: #ffffff;
+        }
+        body.dark-mode .ag-theme-quartz .ag-header {
+            background-color: #1a1a1a !important;
+        }
+        body.dark-mode .footer {
+            background-color: #2c2c2c;
+            color: #ffffff;
+        }
+        body.dark-mode .form-control {
+            background-color: #333;
+            color: #fff;
+            border-color: #555;
+        }
+        body.dark-mode .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        body.dark-mode .btn-outline-primary {
+            color: #ffffff;
+            border-color: #ffffff;
+        }
+        body.dark-mode .btn-outline-primary:hover {
+            background-color: #ffffff;
+            color: #0d6efd;
+        }
+        body.dark-mode .toast {
+            background-color: #333;
+            color: #fff;
+        }
+        body.dark-mode #stats {
+            background-color: #2c2c2c;
+            color: #ffffff;
+        }
+        body.dark-mode .chartContainer {
+            border-color: #555;
+            background-color: #2c2c2c;
+        }
+        body.dark-mode .ram-legend,
+        body.dark-mode .chart-legend {
+            background-color: #2c2c2c;
+            border-color: #555;
+        }
+        body.dark-mode h2 {
+            color: #ffffff;
+        }
+        body.dark-mode .legend-item.active {
+            background-color: #4a6a8a;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-title {
+                font-size: 20px;
+            }
+            
+            .chart-controls {
+                gap: 15px;
+            }
+            
+            .chart-toggle label {
+                font-size: 13px;
+            }
+            
+            body {
+                padding-top: 120px; /* More space for mobile header */
+            }
+            
+            .main-content {
+                padding: 10px;
+            }
+            
+            .chartContainer {
+                min-height: 350px; /* Slightly smaller for mobile */
+            }
+            
+            .chartCanvas {
+                max-height: 350px; /* Slightly smaller canvas height for mobile */
+            }
+            
+            .search-container {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .search-container .form-control {
+                flex: 1 1 100%;
+                margin-bottom: 10px;
+            }
+            .search-container .btn-group {
+                flex: 1 1 auto;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fixed Header -->
+    <header class="fixed-header">
+        <div class="header-container">
+            <h1 class="header-title"><Program> Device Statistics Dashboard</h1>
+            <div class="chart-controls">
+                <div class="chart-toggle">
+                    <input type="checkbox" id="toggleCitrix" onchange="toggleChartSection('citrix')">
+                    <label for="toggleCitrix">Citrix Versions</label>
+                </div>
+                <div class="chart-toggle">
+                    <input type="checkbox" id="toggleWindows" onchange="toggleChartSection('windows')">
+                    <label for="toggleWindows">Windows Versions</label>
+                </div>
+                <div class="chart-toggle">
+                    <input type="checkbox" id="toggleRam" onchange="toggleChartSection('ram')">
+                    <label for="toggleRam">RAM Configuration</label>
+                </div>
+                <div class="chart-toggle">
+                    <input type="checkbox" id="toggleDarkMode" onchange="toggleDarkMode()">
+                    <label for="toggleDarkMode">Dark Mode</label>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Stats Section -->
+        <div id="stats">
+            <p><strong>Total Distinct Devices:</strong> <span id="deviceCount">Calculating...</span></p>
+        </div>
+
+        <!-- Citrix Version Chart -->
+        <div id="citrixSection" class="chart-section">
+            <h2>Device Count by Location and Citrix Version (Latest Transactions)</h2>
+            <div class="chartContainer">
+                <div id="citrixLegend" class="chart-legend"></div>
+                <canvas id="citrixChart" class="chartCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Windows Version Chart -->
+        <div id="windowsSection" class="chart-section">
+            <h2>Device Count by Location and Windows Version/Display Version (Latest Transactions)</h2>
+            <div class="chartContainer">
+                <div id="windowsLegend" class="chart-legend"></div>
+                <canvas id="windowsChart" class="chartCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- RAM Configuration Chart and Table -->
+        <div id="ramSection" class="chart-section">
+            <h2>Device Count by Location and RAM Configuration (Latest Transactions)</h2>
+            <div class="chartContainer">
+                <canvas id="ramChart" class="chartCanvas"></canvas>
+                <div id="ramLegend" class="ram-legend"></div>
+            </div>
+            <div class="table-header d-flex align-items-center justify-content-between">
+                <span>Data Table - <span id="tableHeaderQueryName">Unknown</span></span>
+            </div>
+            <div class="search-container">
+                <input type="text" class="form-control" id="globalSearch" placeholder="Search all columns..." oninput="onSearchInput()">
+                <div class="btn-group" role="group" aria-label="Export options">
+                    <button class="btn btn-outline-primary btn-export" id="exportSelectedBtn" onclick="exportData('selected')" data-bs-toggle="tooltip" data-bs-placement="top" title="Export only selected rows" aria-label="Export selected rows">
+                        <i class="bi bi-download me-1"></i> Export Selected
+                    </button>
+                    <button class="btn btn-primary btn-export" id="exportAllBtn" onclick="exportData('all')" data-bs-toggle="tooltip" data-bs-placement="top" title="Export all rows" aria-label="Export all rows">
+                        <i class="bi bi-download me-1"></i> Export All
+                    </button>
+                </div>
+            </div>
+            <div class="table-container">
+                <div id="dataTable" class="ag-theme-quartz"></div>
+            </div>
+            <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                <div id="copyToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-body" id="toastMessage">Action completed!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        Current Date: <span id="currentDate"></span>
+    </footer>
+
+    <!-- Load Data -->
+    <script src="report/Data/DataIn_1.js"></script>
+
+    <!-- Bootstrap and AG Grid Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.2.2/dist/ag-grid-community.min.js"></script>
+
+    <!-- Script: Update Header Title with Program Name -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const headerTitle = document.querySelector('.header-title');
+            if (typeof Program !== 'undefined' && Program) {
+                headerTitle.textContent = `${Program} Device Statistics Dashboard`;
+            } else {
+                headerTitle.textContent = 'Device Statistics Dashboard';
+                console.warn('Program variable not found in DataIn_1.js, using default title');
+            }
+        });
+    </script>
+
+    <!-- Script 0: Chart Visibility Control -->
+    <script>
+        function toggleChartSection(chartType) {
+            const checkbox = document.getElementById(`toggle${chartType.charAt(0).toUpperCase() + chartType.slice(1)}`);
+            const section = document.getElementById(`${chartType}Section`);
+            
+            localStorage.setItem(`show${chartType.charAt(0).toUpperCase() + chartType.slice(1)}Chart`, checkbox.checked);
+            
+            if (checkbox.checked) {
+                section.classList.remove('hidden');
+                if (window[`${chartType}Chart`]) {
+                    setTimeout(() => {
+                        window[`${chartType}Chart`].resize();
+                    }, 100);
+                }
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            ['citrix', 'windows', 'ram'].forEach(chartType => {
+                const checkbox = document.getElementById(`toggle${chartType.charAt(0).toUpperCase() + chartType.slice(1)}`);
+                const section = document.getElementById(`${chartType}Section`);
+                
+                if (checkbox && section) {
+                    let savedState = localStorage.getItem(`show${chartType.charAt(0).toUpperCase() + chartType.slice(1)}Chart`);
+                    
+                    if (chartType === 'citrix' && window.allCitrixNotFound) {
+                        checkbox.checked = false;
+                        checkbox.disabled = true;
+                        section.classList.add('hidden');
+                        localStorage.setItem('showCitrixChart', false);
+                    } else {
+                        checkbox.checked = savedState !== null ? savedState === 'true' : true;
+                        if (checkbox.checked) {
+                            section.classList.remove('hidden');
+                            if (window[`${chartType}Chart`]) {
+                                setTimeout(() => {
+                                    window[`${chartType}Chart`].resize();
+                                }, 100);
+                            }
+                        } else {
+                            section.classList.add('hidden');
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+
+    <!-- Script 1: Data Validation and Error Handling -->
+    <script>
+        if (typeof DataIn === 'undefined') {
+            alert('Error: DataIn_1.js not loaded or DataIn not defined');
+            document.getElementById('deviceCount').textContent = 'Error: Data not loaded';
+            throw new Error('Data not loaded');
+        }
+        
+        if (!Array.isArray(DataIn) || DataIn.length === 0) {
+            alert('Error: Invalid or empty chart data');
+            document.getElementById('deviceCount').textContent = 'Error: Invalid data';
+            throw new Error('Invalid chart data');
+        }
+    </script>
+
+    <!-- Script 2: Total Distinct Devices Counter -->
+    <script>
+        (function() {
+            try {
+                const uniqueSerials = new Set(DataIn.map(item => item.serial_number));
+                document.getElementById('deviceCount').textContent = uniqueSerials.size;
+            } catch (error) {
+                console.error('Error counting devices:', error);
+                document.getElementById('deviceCount').textContent = 'Error calculating count';
+            }
+        })();
+    </script>
+
+    <!-- Script 3: Data Processing Utilities -->
+    <script>
+        const DataUtils = {
+            compareVersions(a, b) {
+                const partsA = (a || '0.0.0.0').split('.').map(Number);
+                const partsB = (b || '0.0.0.0').split('.').map(Number);
+                for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+                    const numA = i < partsA.length ? partsA[i] : 0;
+                    const numB = i < partsB.length ? partsB[i] : 0;
+                    if (numA !== numB) return numB - numA;
+                }
+                return 0;
+            },
+
+            compareRam(a, b) {
+                const ramA = parseFloat(a.match(/(\d+)/)?.[1] || 0);
+                const ramB = parseFloat(b.match(/(\d+)/)?.[1] || 0);
+                return ramB - ramA;
+            },
+
+            compareRamType(a, b) {
+                const ramTypeOrder = ['DDR5', 'DDR4', 'DDR3', 'Unknown'];
+                const partsA = a.split(',');
+                const partsB = b.split(',');
+                const typeA = partsA.length > 2 ? partsA[2].trim() : 'Unknown';
+                const typeB = partsB.length > 2 ? partsB[2].trim() : 'Unknown';
+                const indexA = ramTypeOrder.indexOf(typeA);
+                const indexB = ramTypeOrder.indexOf(typeB);
+                if (indexA !== indexB) {
+                    const finalIndexA = indexA === -1 ? ramTypeOrder.length : indexA;
+                    const finalIndexB = indexB === -1 ? ramTypeOrder.length : indexB;
+                    return finalIndexA - finalIndexB;
+                }
+                const totalRamA = partsA.length > 0 ? partsA[0].trim() : '';
+                const totalRamB = partsB.length > 0 ? partsB[0].trim() : '';
+                return this.compareRam(totalRamA, totalRamB);
+            },
+
+            getLatestTransactions(data) {
+                const latestTransactions = {};
+                data.forEach(item => {
+                    const serial = item.serial_number;
+                    const timestamp = new Date(item.timestamp);
+                    if (!latestTransactions[serial] || timestamp > new Date(latestTransactions[serial].timestamp)) {
+                        latestTransactions[serial] = item;
+                    }
+                });
+                return Object.values(latestTransactions);
+            },
+
+            getColorPalette() {
+                return [
+                    'rgba(75, 192, 192, 0.6)', 'rgba(153, 102, 255, 0.6)', 'rgba(255, 159, 64, 0.6)',
+                    'rgba(255, 99, 132, 0.6)', 'rgba(54, 162, 235, 0.6)', 'rgba(255, 206, 86, 0.6)',
+                    'rgba(201, 203, 207, 0.6)', 'rgba(255, 192, 203, 0.6)', 'rgba(144, 238, 144, 0.6)',
+                    'rgba(221, 160, 221, 0.6)'
+                ];
+            }
+        };
+
+        const latestTransactions = DataUtils.getLatestTransactions(DataIn);
+    </script>
+
+    <!-- Script 4: Citrix Version Chart Data Processing -->
+    <script>
+        (function() {
+            try {
+                // Check if all citrix_version values are 'Not Found'
+                window.allCitrixNotFound = latestTransactions.every(item => 
+                    !item.citrix_version || item.citrix_version.toLowerCase() === 'not found' || item.citrix_version === 'Unknown'
+                );
+
+                if (window.allCitrixNotFound) {
+                    window.citrixChartData = null;
+                    return;
+                }
+
+                const citrixVersionCounts = {};
+                latestTransactions.forEach(item => {
+                    const loc = item.loc1 || 'Unknown';
+                    const version = item.citrix_version || 'Unknown';
+                    if (!citrixVersionCounts[loc]) {
+                        citrixVersionCounts[loc] = {};
+                    }
+                    citrixVersionCounts[loc][version] = (citrixVersionCounts[loc][version] || 0) + 1;
+                });
+
+                const citrixVersions = [...new Set(latestTransactions.map(item => item.citrix_version || 'Unknown'))]
+                    .sort(DataUtils.compareVersions);
+
+                const loc1Sorted = Object.keys(citrixVersionCounts).sort((a, b) => a.localeCompare(b));
+                window.citrixChartData = {
+                    locations: loc1Sorted,
+                    versions: citrixVersions,
+                    data: loc1Sorted.map(loc => ({
+                        loc1: loc,
+                        versions: citrixVersions.map(version => citrixVersionCounts[loc][version] || 0)
+                    }))
+                };
+            } catch (error) {
+                console.error('Error processing Citrix data:', error);
+                window.citrixChartData = null;
+            }
+        })();
+    </script>
+
+    <!-- Script 5: Citrix Version Chart Initialization -->
+    <script>
+        (function() {
+            if (!window.citrixChartData) {
+                document.getElementById('citrixChart').getContext('2d').fillText('Error loading Citrix chart data', 10, 50);
+                return;
+            }
+
+            try {
+                const colors = DataUtils.getColorPalette();
+                const citrixCtx = document.getElementById('citrixChart').getContext('2d');
+                
+                const totalDevices = window.citrixChartData.data.reduce((total, location) => {
+                    return total + location.versions.reduce((sum, count) => sum + count, 0);
+                }, 0);
+                
+                const datasets = window.citrixChartData.versions.map((version, index) => {
+                    const versionTotal = window.citrixChartData.data.reduce((sum, location) => sum + location.versions[index], 0);
+                    const percentage = totalDevices > 0 ? ((versionTotal / totalDevices) * 100).toFixed(1) : '0.0';
+                    
+                    return {
+                        label: version,
+                        data: window.citrixChartData.data.map(item => item.versions[index]),
+                        backgroundColor: colors[index % colors.length],
+                        borderColor: colors[index % colors.length].replace('0.6', '1'),
+                        borderWidth: 1,
+                        hidden: false,
+                        total: versionTotal,
+                        percentage: percentage
+                    };
+                });
+
+                const legendContainer = document.getElementById('citrixLegend');
+                legendContainer.innerHTML = datasets.map((dataset, index) => `
+                    <div class="legend-item" data-index="${index}" onclick="toggleCitrixDataset(${index})">
+                        <div class="legend-color" style="background-color: ${dataset.backgroundColor}"></div>
+                        <div class="legend-text-container">
+                            <div class="legend-percentage">${dataset.percentage}%</div>
+                            <div class="legend-text">${dataset.label}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                window.citrixChart = new Chart(citrixCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: window.citrixChartData.locations,
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'x',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 },
+                                title: { display: true, text: 'Device Count' }
+                            },
+                            x: {
+                                stacked: true,
+                                title: { display: true, text: 'Location (loc1)' },
+                                ticks: { maxRotation: 90, minRotation: 90 }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Citrix Version Distribution by Location' }
+                        }
+                    }
+                });
+
+                window.toggleCitrixDataset = function(index) {
+                    const chart = window.citrixChart;
+                    const legendItem = document.querySelector(`#citrixLegend .legend-item[data-index="${index}"]`);
+                    
+                    if (chart.isDatasetVisible(index)) {
+                        chart.hide(index);
+                        legendItem.classList.add('hidden');
+                    } else {
+                        chart.show(index);
+                        legendItem.classList.remove('hidden');
+                    }
+                };
+            } catch (error) {
+                console.error('Error creating Citrix chart:', error);
+            }
+        })();
+    </script>
+
+    <!-- Script 6: Windows Version Chart Data Processing -->
+    <script>
+        (function() {
+            try {
+                const windowsVersionCounts = {};
+                latestTransactions.forEach(item => {
+                    const loc = item.loc1 || 'Unknown';
+                    const winVersion = item.windows_version || 'Unknown';
+                    const winDisplay = item.windows_display_version || 'Unknown';
+                    const combinedVersion = `${winDisplay} (${winVersion})`;
+                    if (!windowsVersionCounts[loc]) {
+                        windowsVersionCounts[loc] = {};
+                    }
+                    windowsVersionCounts[loc][combinedVersion] = (windowsVersionCounts[loc][combinedVersion] || 0) + 1;
+                });
+
+                const windowsVersions = [...new Set(latestTransactions.map(item => {
+                    const winVersion = item.windows_version || 'Unknown';
+                    const winDisplay = item.windows_display_version || 'Unknown';
+                    return `${winDisplay} (${winVersion})`;
+                }))].sort((a, b) => {
+                    const versionA = a.match(/\(([^)]+)\)/)?.[1] || '0.0.0.0';
+                    const versionB = b.match(/\(([^)]+)\)/)?.[1] || '0.0.0.0';
+                    return DataUtils.compareVersions(versionA, versionB);
+                });
+
+                const loc1Sorted = Object.keys(windowsVersionCounts).sort((a, b) => a.localeCompare(b));
+                window.windowsChartData = {
+                    locations: loc1Sorted,
+                    versions: windowsVersions,
+                    data: loc1Sorted.map(loc => ({
+                        loc1: loc,
+                        versions: windowsVersions.map(version => windowsVersionCounts[loc][version] || 0)
+                    }))
+                };
+            } catch (error) {
+                console.error('Error processing Windows data:', error);
+                window.windowsChartData = null;
+            }
+        })();
+    </script>
+
+    <!-- Script 7: Windows Version Chart Initialization -->
+    <script>
+        (function() {
+            if (!window.windowsChartData) {
+                document.getElementById('windowsChart').getContext('2d').fillText('Error loading Windows chart data', 10, 50);
+                return;
+            }
+
+            try {
+                const colors = DataUtils.getColorPalette();
+                const windowsCtx = document.getElementById('windowsChart').getContext('2d');
+                
+                const totalDevices = window.windowsChartData.data.reduce((total, location) => {
+                    return total + location.versions.reduce((sum, count) => sum + count, 0);
+                }, 0);
+                
+                const datasets = window.windowsChartData.versions.map((version, index) => {
+                    const versionTotal = window.windowsChartData.data.reduce((sum, location) => sum + location.versions[index], 0);
+                    const percentage = totalDevices > 0 ? ((versionTotal / totalDevices) * 100).toFixed(1) : '0.0';
+                    
+                    return {
+                        label: version,
+                        data: window.windowsChartData.data.map(item => item.versions[index]),
+                        backgroundColor: colors[index % colors.length],
+                        borderColor: colors[index % colors.length].replace('0.6', '1'),
+                        borderWidth: 1,
+                        hidden: false,
+                        total: versionTotal,
+                        percentage: percentage
+                    };
+                });
+
+                const legendContainer = document.getElementById('windowsLegend');
+                legendContainer.innerHTML = datasets.map((dataset, index) => `
+                    <div class="legend-item" data-index="${index}" onclick="toggleWindowsDataset(${index})">
+                        <div class="legend-color" style="background-color: ${dataset.backgroundColor}"></div>
+                        <div class="legend-text-container">
+                            <div class="legend-percentage">${dataset.percentage}%</div>
+                            <div class="legend-text">${dataset.label}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                window.windowsChart = new Chart(windowsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: window.windowsChartData.locations,
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'x',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 },
+                                title: { display: true, text: 'Device Count' }
+                            },
+                            x: {
+                                stacked: true,
+                                title: { display: true, text: 'Location (loc1)' },
+                                ticks: { maxRotation: 90, minRotation: 90 }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'Windows Version Distribution by Location' }
+                        }
+                    }
+                });
+
+                window.toggleWindowsDataset = function(index) {
+                    const chart = window.windowsChart;
+                    const legendItem = document.querySelector(`#windowsLegend .legend-item[data-index="${index}"]`);
+                    
+                    if (chart.isDatasetVisible(index)) {
+                        chart.hide(index);
+                        legendItem.classList.add('hidden');
+                    } else {
+                        chart.show(index);
+                        legendItem.classList.remove('hidden');
+                    }
+                };
+            } catch (error) {
+                console.error('Error creating Windows chart:', error);
+            }
+        })();
+    </script>
+
+    <!-- Script 8: RAM Configuration Chart Data Processing -->
+    <script>
+        (function() {
+            try {
+                const ramConfigCounts = {};
+                latestTransactions.forEach(item => {
+                    const loc = item.loc1 || 'Unknown';
+                    const totalRam = item.total_ram || 'Unknown';
+                    const ramPerSlot = item.ram_per_slot || 'Unknown';
+                    const ramType = item.ram_type || 'Unknown';
+                    const combinedRam = `${totalRam}, ${ramPerSlot}, ${ramType}`;
+                    
+                    if (!ramConfigCounts[loc]) {
+                        ramConfigCounts[loc] = {};
+                    }
+                    ramConfigCounts[loc][combinedRam] = (ramConfigCounts[loc][combinedRam] || 0) + 1;
+                });
+
+                const ramConfigs = [...new Set(latestTransactions.map(item => {
+                    const totalRam = item.total_ram || 'Unknown';
+                    const ramPerSlot = item.ram_per_slot || 'Unknown';
+                    const ramType = item.ram_type || 'Unknown';
+                    return `${totalRam}, ${ramPerSlot}, ${ramType}`;
+                }))];
+
+                ramConfigs.sort((a, b) => {
+                    try {
+                        return DataUtils.compareRamType(a, b);
+                    } catch (error) {
+                        console.warn('Error comparing RAM types:', error, 'Items:', a, b);
+                        return a.localeCompare(b);
+                    }
+                });
+
+                const loc1Sorted = Object.keys(ramConfigCounts).sort((a, b) => a.localeCompare(b));
+                window.ramChartData = {
+                    locations: loc1Sorted,
+                    configs: ramConfigs,
+                    data: loc1Sorted.map(loc => ({
+                        loc1: loc,
+                        configs: ramConfigs.map(config => ramConfigCounts[loc][config] || 0)
+                    }))
+                };
+            } catch (error) {
+                console.error('Error processing RAM data:', error);
+                window.ramChartData = null;
+            }
+        })();
+    </script>
+
+    <!-- Script 9: RAM Configuration Chart Initialization -->
+    <script>
+        (function() {
+            if (!window.ramChartData) {
+                document.getElementById('ramChart').getContext('2d').fillText('Error loading RAM chart data', 10, 50);
+                return;
+            }
+
+            try {
+                const colors = DataUtils.getColorPalette();
+                const ramCtx = document.getElementById('ramChart').getContext('2d');
+                
+                const totalDevices = window.ramChartData.data.reduce((total, location) => {
+                    return total + location.configs.reduce((sum, count) => sum + count, 0);
+                }, 0);
+                
+                const datasets = window.ramChartData.configs.map((config, index) => {
+                    const configTotal = window.ramChartData.data.reduce((sum, location) => sum + location.configs[index], 0);
+                    const percentage = totalDevices > 0 ? ((configTotal / totalDevices) * 100).toFixed(1) : '0.0';
+                    
+                    return {
+                        label: config,
+                        data: window.ramChartData.data.map(item => item.configs[index]),
+                        backgroundColor: colors[index % colors.length],
+                        borderColor: colors[index % colors.length].replace('0.6', '1'),
+                        borderWidth: 1,
+                        hidden: false,
+                        total: configTotal,
+                        percentage: percentage
+                    };
+                });
+
+                const legendContainer = document.getElementById('ramLegend');
+                legendContainer.innerHTML = window.ramChartData.locations.map((location, index) => `
+                    <div class="legend-item" data-loc1="${location}" onclick="filterTableByLoc1('${location}')">
+                        <div class="legend-color" style="background-color: ${colors[index % colors.length]}"></div>
+                        <div class="legend-text-container">
+                            <div class="legend-text">${location}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                window.ramChart = new Chart(ramCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: window.ramChartData.locations,
+                        datasets: datasets
+                    },
+                    options: {
+                        indexAxis: 'x',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 },
+                                title: { display: true, text: 'Device Count' }
+                            },
+                            x: {
+                                stacked: true,
+                                title: { display: true, text: 'Location (loc1)' },
+                                ticks: { maxRotation: 90, minRotation: 90 }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: 'RAM Configuration Distribution by Location (Click Legend to Filter Table)' }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error creating RAM chart:', error);
+            }
+        })();
+    </script>
+
+    <!-- Script 10: AG Grid Table Initialization -->
+    <script>
+        let gridApi;
+        let gridOptions;
+        let toast;
+        let currentLoc1Filter = null;
+
+        function updateCurrentDate() {
+            const date = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = date.toLocaleDateString('en-US', options);
+        }
+
+        function toggleDarkMode() {
+            const checkbox = document.getElementById('toggleDarkMode');
+            const isDarkMode = checkbox.checked;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            localStorage.setItem('darkMode', isDarkMode);
+        }
+
+        function filterTableByLoc1(loc1) {
+            if (!gridApi) {
+                console.error('Grid not initialized');
+                document.getElementById('toastMessage').textContent = 'Grid not initialized!';
+                toast.show();
+                return;
+            }
+
+            // Toggle filter: if clicking the same loc1, clear the filter
+            if (currentLoc1Filter === loc1) {
+                gridApi.setFilterModel(null);
+                currentLoc1Filter = null;
+                document.querySelectorAll('#ramLegend .legend-item').forEach(item => item.classList.remove('active'));
+            } else {
+                gridApi.setFilterModel({
+                    loc1: {
+                        filterType: 'text',
+                        type: 'equals',
+                        filter: loc1
+                    }
+                });
+                currentLoc1Filter = loc1;
+                document.querySelectorAll('#ramLegend .legend-item').forEach(item => {
+                    item.classList.toggle('active', item.getAttribute('data-loc1') === loc1);
+                });
+            }
+
+            const rowCount = gridApi.getDisplayedRowCount();
+            if (rowCount === 0) {
+                gridApi.showNoRowsOverlay();
+            } else {
+                gridApi.hideOverlay();
+            }
+            console.log(`Filtered table by loc1: "${loc1}", Displayed rows: ${rowCount}`);
+            
+            // Scroll to table
+            document.getElementById('dataTable').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const header = document.querySelector('#tableHeaderQueryName');
+            header.textContent = window.QueryName || 'Unknown';
+
+            updateCurrentDate();
+
+            const darkModeCheckbox = document.getElementById('toggleDarkMode');
+            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+            darkModeCheckbox.checked = savedDarkMode;
+            if (savedDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+            const gridDiv = document.getElementById('dataTable');
+            toast = new bootstrap.Toast(document.getElementById('copyToast'));
+
+            if (!DataIn || DataIn.length === 0) {
+                gridDiv.innerHTML = '<p class="text-center">No data available</p>';
+                return;
+            }
+
+            // Define custom column order
+            const columnOrder = [
+                //{ field: 'id', headerName: 'ID', width: 50, pinned: 'left' },
+                { field: 'floor', headerName: 'Floor', width: 20, pinned: 'left' },
+                { field: 'roomname', headerName: 'Room Name', width: 100, pinned: 'left' },
+                { field: 'loc1', headerName: 'Loc 1', width: 55 , pinned: 'left'},
+                { field: 'loc2', headerName: 'Loc 2', width: 20, pinned: 'left' },
+                //{ field: 'loceam', headerName: 'Location EAM', width: 100 },
+                //{ field: 'log_user', headerName: 'Log User', width: 100 },
+                { field: 'hostname', headerName: 'Hostname', width: 150 },
+                { field: 'serial_number', headerName: 'Serial Number', width: 150 },
+                { field: 'processor', headerName: 'Processor', width: 150 },
+                //{ field: 'windows_version', headerName: 'OS Ver', width: 120 },
+                //{ field: 'windows_display_version', headerName: '2XHX', width: 150 },
+                { field: 'manufacturer', headerName: 'Manufacturer', width: 120 },
+                { field: 'model', headerName: 'Model', width: 120 },
+                { field: 'total_ram', headerName: 'Total RAM', width: 100 },
+                { field: 'num_ram_slots', headerName: 'Number of RAM Slots', width: 100 },
+                { field: 'ram_per_slot', headerName: 'RAM Per Slot', width: 100 },
+                //{ field: 'ram_speed', headerName: 'RAM Speed', width: 100 },
+                { field: 'ram_type', headerName: 'RAM Type', width: 100 },
+                //{ field: 'ip_address', headerName: 'IP Address', width: 120 },
+                { field: 'mac_address', headerName: 'MAC Address', width: 120 },
+                //{ field: 'citrix_name', headerName: 'Citrix Name', width: 120 },
+                //{ field: 'citrix_version', headerName: 'Citrix Version', width: 120 },
+                { field: 'taskfor', headerName: 'Task For', width: 100 },
+                { field: 'status', headerName: 'Status', width: 100 },
+                { field: 'total_hdd_capacity', headerName: 'Total HDD Capacity', width: 120 },
+                { field: 'drive_types', headerName: 'Drive Types', width: 120 },
+                { field: 'timestamp', headerName: 'Timestamp', width: 150 }
+            ];
+
+            // Generate column definitions with common properties
+            const columnDefs = columnOrder.map(col => ({
+                headerName: col.headerName,
+                field: col.field,
+                sortable: true,
+                filter: 'agTextColumnFilter',
+                valueFormatter: params => params.value ?? 'N/A',
+                pinned: col.pinned || null,
+                width: col.width
+            }));
+
+            // AG Grid configuration
+            gridOptions = {
+                columnDefs: columnDefs,
+                rowData: DataIn,
+                pagination: true,
+                paginationPageSize: 25,
+                paginationPageSizeSelector: [15, 25, 50],
+                domLayout: 'normal',
+                suppressHorizontalScroll: false,
+                defaultColDef: {
+                    flex: 1,
+                    minWidth: 100,
+                    resizable: true,
+                    enableCellTextSelection: true,
+                    ensureCellSelectable: true
+                },
+                rowSelection: 'multiple',
+                defaultCsvExportParams: {
+                    fileName: 'data_export.csv'
+                },
+                onSelectionChanged: params => {
+                    const selectedRows = gridApi.getSelectedRows();
+                    console.log('Selected Rows:', selectedRows);
+                },
+                onCellDoubleClicked: params => {
+                    const value = params.value ?? 'N/A';
+                    navigator.clipboard.writeText(value).then(() => {
+                        console.log(`Copied to clipboard: ${value}`);
+                        document.getElementById('toastMessage').textContent = `Copied: ${value}`;
+                        toast.show();
+                    }).catch(err => {
+                        console.error('Failed to copy:', err);
+                        document.getElementById('toastMessage').textContent = 'Copy failed!';
+                        toast.show();
+                    });
+                },
+                onGridReady: params => {
+                    gridApi.setFilterModel(null);
+                    gridApi.refreshCells();
+                }
+            };
+
+            // Initialize AG Grid using createGrid
+            gridApi = agGrid.createGrid(gridDiv, gridOptions);
+        });
+
+        window.onSearchInput = function() {
+            const searchInput = document.getElementById('globalSearch').value;
+            if (gridApi) {
+                gridApi.setGridOption('quickFilterText', searchInput);
+                const rowCount = gridApi.getDisplayedRowCount();
+                if (rowCount === 0) {
+                    gridApi.showNoRowsOverlay();
+                } else {
+                    gridApi.hideOverlay();
+                }
+                console.log(`Displayed rows: ${rowCount}, Filter: "${searchInput}"`);
+            }
+        };
+
+        window.exportData = function(type) {
+            if (!gridApi) {
+                console.error('Grid not initialized');
+                document.getElementById('toastMessage').textContent = 'Grid not initialized!';
+                toast.show();
+                return;
+            }
+
+            const button = type === 'selected' ? document.getElementById('exportSelectedBtn') : document.getElementById('exportAllBtn');
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Loading...';
+
+            const isSelected = type === 'selected';
+            const params = {
+                fileName: `data_export_${type}.csv`,
+                onlySelected: isSelected,
+                exportedRows: type === 'all' ? 'all' : 'filteredAndSorted'
+            };
+
+            try {
+                gridApi.exportDataAsCsv(params);
+                document.getElementById('toastMessage').textContent = `Exported ${type} as CSV`;
+                toast.show();
+                console.log(`Exported ${type} data as CSV`);
+            } catch (err) {
+                console.error('Export failed:', err);
+                document.getElementById('toastMessage').textContent = `Export failed: ${err.message}`;
+                toast.show();
+            } finally {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
+        };
+    </script>
+</body>
+</html>
