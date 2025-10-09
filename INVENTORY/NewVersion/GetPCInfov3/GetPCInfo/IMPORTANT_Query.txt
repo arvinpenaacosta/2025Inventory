@@ -1,0 +1,125 @@
+
+
+# Display all Distinct Records
+
+WITH LatestRecords AS (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn
+    FROM inventory
+)
+SELECT *
+FROM LatestRecords
+WHERE rn = 1
+ORDER BY floor, loc1, loc2;
+
+================================================================================
+
+WITH LatestRecords AS (
+    SELECT id, floor, roomname, loc1, loc2, loceam, log_user, hostname, serial_number,
+           processor, windows_version, windows_display_version, windows_install_date,
+           manufacturer, model, total_ram, num_ram_slots, ram_per_slot, ram_speed,
+           ram_type, ip_address, mac_address, office_name, office_version,
+           citrix_name, citrix_version, status, taskfor, total_hdd_capacity,
+           drive_types, timestamp,
+           ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn
+    FROM inventory
+)
+SELECT id, floor, roomname, loc1, loc2, loceam, log_user, hostname, serial_number,
+       processor, windows_version, windows_display_version, windows_install_date,
+       manufacturer, model, total_ram, num_ram_slots, ram_per_slot, ram_speed,
+       ram_type, ip_address, mac_address, office_name, office_version,
+       citrix_name, citrix_version, status, taskfor, total_hdd_capacity,
+       drive_types, timestamp
+FROM LatestRecords
+WHERE rn = 1
+ORDER BY floor, loc1, loc2;
+===================================================================================
+
+COLLECT When is Windows is Installed
+
+WITH LatestRecords AS (
+    SELECT serial_number, windows_install_date, loc1, loc2,
+           ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn
+    FROM inventory
+    WHERE serial_number IS NOT NULL
+)
+SELECT 
+    windows_install_date,
+    COUNT(DISTINCT serial_number) AS distinct_serial_count,
+    GROUP_CONCAT(DISTINCT loc1 || '-' || loc2) AS locations
+FROM LatestRecords
+WHERE rn = 1
+GROUP BY windows_install_date
+ORDER BY windows_install_date;
+
+================================================================================
+
+# Update Duplicate Serial Number. Get the Last 2 records
+# Get the value of taskfor of the least record and update the taskfor field of the latest row.
+
+WITH DuplicateSerials AS (
+    SELECT serial_number
+    FROM inventory
+    GROUP BY serial_number
+    HAVING COUNT(*) > 1
+),
+LastTwoDuplicates AS (
+    SELECT id, serial_number, taskfor,
+           LAG(taskfor) OVER (PARTITION BY serial_number ORDER BY id) AS previous_taskfor,
+           ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY id DESC) AS row_num
+    FROM inventory
+    WHERE serial_number IN (SELECT serial_number FROM DuplicateSerials)
+    AND id IN (
+        SELECT id
+        FROM inventory i2
+        WHERE i2.serial_number = inventory.serial_number
+        ORDER BY id DESC
+        LIMIT 2
+    )
+)
+UPDATE inventory
+SET taskfor = (
+    SELECT previous_taskfor
+    FROM LastTwoDuplicates
+    WHERE LastTwoDuplicates.id = inventory.id
+    AND LastTwoDuplicates.row_num = 1
+    AND LastTwoDuplicates.previous_taskfor IS NOT NULL
+)
+WHERE id IN (
+    SELECT id
+    FROM LastTwoDuplicates
+    WHERE row_num = 1
+    AND previous_taskfor IS NOT NULL
+);
+
+================================================================================
+collecting windows versions
+
+WITH LatestRecords AS (
+    SELECT floor, loc1, serial_number, windows_version,
+           ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn
+    FROM inventory
+    WHERE serial_number IS NOT NULL
+)
+SELECT floor, loc1, windows_version, COUNT(DISTINCT serial_number) AS distinct_serial_count
+FROM LatestRecords
+WHERE rn = 1
+GROUP BY floor, loc1, windows_version
+ORDER BY floor, loc1, windows_version;
+
+==============================================================================
+collecting Memory Informations
+
+WITH LatestRecords AS (
+    SELECT floor, loc1, serial_number, total_ram, num_ram_slots, ram_per_slot, ram_speed, ram_type,
+           ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn
+    FROM inventory
+    WHERE serial_number IS NOT NULL
+)
+SELECT floor, loc1, total_ram, num_ram_slots, ram_per_slot, ram_speed, ram_type,
+       COUNT(DISTINCT serial_number) AS distinct_serial_count
+FROM LatestRecords
+WHERE rn = 1
+GROUP BY floor, loc1, total_ram, num_ram_slots, ram_per_slot, ram_speed, ram_type
+ORDER BY floor, loc1, total_ram, num_ram_slots, ram_per_slot, ram_speed, ram_type;
+
