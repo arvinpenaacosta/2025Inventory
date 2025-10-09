@@ -1,0 +1,89 @@
+{
+  "queries":
+    {
+
+    "Latest Inventory": {
+      "html": "Link_1, [Latest Inventory]",
+      "jsfile": "DataIn_1",
+      "convert_it" : "1",
+      "description": "Extracts the latest inventory record for each serial number, sorted by floor, loc1, and loc2",
+      "query": "WITH latest_inventory AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY datetime(timestamp) DESC) AS rn FROM inventory WHERE taskfor IN ('RAM Upgrade 1', 'RAM Upgrade 2', 'RAM As Is','VACANT','Inventory')) SELECT * FROM latest_inventory WHERE rn = 1 ORDER BY floor, loc1, loc2"
+    },
+
+
+    "Latest Inventory2": {
+      "html": "Link_2, [Latest Inventory2]",
+      "jsfile": "LatestInv",
+      "convert_it" : "1",
+      "description": "Extracts the latest inventory record for each serial number, sorted by floor, loc1, and loc2",
+      "query": "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn FROM inventory) AS LatestRecords WHERE rn = 1 ORDER BY floor, loc1, loc2"
+    },
+
+    "Win11 Inventory": {
+      "html": "Link_2, [Latest Inventory2]",
+      "jsfile": "winver",
+      "convert_it" : "0",
+      "description": "Selects latest window 11 inventory per flooor",
+      "query": "WITH LatestRecords AS (SELECT floor, loc1, serial_number, windows_version, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn FROM inventory WHERE serial_number IS NOT NULL), Counts AS (SELECT floor, loc1, windows_version, COUNT(DISTINCT serial_number) AS distinct_serial_count FROM LatestRecords WHERE rn = 1 GROUP BY floor, loc1, windows_version) SELECT 'const windowsData = ' || json_group_array(json_object('floor', floor,'locations',(SELECT json_group_array(json_object('loc', loc1,'windows_version', windows_version,'distinct_serial_count', distinct_serial_count)) FROM Counts c2 WHERE c2.floor = c1.floor))) || ';' AS js_output FROM (SELECT DISTINCT floor FROM Counts) c1"
+    },
+
+    "RAM Inventory": {
+      "html": "Link_2, [Latest Inventory2]",
+      "jsfile": "Ram",
+      "convert_it" : "0",
+      "description": "Selects latest window 11 inventory per flooor",
+      "query": "WITH LatestRecords AS (SELECT floor, loc1, serial_number, total_ram, num_ram_slots, ram_per_slot, ram_speed, ram_type, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn FROM inventory WHERE serial_number IS NOT NULL), Counts AS (SELECT floor, loc1, total_ram, num_ram_slots, ram_per_slot, ram_speed, ram_type, COUNT(DISTINCT serial_number) AS distinct_serial_count FROM LatestRecords WHERE rn = 1 GROUP BY floor, loc1, total_ram, num_ram_slots, ram_per_slot, ram_speed, ram_type) SELECT 'const windowsData = ' || json_group_array(json_object('floor', floor,'locations',(SELECT json_group_array(json_object('loc', loc1,'total_ram', total_ram,'num_ram_slots', num_ram_slots,'ram_per_slot', ram_per_slot,'ram_speed', ram_speed,'ram_type', ram_type,'distinct_serial_count', distinct_serial_count)) FROM Counts c2 WHERE c2.floor = c1.floor))) || ';' AS js_output FROM (SELECT DISTINCT floor FROM Counts) c1;"
+    },
+
+    "Desktop Model": {
+      "html": "Link_2, [Latest Inventory2]",
+      "jsfile": "model",
+      "convert_it" : "0",
+      "description": "Selects desktop model inventory per flooor",
+      "query": "WITH LatestRecords AS (SELECT floor, loc1, serial_number, model, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn FROM inventory WHERE serial_number IS NOT NULL), Counts AS (SELECT floor, loc1, model, COUNT(DISTINCT serial_number) AS distinct_serial_count FROM LatestRecords WHERE rn = 1 GROUP BY floor, loc1, model) SELECT 'const windowsData = ' || json_group_array(json_object('floor', floor,'locations',(SELECT json_group_array(json_object('loc', loc1,'model', model,'distinct_serial_count', distinct_serial_count)) FROM Counts c2 WHERE c2.floor = c1.floor))) || ';' AS js_output FROM (SELECT DISTINCT floor FROM Counts) c1;"
+    },
+
+    "Citrix Version": {
+      "html": "Link_2, [Latest Inventory2]",
+      "jsfile": "citrix",
+      "convert_it" : "0",
+      "description": "Selects Citrix Version inventory per flooor",
+      "query": "WITH LatestRecords AS (SELECT floor, loc1, serial_number, citrix_version, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC, id DESC) AS rn FROM inventory WHERE serial_number IS NOT NULL), Counts AS (SELECT floor, loc1, citrix_version, COUNT(DISTINCT serial_number) AS distinct_serial_count FROM LatestRecords WHERE rn = 1 GROUP BY floor, loc1, citrix_version) SELECT 'const windowsData = ' || json_group_array(json_object('floor', floor,'locations',(SELECT json_group_array(json_object('loc', loc1,'citrix_version', citrix_version,'distinct_serial_count', distinct_serial_count)) FROM Counts c2 WHERE c2.floor = c1.floor))) || ';' AS js_output FROM (SELECT DISTINCT floor FROM Counts) c1;"
+    },
+
+
+
+
+
+    "Inventory per Device": {
+      "html": "Link_2, [Latest Inventory2]",
+      "jsfile": "DataIn_2",
+      "convert_it" : "0",
+      "description": "Selects specific columns from inventory, sorted by hostname, serial_number, and timestamp",
+      "query": "SELECT id, floor, loc1, loc2, log_user, hostname, serial_number, processor, model, total_ram, ram_per_slot, ram_speed, ram_type, mac_address, timestamp FROM inventory ORDER BY hostname, serial_number, timestamp DESC"
+    },
+    "Citrix Workspace 25.3.10.69": {
+      "html": "Link_3, [Latest Inventory3]",
+      "jsfile": "DataIn_3",
+      "convert_it" : "1",
+      "description": "Extracts the latest inventory record for each serial number where Citrix version is 25.3.10.69",
+      "query": "WITH latest_inventory AS (SELECT *, ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY datetime(timestamp) DESC) AS rn FROM inventory WHERE serial_number IS NOT NULL AND serial_number != '' AND citrix_version = '25.3.10.69') SELECT floor, loc1, loc2, hostname, serial_number, citrix_version, windows_version AS OS, windows_display_version AS Version, model, total_ram,  log_user, timestamp FROM latest_inventory WHERE rn = 1 ORDER BY loc1, loc2"
+    },
+    "(PROGRAM) Asset Total Count ": {
+      "html": "value1",
+      "jsfile": "DashValue1",
+      "convert_it" : "1",
+      "description": "The query returns the latest inventory assets count per location (loc1) and floor.",
+      "query": "WITH LatestRecords AS ( SELECT ROW_NUMBER() OVER (PARTITION BY serial_number ORDER BY timestamp DESC) AS rn FROM inventory WHERE serial_number IS NOT NULL AND serial_number != '') SELECT COUNT(*) AS total_count FROM LatestRecords WHERE rn = 1"
+    },
+    "Asset Count per Location (Loc1)": {
+      "html": "Graph_1",
+      "jsfile": "Graph_1",
+      "convert_it" : "1",
+      "description": "The query returns the latest inventory assets count per location (loc1) and floor.",
+      "query": "SELECT floor, loc1, COUNT(*) AS transaction_count FROM inventory i WHERE serial_number IS NOT NULL AND serial_number != '' AND timestamp = (SELECT MAX(timestamp) FROM inventory WHERE serial_number = i.serial_number) GROUP BY floor, loc1 ORDER BY floor, loc1"
+    }
+  }
+
+}
+
