@@ -1,0 +1,1 @@
+const windowsData = [{"floor":"11F","locations":[{"loc":"POD_02","windows_version":"Microsoft Windows 11 Pro","distinct_serial_count":1}]}];

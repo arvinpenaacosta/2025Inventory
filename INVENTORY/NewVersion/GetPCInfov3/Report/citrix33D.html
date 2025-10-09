@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citrix Version Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans snap-y snap-mandatory overflow-y-scroll h-screen scroll-smooth">
+    <!-- Fixed Header -->
+    <div class="fixed top-0 left-0 right-0 z-40 bg-white shadow-md border-b border-gray-200">
+        <div class="container mx-auto p-4">
+            <!-- Single Line Header -->
+            <div class="flex gap-4 items-center justify-between">
+                <h1 class="text-2xl font-bold whitespace-nowrap">Citrix Version Dashboard</h1>
+                <div class="flex gap-4 items-center">
+                    <input 
+                        type="text" 
+                        id="searchBox" 
+                        placeholder="Search by Hostname or Serial Number..." 
+                        class="w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onkeypress="if(event.key === 'Enter') searchDevice()"
+                    />
+                    <button 
+                        onclick="searchDevice()" 
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold whitespace-nowrap"
+                    >
+                        Search
+                    </button>
+                    <button 
+                        onclick="exportToExcel()" 
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold whitespace-nowrap"
+                    >
+                        Export to Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spacer to prevent content from going under fixed header -->
+    <div style="height: 80px;"></div>
+
+    <div class="container mx-auto p-6">
+        <div id="floorContainer" class="space-y-6"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center py-4 mt-8">
+        <p>Current Date: <span id="currentDate"></span></p>
+    </footer>
+
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold" id="modalTitle">Details</h2>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 text-3xl font-bold leading-none">&times;</button>
+                </div>
+            </div>
+            <div id="modalContent" class="p-6 overflow-y-auto flex-1">
+                <!-- Content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="Data/citrix.js"></script>
+    <script src="Data/LatestInv.js"></script>
+    <script>
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+
+        // Function to convert citrix_version to valid object key
+        const toValidKey = (version) => {
+            if (!version || version === "Not found") return 'Unknown_Citrix_Version';
+            return version.replace(/[^a-zA-Z0-9_]/g, '_');
+        };
+
+        // Get distinct Citrix versions - using windowsData from citrix.js
+        const distinctVersions = [...new Set(
+            windowsData.flatMap(floor => 
+                floor.locations.map(location => location.citrix_version)
+            ))
+        ];
+
+        // Define a color palette for dynamic assignment
+        const colorPalette = [
+            '#3b82f6', // Blue
+            '#10b981', // Green
+            '#8b5cf6', // Purple
+            '#f59e0b', // Orange
+            '#ef4444', // Red
+            '#6b7280', // Gray
+            '#ec4899', // Pink
+            '#14b8a6', // Teal
+            '#f97316', // Amber
+            '#84cc16', // Lime
+            '#a1a1aa'  // Zinc
+        ];
+
+        // Function to get color for a version
+        const getVersionColor = (version, index) => {
+            return colorPalette[index % colorPalette.length];
+        };
+
+        // Search Device Function
+        function searchDevice() {
+            const searchTerm = document.getElementById('searchBox').value.trim();
+            
+            if (!searchTerm) {
+                alert('Please enter a hostname or serial number to search.');
+                return;
+            }
+
+            // Search through DataIn array
+            const results = DataIn.filter(device => {
+                const hostname = (device.hostname || '').toLowerCase();
+                const serialNumber = (device.serial_number || '').toLowerCase();
+                const search = searchTerm.toLowerCase();
+                
+                return hostname.includes(search) || serialNumber.includes(search);
+            });
+
+            // Display results in modal
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+
+            modalTitle.textContent = `Search Results for: "${searchTerm}"`;
+
+            let content = '<div class="space-y-4">';
+            
+            if (results.length === 0) {
+                content += '<p class="text-gray-600 text-center py-4">No devices found matching your search.</p>';
+            } else {
+                content += `<p class="text-sm text-gray-600 mb-2">Found: <strong>${results.length}</strong> device(s)</p>`;
+                content += '<div class="overflow-x-auto">';
+                content += '<table class="min-w-full border-collapse border border-gray-300">';
+                content += `
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Floor</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Loc1</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Loc2</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Hostname</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Serial Number</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Citrix Version</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Total RAM</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Task For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+
+                results.forEach((device, index) => {
+                    const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                    content += `
+                        <tr class="${rowClass}">
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.floor || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.loc1 || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.loc2 || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm font-medium">${device.hostname || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.serial_number || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.citrix_version || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.total_ram || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.taskfor || '-'}</td>
+                        </tr>
+                    `;
+                });
+
+                content += '</tbody></table></div>';
+            }
+
+            content += '</div>';
+
+            modalContent.innerHTML = content;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        // Export to Excel Function
+        function exportToExcel() {
+            if (!DataIn || DataIn.length === 0) {
+                alert('No data available to export.');
+                return;
+            }
+
+            // Prepare data for Excel
+            const exportData = DataIn.map(device => ({
+                'Floor': device.floor || '',
+                'Location 1': device.loc1 || '',
+                'Location 2': device.loc2 || '',
+                'Hostname': device.hostname || '',
+                'Serial Number': device.serial_number || '',
+                'Citrix Version': device.citrix_version || '',
+                'Total RAM': device.total_ram || '',
+                'Task For': device.taskfor || ''
+            }));
+
+            // Create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+
+            // Auto-size columns
+            const colWidths = [
+                { wch: 10 }, // Floor
+                { wch: 15 }, // Location 1
+                { wch: 15 }, // Location 2
+                { wch: 20 }, // Hostname
+                { wch: 20 }, // Serial Number
+                { wch: 20 }, // Citrix Version
+                { wch: 12 }, // Total RAM
+                { wch: 20 }  // Task For
+            ];
+            ws['!cols'] = colWidths;
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Citrix Inventory');
+
+            // Generate filename with current date
+            const today = new Date().toISOString().split('T')[0];
+            const filename = `Citrix_Inventory_${today}.xlsx`;
+
+            // Save file
+            XLSX.writeFile(wb, filename);
+        }
+
+        // Modal functions
+        function openModal(floor, location) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+
+            modalTitle.textContent = `Floor ${floor} - Location: ${location}`;
+
+            // Find all devices for this floor and location, sorted by loc2
+            const devices = DataIn.filter(device => 
+                device.floor === floor && device.loc1 === location
+            ).sort((a, b) => {
+                const loc2A = a.loc2 || '';
+                const loc2B = b.loc2 || '';
+                return loc2A.localeCompare(loc2B);
+            });
+
+            // Build table content
+            let content = '<div class="space-y-4">';
+            
+            if (devices.length === 0) {
+                content += '<p class="text-gray-600 text-center py-4">No device data found for this location.</p>';
+            } else {
+                content += `<p class="text-sm text-gray-600 mb-2">Total Devices: <strong>${devices.length}</strong></p>`;
+                content += '<div class="overflow-x-auto">';
+                content += '<table class="min-w-full border-collapse border border-gray-300">';
+                content += `
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Floor</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Loc1</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Loc2</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Hostname</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Serial Number</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Citrix Version</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Total RAM</th>
+                            <th class="border border-gray-300 px-4 py-2 text-left font-semibold text-sm">Task For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+
+                devices.forEach((device, index) => {
+                    const rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                    content += `
+                        <tr class="${rowClass}">
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.floor || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.loc1 || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.loc2 || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm font-medium">${device.hostname || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.serial_number || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.citrix_version || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.total_ram || '-'}</td>
+                            <td class="border border-gray-300 px-4 py-2 text-sm">${device.taskfor || '-'}</td>
+                        </tr>
+                    `;
+                });
+
+                content += '</tbody></table></div>';
+            }
+
+            content += '</div>';
+
+            modalContent.innerHTML = content;
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Function to render stacked bar charts
+        function renderDashboard() {
+            const container = document.getElementById('floorContainer');
+            container.innerHTML = '';
+
+            windowsData.forEach(floor => {
+                // Create floor container
+                const floorDiv = document.createElement('div');
+                floorDiv.className = 'bg-white p-4 rounded-lg shadow-md snap-center snap-always min-h-[calc(100vh-160px)] flex flex-col justify-center';
+                
+                const floorTitle = document.createElement('h3');
+                floorTitle.className = 'text-xl font-semibold mb-4';
+                floorTitle.textContent = `Floor: ${floor.floor}`;
+                floorDiv.appendChild(floorTitle);
+
+                const canvas = document.createElement('canvas');
+                canvas.id = `chart-${floor.floor}`;
+                floorDiv.appendChild(canvas);
+                container.appendChild(floorDiv);
+
+                // Get unique locations for this floor
+                const locations = [...new Set(floor.locations.map(loc => loc.loc))];
+
+                // Initialize arrays for each Citrix version
+                const versionArrays = {};
+                distinctVersions.forEach(version => {
+                    const key = toValidKey(version);
+                    versionArrays[key] = new Array(locations.length).fill(0);
+                });
+
+                // Populate arrays with distinct_serial_count
+                locations.forEach((loc, index) => {
+                    distinctVersions.forEach(version => {
+                        const key = toValidKey(version);
+                        const count = floor.locations.find(l => 
+                            l.loc === loc && l.citrix_version === version
+                        )?.distinct_serial_count || 0;
+                        versionArrays[key][index] = count;
+                    });
+                });
+
+                // Create Chart.js instance
+                const ctx = document.getElementById(`chart-${floor.floor}`).getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: locations,
+                        datasets: distinctVersions.map((version, index) => {
+                            const key = toValidKey(version);
+                            return {
+                                label: version === "Not found" ? "Unknown Citrix Version" : version,
+                                data: versionArrays[key],
+                                backgroundColor: getVersionColor(version, index),
+                                stack: 'Stack 0'
+                            };
+                        })
+                    },
+                    options: {
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const element = elements[0];
+                                const locationIndex = element.index;
+                                const location = locations[locationIndex];
+                                openModal(floor.floor, location);
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Device Count by Citrix Version - Floor ${floor.floor}`
+                            },
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: { display: true, text: 'Location' },
+                                ticks: { maxRotation: 90, minRotation: 90 }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: { display: true, text: 'Device Count' },
+                                ticks: { stepSize: 1 }
+                            }
+                        },
+                        responsive: true
+                    }
+                });
+            });
+        }
+
+        // Call render function on page load
+        window.onload = renderDashboard;
+
+        // Scroll snap functionality
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+            clearTimeout(scrollTimeout);
+            
+            scrollTimeout = setTimeout(function() {
+                const containers = document.querySelectorAll('#floorContainer > div');
+                const windowCenter = window.innerHeight / 2 + window.scrollY;
+                
+                let closestContainer = null;
+                let closestDistance = Infinity;
+                
+                containers.forEach(container => {
+                    const containerTop = container.offsetTop;
+                    const containerCenter = containerTop + (container.offsetHeight / 2);
+                    const distance = Math.abs(windowCenter - containerCenter);
+                    
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestContainer = container;
+                    }
+                });
+                
+                if (closestContainer) {
+                    const containerTop = closestContainer.offsetTop;
+                    const containerHeight = closestContainer.offsetHeight;
+                    const scrollTo = containerTop - (window.innerHeight / 2) + (containerHeight / 2);
+                    
+                    window.scrollTo({
+                        top: scrollTo,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 150);
+        });
+    </script>
+</body>
+</html>

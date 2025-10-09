@@ -1,0 +1,1 @@
+const windowsData = [{"floor":"11F","locations":[{"loc":"POD_02","model":"81BG","distinct_serial_count":1}]}];

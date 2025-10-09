@@ -1,0 +1,1 @@
+const windowsData = [{"floor":"11F","locations":[{"loc":"POD_02","citrix_version":"25.3.2.196","distinct_serial_count":1}]}];

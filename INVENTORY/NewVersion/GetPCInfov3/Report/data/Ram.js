@@ -1,0 +1,1 @@
+const windowsData = [{"floor":"11F","locations":[{"loc":"POD_02","total_ram":"20.00 GB","num_ram_slots":"2","ram_per_slot":"4.00 GB > 16.00 GB","ram_speed":"2133 MHz","ram_type":"DDR4","distinct_serial_count":1}]}];
