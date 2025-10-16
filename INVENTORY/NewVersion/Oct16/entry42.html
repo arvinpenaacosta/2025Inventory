@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Inventory Manager</title>
+    <style>
+        /* --- Mobile-First CSS for Responsiveness --- */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 1.5rem; 
+            margin: 0;
+            flex-grow: 1;
+            text-align: left;
+        }
+        .header-db-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #current-db-display {
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 2px;
+            color: #b3d9ff;
+            white-space: nowrap;
+        }
+        .container {
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        button:hover:not(:disabled) {
+            background-color: #218838;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* --- Modal Styling --- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        .radio-option {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .radio-option:hover {
+            background-color: #f9f9f9;
+        }
+        .radio-option:last-child {
+            border-bottom: none;
+        }
+        .radio-option label {
+            font-weight: normal;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        /* Icon Button Styling */
+        .icon-button {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: white;
+            height: 30px;
+            width: 30px;
+            margin-bottom: 2px;
+        }
+        .icon-button svg {
+            fill: currentColor;
+            height: 24px;
+            width: 24px;
+        }
+        
+        /* Simple Message Box */
+        #message-box {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Confirmation Modal Styling */
+        .confirm-modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        .confirm-modal-content h2 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .change-summary {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .change-summary h3 {
+            margin-top: 0;
+            font-size: 1rem;
+            color: #333;
+        }
+        .value-comparison {
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+        .value-comparison .label {
+            font-weight: bold;
+            color: #555;
+        }
+        .value-comparison .values {
+            margin-left: 10px;
+            color: #333;
+        }
+        .status-display {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border: 1px solid #ffc107;
+        }
+        .status-display strong {
+            color: #856404;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            margin-top: 0;
+        }
+        .btn-cancel {
+            background-color: #6c757d;
+        }
+        .btn-cancel:hover {
+            background-color: #5a6268;
+        }
+        .export-button {
+            background-color: #ffc107; /* Yellow color for export */
+            color: #333;
+        }
+        .export-button:hover:not(:disabled) {
+            background-color: #e0a800;
+        }
+    </style>
+</head>
+<body onload="init()">
+
+    <div id="message-box"></div>
+    
+    <header>
+        <h1>Asset Inventory Tracker</h1>
+        
+        <div class="header-db-controls">
+            <button class="icon-button" onclick="checkExistingDatabases(true)" title="Select Database">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M4 4c0-.552.448-1 1-1h14c.552 0 1 .448 1 1v1h-16v-1zm16 4h-16v13c0 .552.448 1 1 1h14c.552 0 1-.448 1-1v-13zm-10 4h4v-1h-4v1zm-4 4h12v-1h-12v1z"/>
+                </svg>
+            </button>
+            <span id="current-db-display">Not Selected</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <form id="asset-form">
+            <div class="form-group">
+                <label for="location">Location / Station:</label>
+                <input type="text" id="location" name="location" required>
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="val1" name="val1" required>
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="val2" name="val2" required>
+            </div>
+
+            <div class="form-group">
+                <input type="text" id="val3" name="val3">
+            </div>
+
+            <div class="form-group">
+                <select id="status" name="status">
+                    <option value="As Is" selected>As Is</option>
+                    <option value="Update">Update</option>
+                </select>
+            </div>
+
+            <button type="submit" id="save-button" disabled>Save Inventory Entry</button>
+        </form>
+    </div>
+
+    <div id="db-select-modal" class="modal">
+        <div class="modal-content">
+            <h2>Select Program Database</h2>
+            <p>We found existing Program Databases. Select one, or create a new one. All must contain the **'assets'** object store.</p>
+            <div id="db-list-container">
+                </div>
+            <button onclick="selectDatabase(document.querySelector('input[name=\'db_radio\']:checked').value)" id="select-db-button" disabled>Use Selected Program</button>
+            <button onclick="exportSelectedDatabase()" id="export-db-button" class="export-button" disabled>Export Selected Program (CSV)</button>
+            <button onclick="showDBCreateModal()">Create New Program Database</button>
+        </div>
+    </div>
+
+    <div id="db-create-modal" class="modal">
+        <div class="modal-content">
+            <h2>Create New Program Database</h2>
+            <p>Enter the **Program Name** (this will be the database name). It will contain the **'assets'** store.</p>
+            <div class="form-group">
+                <label for="new-db-name">Program Name:</label>
+                <input type="text" id="new-db-name">
+            </div>
+            <button onclick="createDatabaseAndSelect()">Create and Use Program</button>
+        </div>
+    </div>
+
+    <div id="confirm-modal" class="modal">
+        <div class="confirm-modal-content">
+            <h2>Confirm Asset Entry</h2>
+            <div class="change-summary">
+                <h3>Location: <span id="confirm-location"></span></h3>
+                <div class="value-comparison">
+                    <div class="label">Previous Values:</div>
+                    <div class="values" id="confirm-previous"></div>
+                </div>
+                <div class="value-comparison">
+                    <div class="label">Current Values:</div>
+                    <div class="values" id="confirm-current"></div>
+                </div>
+            </div>
+            <div class="status-display">
+                <strong>Detected Status:</strong> <span id="confirm-status"></span>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="cancelSave()">Cancel</button>
+                <button onclick="confirmAndSave()">Confirm & Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL STATE ---
+        let currentDBName = null;
+        const OBJECT_STORE_NAME = "assets"; 
+        const DB_VERSION = 1;
+        let pendingRecord = null; // Store the record to be saved after confirmation
+
+        // --- UTILITY FUNCTIONS ---
+
+        function showModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function hideModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        
+        // Simple, non-blocking message box to replace the toast functionality
+        function showStatusMessage(message, isError = false) {
+            const box = document.getElementById('message-box');
+            box.textContent = message;
+            box.style.backgroundColor = isError ? '#dc3545' : '#28a745';
+            box.style.display = 'block';
+
+            setTimeout(() => {
+                box.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateDBDisplay() {
+            const display = document.getElementById('current-db-display');
+            if (currentDBName) {
+                display.textContent = currentDBName;
+                document.getElementById('save-button').disabled = false;
+            } else {
+                display.textContent = 'Not Selected';
+                document.getElementById('save-button').disabled = true;
+            }
+        }
+
+        // --- INDEXEDDB CORE FUNCTIONS ---
+
+        // Step 1: Initialize on Load
+        function init() {
+            if (!window.indexedDB) {
+                showStatusMessage("Error: IndexedDB is not supported by your browser.", true);
+                return;
+            }
+
+            // Initial check only proceeds to selection/creation if no DB is selected
+            if (window.indexedDB.databases) {
+                checkExistingDatabases(false); 
+            } else {
+                showDBCreateModal();
+            }
+            updateDBDisplay();
+
+            // Set up the form submit handler
+            document.getElementById('asset-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveEntry();
+            });
+        }
+
+        // Step 2: Check Existing Databases
+        async function checkExistingDatabases(forceModal) {
+            try {
+                const databases = await indexedDB.databases();
+                const validDBs = [];
+
+                await Promise.all(databases.map(async (dbInfo) => {
+                    let db;
+                    try {
+                        // Exclude the special 'Assets-Manager' database if it exists (for compatibility)
+                        if (dbInfo.name === 'Assets-Manager') return; 
+
+                        db = await new Promise((resolve, reject) => {
+                            // Don't use version number here to avoid unwanted upgrades
+                            const request = indexedDB.open(dbInfo.name); 
+                            request.onsuccess = () => resolve(request.result);
+                            request.onerror = () => reject(request.error);
+                        });
+
+                        // Check if the required object store exists
+                        if (db.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+                            validDBs.push(dbInfo.name);
+                        }
+                    } catch (e) {
+                        console.error(`Could not open DB ${dbInfo.name} for inspection:`, e);
+                    } finally {
+                        if (db) db.close();
+                    }
+                }));
+
+                if (validDBs.length > 0) {
+                    showDBSelectModal(validDBs);
+                } else if (forceModal || !currentDBName) {
+                    showDBCreateModal();
+                }
+
+            } catch (error) {
+                console.error("Error checking databases:", error);
+                if (forceModal || !currentDBName) {
+                    showDBCreateModal();
+                }
+            }
+        }
+
+        // Step 3: Show Selection Modal
+        function showDBSelectModal(dbList) {
+            const container = document.getElementById('db-list-container');
+            const selectButton = document.getElementById('select-db-button');
+            const exportButton = document.getElementById('export-db-button');
+
+            container.innerHTML = '';
+            selectButton.disabled = true;
+            exportButton.disabled = true;
+
+            let defaultCheckedName = null;
+            if (currentDBName && dbList.includes(currentDBName)) {
+                defaultCheckedName = currentDBName;
+            } else if (dbList.length > 0) {
+                defaultCheckedName = dbList[0];
+            }
+
+            dbList.forEach(dbName => {
+                const isCurrent = dbName === defaultCheckedName;
+                const div = document.createElement('div');
+                div.className = 'radio-option';
+                div.innerHTML = `
+                    <input type="radio" id="radio-${dbName}" name="db_radio" value="${dbName}" ${isCurrent ? 'checked' : ''}>
+                    <label for="radio-${dbName}">${dbName} ${dbName === currentDBName ? '(Active)' : ''}</label>
+                `;
+                container.appendChild(div);
+            });
+            
+            // Initial check for button states
+            if (defaultCheckedName) {
+                selectButton.disabled = false;
+                exportButton.disabled = false;
+            }
+
+            container.addEventListener('change', () => {
+                const checkedRadio = document.querySelector('input[name=\'db_radio\']:checked');
+                selectButton.disabled = !checkedRadio;
+                exportButton.disabled = !checkedRadio;
+            });
+
+            showModal('db-select-modal');
+        }
+        
+        // **NEW FUNCTION: Export Database to CSV**
+        function exportSelectedDatabase() {
+            const checkedRadio = document.querySelector('input[name=\'db_radio\']:checked');
+            if (!checkedRadio) {
+                showStatusMessage("Please select a database to export.", true);
+                return;
+            }
+            const dbName = checkedRadio.value;
+            hideModal('db-select-modal');
+            showStatusMessage(`Preparing to export '${dbName}'...`);
+
+            const request = indexedDB.open(dbName);
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                const transaction = db.transaction(OBJECT_STORE_NAME, 'readonly');
+                const store = transaction.objectStore(OBJECT_STORE_NAME);
+                const getAllRequest = store.getAll();
+
+                getAllRequest.onsuccess = function(e) {
+                    const records = e.target.result;
+                    db.close();
+
+                    if (records.length === 0) {
+                        showStatusMessage(`Database '${dbName}' is empty. Nothing to export.`, true);
+                        return;
+                    }
+                    
+                    // 1. Get Headers (using the first record's keys)
+                    const headers = Object.keys(records[0]).join(',');
+                    
+                    // 2. Map data rows
+                    const csvData = records.map(record => {
+                        return Object.values(record).map(value => {
+                            // Simple CSV escaping: surround values containing comma or double quote with double quotes
+                            let formattedValue = String(value).replace(/"/g, '""');
+                            if (formattedValue.includes(',') || formattedValue.includes('\n') || formattedValue.includes('"')) {
+                                formattedValue = `"${formattedValue}"`;
+                            }
+                            return formattedValue;
+                        }).join(',');
+                    }).join('\n');
+
+                    const csvContent = headers + '\n' + csvData;
+                    
+                    // 3. Create Blob and Download Link
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `${dbName}_export_${new Date().toISOString().slice(0, 10)}.csv`);
+                    
+                    // 4. Trigger download
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    
+                    showStatusMessage(`Export of '${dbName}' successful!`);
+                };
+
+                getAllRequest.onerror = function(e) {
+                    db.close();
+                    console.error("Error reading data for export:", e.target.error);
+                    showStatusMessage("Error exporting database.", true);
+                };
+            };
+
+            request.onerror = function(event) {
+                console.error("Database connection error:", event.target.error);
+                showStatusMessage("Failed to connect for export.", true);
+            };
+        }
+
+
+        // Step 4: Show Creation Modal
+        function showDBCreateModal() {
+            hideModal('db-select-modal');
+            showModal('db-create-modal');
+        }
+
+        // Step 5: Create Database (Program Name) and Store (assets)
+        function createDatabaseAndSelect() {
+            const dbName = document.getElementById('new-db-name').value.trim();
+            if (!dbName) {
+                showStatusMessage("Please enter a Program Name.");
+                return;
+            }
+
+            const request = indexedDB.open(dbName, DB_VERSION); 
+
+            request.onupgradeneeded = function(event) {
+                const db = event.target.result;
+                
+                if (!db.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+                    const store = db.createObjectStore(OBJECT_STORE_NAME, { 
+                        keyPath: 'id',
+                        autoIncrement: true 
+                    });
+                    
+                    store.createIndex('locationIndex', 'location', { unique: false });
+                    console.log(`Schema created: Store '${OBJECT_STORE_NAME}' set up in DB '${dbName}'.`);
+                }
+            };
+
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                // Added a small timeout (0ms) to ensure the upgrade transaction has fully committed
+                // before closing and proceeding to select the database.
+                setTimeout(() => {
+                    db.close(); 
+                    selectDatabase(dbName);
+                    showStatusMessage(`Program Database '${dbName}' created and selected successfully.`);
+                }, 0); 
+            };
+
+            request.onerror = function(event) {
+                console.error("Database creation error:", event.target.error);
+                showStatusMessage("Error creating database. Check console for details.", true);
+            };
+        }
+        
+        // Step 6: Select Database (Finalize Setup)
+        function selectDatabase(dbName) {
+            currentDBName = dbName;
+            hideModal('db-select-modal');
+            hideModal('db-create-modal');
+            
+            updateDBDisplay();
+            showStatusMessage(`Program Database '${currentDBName}' selected.`);
+        }
+
+        // Step 7: Data Saving Logic with Validation
+        function saveEntry() {
+            if (!currentDBName) {
+                showStatusMessage("Please select or create a database first.", true);
+                return;
+            }
+            
+            const form = document.getElementById('asset-form');
+            
+            const currentValues = {
+                location: form.location.value.trim(),
+                device1: form.val1.value.trim(),
+                device2: form.val2.value.trim(),
+                device3: form.val3.value.trim(),
+                status: form.status.value
+            };
+
+            // Search for existing records with the same location
+            searchAndValidate(currentValues);
+        }
+
+        // Step 8: Search for existing records and validate
+        function searchAndValidate(currentValues) {
+            const request = indexedDB.open(currentDBName);
+
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                
+                if (!db.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+                    db.close();
+                    showStatusMessage(`Error: Store '${OBJECT_STORE_NAME}' not found. Please recreate DB.`, true);
+                    return;
+                }
+
+                const transaction = db.transaction(OBJECT_STORE_NAME, 'readonly');
+                const store = transaction.objectStore(OBJECT_STORE_NAME);
+                const index = store.index('locationIndex');
+                
+                const searchRequest = index.getAll(IDBKeyRange.only(currentValues.location));
+
+                searchRequest.onsuccess = function(e) {
+                    const results = e.target.result;
+                    
+                    if (results.length === 0) {
+                        // No previous record found, save directly
+                        db.close();
+                        saveRecordDirectly(currentValues);
+                    } else {
+                        // Find the latest record (highest ID)
+                        const latestRecord = results.reduce((max, record) => 
+                            record.id > max.id ? record : max
+                        );
+                        
+                        db.close();
+                        // Compare and show confirmation modal
+                        compareAndConfirm(latestRecord, currentValues);
+                    }
+                };
+
+                searchRequest.onerror = function(e) {
+                    console.error("Search error:", e.target.error);
+                    db.close();
+                    showStatusMessage("Error searching for existing records.", true);
+                };
+            };
+
+            request.onerror = function(event) {
+                console.error("Database connection error:", event.target.error);
+                showStatusMessage("Failed to connect to the selected database.", true);
+            };
+        }
+
+        // Step 9: Compare values and show confirmation modal
+        function compareAndConfirm(previousRecord, currentValues) {
+            // Extract non-empty values (case-insensitive comparison)
+            const prevValues = [
+                previousRecord.device1,
+                previousRecord.device2,
+                previousRecord.device3
+            ].filter(v => v && v.trim() !== '').map(v => v.toLowerCase());
+
+            const currValues = [
+                currentValues.device1,
+                currentValues.device2,
+                currentValues.device3
+            ].filter(v => v && v.trim() !== '').map(v => v.toLowerCase());
+
+            // Find additions and removals
+            const additions = currValues.filter(v => !prevValues.includes(v));
+            const removals = prevValues.filter(v => !currValues.includes(v));
+
+            let detectedStatus = "";
+
+            if (additions.length === 0 && removals.length === 0) {
+                // No changes
+                detectedStatus = "As Is";
+            } else if (additions.length > 0 && removals.length === 0) {
+                // Only additions
+                const addedItems = additions.map(v => 
+                    getCurrentOriginalCase(currentValues, v)
+                ).join(", ");
+                detectedStatus = `Update: ${addedItems} Added to the Asset`;
+            } else if (removals.length > 0 && additions.length === 0) {
+                // Only removals
+                const removedItems = removals.map(v => 
+                    getPreviousOriginalCase(previousRecord, v)
+                ).join(", ");
+                detectedStatus = `Update: ${removedItems} Removed from the Asset`;
+            } else {
+                // Replacements (additions and removals)
+                const addedItems = additions.map(v => 
+                    getCurrentOriginalCase(currentValues, v)
+                ).join(", ");
+                const removedItems = removals.map(v => 
+                    getPreviousOriginalCase(previousRecord, v)
+                ).join(", ");
+                detectedStatus = `Update: ${addedItems} replaced ${removedItems}`;
+            }
+
+            // Store pending record with detected status
+            pendingRecord = {
+                location: currentValues.location,
+                device1: currentValues.device1,
+                device2: currentValues.device2,
+                device3: currentValues.device3,
+                status: detectedStatus,
+                timestamp: new Date().toISOString()
+            };
+
+            // Show confirmation modal
+            document.getElementById('confirm-location').textContent = currentValues.location;
+            document.getElementById('confirm-previous').textContent = 
+                `${previousRecord.device1 || '(empty)'}, ${previousRecord.device2 || '(empty)'}, ${previousRecord.device3 || '(empty)'}`;
+            document.getElementById('confirm-current').textContent = 
+                `${currentValues.device1 || '(empty)'}, ${currentValues.device2 || '(empty)'}, ${currentValues.device3 || '(empty)'}`;
+            document.getElementById('confirm-status').textContent = detectedStatus;
+            
+            showModal('confirm-modal');
+        }
+
+        // Helper: Get original case from current values
+        function getCurrentOriginalCase(currentValues, lowerValue) {
+            const values = [currentValues.device1, currentValues.device2, currentValues.device3];
+            return values.find(v => v && v.toLowerCase() === lowerValue) || lowerValue;
+        }
+
+        // Helper: Get original case from previous record
+        function getPreviousOriginalCase(previousRecord, lowerValue) {
+            const values = [previousRecord.device1, previousRecord.device2, previousRecord.device3];
+            return values.find(v => v && v.toLowerCase() === lowerValue) || lowerValue;
+        }
+
+        // Step 10: Confirm and save the record
+        function confirmAndSave() {
+            if (!pendingRecord) {
+                showStatusMessage("No pending record to save.", true);
+                return;
+            }
+
+            const request = indexedDB.open(currentDBName);
+
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                const transaction = db.transaction(OBJECT_STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(OBJECT_STORE_NAME);
+
+                const addRequest = store.add(pendingRecord);
+
+                addRequest.onsuccess = function(e) {
+                    showStatusMessage(`Asset entry saved for ${pendingRecord.location}.`);
+                    document.getElementById('asset-form').reset();
+                    hideModal('confirm-modal');
+                    pendingRecord = null;
+                };
+
+                addRequest.onerror = function(e) {
+                    console.error("Error adding record:", e.target.error);
+                    showStatusMessage("Error saving data. Check console.", true);
+                };
+
+                transaction.oncomplete = () => db.close();
+                transaction.onerror = () => db.close();
+            };
+
+            request.onerror = function(event) {
+                console.error("Database connection error:", event.target.error);
+                showStatusMessage("Failed to connect to the selected database.", true);
+            };
+        }
+
+        // Step 11: Cancel save operation
+        function cancelSave() {
+            hideModal('confirm-modal');
+            pendingRecord = null;
+            showStatusMessage("Save operation cancelled.");
+        }
+
+        // Step 12: Save record directly (when no previous record exists)
+        function saveRecordDirectly(currentValues) {
+            const record = {
+                location: currentValues.location,
+                device1: currentValues.device1,
+                device2: currentValues.device2,
+                device3: currentValues.device3,
+                status: currentValues.status,
+                timestamp: new Date().toISOString()
+            };
+
+            const request = indexedDB.open(currentDBName);
+
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                const transaction = db.transaction(OBJECT_STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(OBJECT_STORE_NAME);
+
+                const addRequest = store.add(record);
+
+                addRequest.onsuccess = function(e) {
+                    showStatusMessage(`Asset entry saved for ${record.location}.`);
+                    document.getElementById('asset-form').reset();
+                };
+
+                addRequest.onerror = function(e) {
+                    console.error("Error adding record:", e.target.error);
+                    showStatusMessage("Error saving data. Check console.", true);
+                };
+
+                transaction.oncomplete = () => db.close();
+                transaction.onerror = () => db.close();
+            };
+
+            request.onerror = function(event) {
+                console.error("Database connection error:", event.target.error);
+                showStatusMessage("Failed to connect to the selected database.", true);
+            };
+        }
+    </script>
+</body>
+</html>

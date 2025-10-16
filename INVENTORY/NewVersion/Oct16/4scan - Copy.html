@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4-Step Paused Batch Scanner</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <script src="static/assets/js/html5-qrcode.min.js"></script> 
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      /* Align items to the top */
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      /* Add padding to push content down slightly from the very top */
+      padding-top: 50px; 
+    }
+
+    .frosted-glass {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      width: 100%;
+      max-width: 450px; /* Standard width */
+      padding: 30px;
+      text-align: center;
+    }
+
+    .app-header {
+      margin-bottom: 25px;
+      color: #0d6efd; /* Blue highlight */
+    }
+    
+    .app-header h3 {
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+
+    input {
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 8px;
+      padding: 10px; 
+      font-size: 0.85em; 
+      text-align: left;
+      font-weight: 500;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    
+    /* Make the input take full width in the vertical layout */
+    .vertical-input-group {
+        width: 100%;
+        margin-bottom: 1rem; /* mb-3 equivalent */
+    }
+
+    .btn-primary {
+      background-color: #0d6efd;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: #0b5ed7;
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    /* Hide the button when scanning is active */
+    .scanning-active #searchBtn {
+        display: none;
+    }
+    /* Show the results when scanning is complete */
+    .scanning-complete #resultsOutput {
+        display: block;
+    }
+    
+    /* Modal Styling */
+    .modal-content {
+      background-color: #222;
+      border: none;
+      border-radius: 12px;
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid #333;
+    }
+
+    #qr-reader {
+      margin-top: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      min-height: 250px; 
+    }
+    
+    /* Ensure the modal body has margin when the instruction text is removed */
+    .modal-body {
+        padding-bottom: 20px;
+    }
+    
+    /* New styles for pause feedback */
+    .pause-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 1.5em;
+        font-weight: bold;
+        z-index: 10;
+        border-radius: 10px;
+    }
+    
+    /* Custom style for the DUPLICATE message box */
+    .duplicate-message-box {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(180, 0, 0, 0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        z-index: 20;
+        font-size: 1.1em;
+        font-weight: bold;
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        min-width: 90%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="frosted-glass" id="appContainer">
+    <div class="app-header">
+        <h3>4-Step Batch Processor</h3>
+    </div>
+    
+    <div id="resultsOutput" class="mb-4" style="display: none;">
+        <h6 class="text-start text-info mb-3">Captured Temp Values:</h6>
+        
+        <div class="vertical-input-group">
+            <input type="text" id="temp1Output" class="form-control" readonly placeholder="Scan 1" />
+        </div>
+        
+        <div class="vertical-input-group">
+            <input type="text" id="temp2Output" class="form-control" readonly placeholder="Scan 2" />
+        </div>
+        
+        <div class="vertical-input-group">
+            <input type="text" id="temp3Output" class="form-control" readonly placeholder="Scan 3" />
+        </div>
+        
+        <div class="vertical-input-group mb-0"> <input type="text" id="temp4Output" class="form-control" readonly placeholder="Scan 4" />
+        </div>
+        
+    </div>
+
+    <button class="btn btn-primary w-100" id="searchBtn">
+      <i class="fas fa-play"></i> Start Batch Scan (4 Items)
+    </button>
+  </div>
+  
+  <div
+    class="modal fade"
+    id="scannerModal"
+    tabindex="-1"
+    aria-hidden="true"
+    data-bs-backdrop="static"
+  >
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content text-center">
+        <div class="modal-header">
+          <h5 class="modal-title" id="scanModalTitle">Ready...</h5>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+            id="closeScannerBtn"
+          ></button>
+        </div>
+        <div class="modal-body" style="position: relative;">
+          <div id="pauseOverlay" class="pause-overlay" style="display: none;">
+                <i class="fas fa-pause fa-2x mb-3"></i>
+                PAUSED
+                </div>
+          
+          <div id="duplicateMessageBox" class="duplicate-message-box" style="display: none;">
+              🚫 DUPLICATE SCAN 🚫
+              <p class="mt-2 mb-0" id="duplicateSerialText"></p>
+          </div>
+          
+          <div id="qr-reader" style="width: 100%"></div>
+          
+          <button class="btn btn-danger w-100 mt-3" id="stopScanBtn" style="display: none;">
+              Stop
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <audio id="beep-sound" src="static/assets/audio/beep.mp3" preload="auto"></audio>
+  <audio id="cancel-sound" src="static/assets/audio/cancel2.mp3" preload="auto"></audio>
+
+  <script>
+    // --- BATCH SCAN CONFIGURATION ---
+    const MAX_SCANS = 4;
+    const PAUSE_DURATION_MS = 1500; // 1.5 seconds pause
+    const DUPLICATE_MESSAGE_DURATION_MS = 2000; // 2 seconds for duplicate error
+
+    // --- GLOBAL STATE ---
+    let html5QrCode = null;
+    let currentScanCount = 0;
+    let isScanning = false;
+    let isProcessing = false; // Flag to prevent rapid multi-scan during pause/process
+
+    // --- ELEMENT REFERENCES ---
+    const appContainer = document.getElementById("appContainer");
+    const searchBtn = document.getElementById("searchBtn");
+    const scannerModalEl = document.getElementById("scannerModal");
+    const scanModalTitle = document.getElementById("scanModalTitle");
+    // const scannerInstruction = document.getElementById("scannerInstruction"); // REMOVED
+    const closeScannerBtn = document.getElementById("closeScannerBtn");
+    const pauseOverlay = document.getElementById("pauseOverlay");
+    const stopScanBtn = document.getElementById("stopScanBtn"); 
+    const duplicateMessageBox = document.getElementById("duplicateMessageBox");
+    const duplicateSerialText = document.getElementById("duplicateSerialText");
+    
+    // Array to hold references to the four new input elements
+    const tempOutputs = [
+        document.getElementById("temp1Output"),
+        document.getElementById("temp2Output"),
+        document.getElementById("temp3Output"),
+        document.getElementById("temp4Output"),
+    ];
+    
+    // --- AUDIO HELPER FUNCTION ---
+    function playSound(audioId) {
+        const audio = document.getElementById(audioId);
+        if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.play().catch(e => console.error("Error playing sound:", e));
+        }
+    }
+
+    // --- UI UPDATES ---
+    function updateScanStatus(isFinal = false) { 
+        appContainer.classList.toggle('scanning-active', !isFinal);
+        appContainer.classList.toggle('scanning-complete', isFinal);
+    }
+    
+    function updateModalStatus(step, instruction, color = 'text-warning') {
+        // Only update the modal title, since the instruction element is removed
+        if (duplicateMessageBox.style.display === 'none') {
+            scanModalTitle.textContent = `Scanning Serial (${step} of ${MAX_SCANS})`;
+            // scannerInstruction.textContent = instruction; // REMOVED
+            // scannerInstruction.className = `mt-3 ${color}`; // REMOVED
+        }
+    }
+    
+    function showDuplicateError(serial) {
+        playSound('cancel-sound');
+        duplicateSerialText.textContent = `Value: ${serial}`;
+        duplicateMessageBox.style.display = 'block';
+        
+        // Hide the instruction text temporarily (not needed as it's removed, but leaving the logic clean)
+        // scannerInstruction.style.display = 'none'; 
+        
+        // Set a timeout to clear the error message and restore instructions
+        setTimeout(() => {
+            duplicateMessageBox.style.display = 'none';
+            // scannerInstruction.style.display = 'block'; // REMOVED
+            if(isScanning && !isProcessing) { 
+                updateModalStatus(currentScanCount + 1, ``, 'text-warning'); // Pass empty instruction
+            }
+        }, DUPLICATE_MESSAGE_DURATION_MS);
+    }
+
+    /**
+     * Stops the scanning process, closes the modal, and returns to the main UI.
+     * @param {boolean} isCancelled - True if manually cancelled via modal close button.
+     */
+    function stopBatchScan(isCancelled = false) {
+        stopScanner().finally(() => { 
+            const scanModal = bootstrap.Modal.getInstance(scannerModalEl);
+            if (scanModal) scanModal.hide(); // Close scanner modal
+            
+            isScanning = false;
+            isProcessing = false;
+
+            // Fill remaining empty fields with N/A
+            if (currentScanCount < MAX_SCANS) {
+                for (let i = currentScanCount; i < MAX_SCANS; i++) {
+                    if (tempOutputs[i].value === '') { 
+                        tempOutputs[i].value = 'N/A';
+                    }
+                }
+            }
+            
+            if (isCancelled) {
+                 playSound('cancel-sound'); 
+            } 
+            
+            // Ensure the stop button is hidden upon return
+            stopScanBtn.style.display = 'none';
+            updateScanStatus(true); // Final state
+        });
+    }
+
+    // --- CORE LOGIC: Handle Scanned Serial ---
+    function handleScanSuccess(serial) {
+        if (isProcessing) return; // Ignore subsequent scans while processing
+        isProcessing = true;
+        
+        const trimmedSerial = serial.trim().replace(/[\r\n]+/g, "").replace(/^"|"$/g, "");
+
+        // --- DUPLICATE CHECK LOGIC ---
+        const existingValues = tempOutputs.slice(0, currentScanCount).map(input => input.value);
+        if (existingValues.includes(trimmedSerial)) {
+            isProcessing = false; // Allow next scan immediately
+            showDuplicateError(trimmedSerial);
+            
+            // Resume scanning immediately to allow the user to scan a different item
+            if (html5QrCode && html5QrCode.getState() !== 1) { // 1 is state STOPPED
+                 html5QrCode.resume();
+            }
+            return; // EXIT: Do not proceed with capture or pause logic
+        }
+        // --- END DUPLICATE CHECK ---
+
+        currentScanCount++;
+        
+        console.log(`Captured Serial #${currentScanCount} (Temp${currentScanCount}): ${trimmedSerial}`);
+        
+        // Place scanned value into the correct individual input field
+        if (currentScanCount > 0 && currentScanCount <= MAX_SCANS) {
+            tempOutputs[currentScanCount - 1].value = trimmedSerial;
+        }
+
+        // 1. Play sound
+        playSound('beep-sound');
+
+        // 2. Check if batch is complete
+        if (currentScanCount >= MAX_SCANS) {
+            // Batch complete (Final logic)
+            stopScanner().finally(() => { 
+                const scanModal = bootstrap.Modal.getInstance(scannerModalEl);
+                if (scanModal) scanModal.hide(); // Close scanner modal
+                
+                isScanning = false;
+                isProcessing = false;
+
+                // Reset UI to final state (all 4 inputs are filled)
+                updateScanStatus(true); // Final state
+            });
+            
+        } else {
+            // Check for mid-batch stop condition (After 2nd scan)
+            if (currentScanCount >= 2) {
+                stopScanBtn.style.display = 'block'; // Show the stop button
+                // Clear instruction text (only modal title update remains)
+                updateModalStatus(
+                    currentScanCount + 1, 
+                    "", // Instruction is now irrelevant for this modal
+                    'text-info'
+                );
+            } else {
+                updateModalStatus(
+                    currentScanCount + 1, 
+                    ``, // Instruction is now irrelevant for this modal
+                    'text-success'
+                );
+            }
+
+            // Show pause feedback overlay
+            pauseOverlay.style.display = 'flex';
+            
+            // Temporarily disable detection
+            if (html5QrCode) {
+                 html5QrCode.pause(true); 
+            }
+            
+            // Pause duration is still 1.5 seconds
+            setTimeout(() => {
+                pauseOverlay.style.display = 'none'; // Hide pause feedback
+
+                // Re-enable detection process after the pause
+                if (html5QrCode) {
+                    html5QrCode.resume();
+                }
+
+                // Update modal title for the next scan.
+                updateModalStatus(currentScanCount + 1, ``, 'text-warning');
+                
+                updateScanStatus(false); // Scanning state (simplified)
+                
+                isProcessing = false; // Allow the next scan to be captured
+            }, PAUSE_DURATION_MS);
+        }
+    }
+
+    /* ---- QR SCANNER LOGIC ---- */
+
+    function startScanner() {
+        if (isScanning) {
+            updateModalStatus(currentScanCount + 1, ``, 'text-warning');
+            return;
+        }
+
+        const scanModal = new bootstrap.Modal(scannerModalEl);
+        scanModal.show();
+        
+        isScanning = true;
+        
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("qr-reader");
+        }
+        
+        // Initial title update
+        updateModalStatus(currentScanCount + 1, ``, 'text-warning');
+
+        html5QrCode
+            .start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                (txt) => handleScanSuccess(txt),
+                (err) => console.log("scan error:", err)
+            )
+            .catch((err) => {
+                console.error("QR start error", err);
+                const modal = bootstrap.Modal.getInstance(scannerModalEl);
+                if (modal) modal.hide();
+                resetState(); // Simplified reset
+            });
+    }
+
+    function stopScanner() {
+        if (html5QrCode) {
+            return html5QrCode
+                .stop()
+                .then(() => {
+                    html5QrCode = null;
+                })
+                .catch((err) => console.error("stop error:", err));
+        }
+        return Promise.resolve();
+    }
+    
+    function resetState() { 
+        currentScanCount = 0;
+        isScanning = false;
+        isProcessing = false;
+        
+        // Clear all four input fields on reset
+        tempOutputs.forEach(input => input.value = '');
+        
+        updateScanStatus(true);
+        appContainer.classList.remove('scanning-active');
+        appContainer.classList.add('scanning-complete');
+        pauseOverlay.style.display = 'none';
+        stopScanBtn.style.display = 'none'; // Ensure stop button is hidden
+        duplicateMessageBox.style.display = 'none'; // Ensure duplicate message is hidden
+        // scannerInstruction.style.display = 'block'; // REMOVED
+    }
+
+    // --- EVENT LISTENERS ---
+
+    // 1. Initial Setup on Load
+    window.onload = function() {
+        resetState(); // Call reset to clear fields and set final state
+        document.getElementById("resultsOutput").style.display = 'none'; 
+    };
+
+    // 2. Start Batch Scan Button
+    searchBtn.addEventListener("click", () => {
+        // Reset state for a new batch
+        resetState(); 
+        document.getElementById("resultsOutput").style.display = 'block';
+        
+        // Transition to scanning state
+        updateScanStatus(false);
+        startScanner();
+    });
+    
+    // 3. Stop Batch Scan Button (Manual Completion/Early Exit)
+    stopScanBtn.addEventListener("click", () => {
+        stopBatchScan(false); // Manually stop and accept captured scans
+    });
+
+    // 4. Close Scanner Button (Manual Cancellation)
+    closeScannerBtn.addEventListener("click", () => {
+        // Treat closing the modal using the X button as a cancellation
+        stopBatchScan(true); 
+    });
+
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Inventory Viewer</title>
+    <style>
+        /* --- Mobile-First CSS for Responsiveness --- */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 {
+            font-size: 1.5rem; 
+            margin: 0;
+            flex-grow: 1;
+            text-align: left;
+        }
+        .header-db-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #current-db-display {
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 2px;
+            color: #b3d9ff; 
+            white-space: nowrap;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .container {
+            padding: 20px 10px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .icon-button {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: white;
+            height: 30px;
+            width: 30px;
+            margin-bottom: 2px;
+        }
+        .icon-button svg {
+            fill: currentColor;
+            height: 24px;
+            width: 24px;
+        }
+        
+        /* --- Data Display Styling --- */
+        #data-view-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+
+        /* Responsive Table */
+        .asset-table-container {
+            overflow-x: auto; 
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Increased min-width to accommodate new column */
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 0.85rem;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            color: #444;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .status-as-is {
+            color: green;
+            font-weight: bold;
+        }
+        .status-update {
+            color: orange;
+            font-weight: bold;
+        }
+        
+        /* --- Modal Styling --- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .radio-option {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            text-align: left;
+        }
+        .radio-option:hover {
+            background-color: #f9f9f9;
+        }
+        .radio-option:last-child {
+            border-bottom: none;
+        }
+        .radio-option label {
+            font-weight: normal;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        /* Button styling including border-radius */
+        .modal-content button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px 15px; 
+            font-size: 1rem;
+            border-radius: 8px; 
+            border: none;
+            cursor: pointer;
+            color: white;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        #select-db-button {
+             background-color: #007bff; 
+        }
+        #select-db-button:hover:not(:disabled) {
+             background-color: #0056b3;
+        }
+        #delete-db-button, #confirm-delete-btn {
+             background-color: #dc3545; /* Red for danger */
+        }
+        #delete-db-button:hover:not(:disabled), #confirm-delete-btn:hover {
+             background-color: #c82333;
+        }
+        /* Create button uses dark high contrast color */
+        .modal-content button[onclick="showDBCreateModal()"], 
+        .modal-content button[onclick="createDatabaseAndSelect()"] {
+            background-color: #343a40; 
+        }
+        .modal-content button[onclick="showDBCreateModal()"]:hover,
+        .modal-content button[onclick="createDatabaseAndSelect()"]:hover {
+            background-color: #1d2124;
+        }
+        
+        /* Confirmation Modal specific styles */
+        #cancel-delete-btn {
+            background-color: #6c757d;
+        }
+        #cancel-delete-btn:hover {
+            background-color: #5a6268;
+        }
+
+        /* Simple Message Box (Toast) */
+        #message-box {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body onload="init()">
+
+    <!-- Simple Message Box for non-blocking feedback -->
+    <div id="message-box"></div>
+    
+    <header>
+        <h1>Asset Viewer Dashboard</h1>
+        
+        <!-- ICON BUTTON AND DB NAME DISPLAY -->
+        <div class="header-db-controls">
+            <button class="icon-button" onclick="checkExistingDatabases(true)" title="Select Database">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M4 4c0-.552.448-1 1-1h14c.552 0 1 .448 1 1v1h-16v-1zm16 4h-16v13c0 .552.448 1 1 1h14c.552 0 1-.448 1-1v-13zm-10 4h4v-1h-4v1zm-4 4h12v-1h-12v1z"/>
+                </svg>
+            </button>
+            <span id="current-db-display">Not Selected</span>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2 id="data-view-title">Last 10 Asset Entries</h2>
+        
+        <!-- Asset Data Display Area -->
+        <div id="asset-data-output" class="asset-table-container">
+            <p style="text-align: center; padding: 20px;">Please select an Asset Program Database to view records.</p>
+        </div>
+    </div>
+
+    <!-- 1. Database Selection Modal -->
+    <div id="db-select-modal" class="modal">
+        <div class="modal-content">
+            <h2>Select Program Database</h2>
+            <p>Select a database containing the **'assets'** object store to view its records.</p>
+            <div id="db-list-container">
+                <!-- Radio buttons will be inserted here -->
+            </div>
+            <button onclick="selectDatabase(document.querySelector('input[name=\'db_radio\']:checked').value)" id="select-db-button" disabled>Use Selected Program</button>
+            <button onclick="showDeleteConfirmation()" id="delete-db-button" disabled>Delete Selected Database</button>
+            <button onclick="showDBCreateModal()">Create New Program Database</button>
+        </div>
+    </div>
+
+    <!-- 2. Database Creation Modal -->
+    <div id="db-create-modal" class="modal">
+        <div class="modal-content">
+            <h2>Create New Program Database</h2>
+            <p>Enter the **Program Name** (this will be the database name). It will contain the **'assets'** store.</p>
+            <p style="font-size: 0.8em; color: gray;">Note: Creating a database here is useful if you haven't used the entry app yet.</p>
+            <div class="form-group">
+                <label for="new-db-name">Program Name:</label>
+                <input type="text" id="new-db-name">
+            </div>
+            <button onclick="createDatabaseAndSelect()">Create and Use Program</button>
+        </div>
+    </div>
+    
+    <!-- 3. Confirmation Modal for Deletion -->
+    <div id="confirm-delete-modal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Deletion</h2>
+            <p style="font-weight: bold; color: #dc3545;">WARNING: This action is permanent.</p>
+            <p>You are about to permanently delete the database: <span id="db-to-delete-name" style="font-style: italic; font-weight: bold;"></span>. All stored assets will be lost.</p>
+            <button onclick="executeDeleteDatabase()" id="confirm-delete-btn">Yes, Permanently Delete</button>
+            <button onclick="hideModal('confirm-delete-modal')" id="cancel-delete-btn">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL STATE ---
+        let currentDBName = null;
+        let dbToDelete = null; // Temporarily holds the DB name for deletion
+        const OBJECT_STORE_NAME = "assets"; 
+        const DB_VERSION = 1;
+
+        // --- UTILITY FUNCTIONS ---
+
+        function showModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function hideModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        
+        function showStatusMessage(message, isError = false) {
+            const box = document.getElementById('message-box');
+            box.textContent = message;
+            box.style.backgroundColor = isError ? '#dc3545' : '#28a745';
+            box.style.display = 'block';
+
+            setTimeout(() => {
+                box.style.display = 'none';
+            }, 3000);
+        }
+
+        function updateDBDisplay() {
+            const display = document.getElementById('current-db-display');
+            if (currentDBName) {
+                display.textContent = currentDBName;
+            } else {
+                display.textContent = 'Not Selected';
+            }
+        }
+        
+        function formatTimestamp(isoString) {
+            if (!isoString) return 'N/A';
+            const date = new Date(isoString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+
+        // --- DATA DISPLAY FUNCTION ---
+        
+        function renderAssetTable(assets) {
+            const outputDiv = document.getElementById('asset-data-output');
+            
+            if (assets.length === 0) {
+                outputDiv.innerHTML = '<p style="text-align: center; padding: 20px; color: #555;">No assets found in this database.</p>';
+                return;
+            }
+
+            let html = `
+                <div class="asset-table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Location</th>
+                                <th>Device 1</th>
+                                <th>Device 2</th>
+                                <th>Device 3</th> <!-- ADDED DEVICE 3 HEADER -->
+                                <th>Status</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            assets.forEach(asset => {
+                const statusClass = asset.status === 'Update' ? 'status-update' : 'status-as-is';
+                html += `
+                    <tr>
+                        <td>${asset.id || 'N/A'}</td>
+                        <td>${asset.location}</td>
+                        <td>${asset.device1 || 'N/A'}</td>
+                        <td>${asset.device2 || 'N/A'}</td>
+                        <td>${asset.device3 || 'N/A'}</td> <!-- ADDED DEVICE 3 DATA -->
+                        <td class="${statusClass}">${asset.status}</td>
+                        <td>${formatTimestamp(asset.timestamp)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            outputDiv.innerHTML = html;
+        }
+
+        // --- INDEXEDDB CORE FUNCTIONS ---
+
+        // Step 1: Initialize on Load
+        function init() {
+            if (!window.indexedDB) {
+                showStatusMessage("Error: IndexedDB is not supported by your browser.", true);
+                return;
+            }
+
+            if (window.indexedDB.databases) {
+                checkExistingDatabases(false); 
+            } else {
+                showDBCreateModal();
+            }
+            updateDBDisplay();
+        }
+
+        // Step 2: Check Existing Databases
+        async function checkExistingDatabases(forceModal) {
+            try {
+                const databases = await indexedDB.databases();
+                const validDBs = [];
+
+                await Promise.all(databases.map(async (dbInfo) => {
+                    let db;
+                    try {
+                        const request = indexedDB.open(dbInfo.name); 
+                        db = await new Promise((resolve, reject) => {
+                            request.onsuccess = () => resolve(request.result);
+                            request.onerror = () => reject(request.error);
+                        });
+
+                        if (db.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+                            validDBs.push(dbInfo.name);
+                        }
+                    } catch (e) {
+                        console.error(`Could not open DB ${dbInfo.name} for inspection:`, e);
+                    } finally {
+                        if (db) db.close();
+                    }
+                }));
+
+                if (validDBs.length > 0) {
+                    showDBSelectModal(validDBs);
+                } else if (forceModal) {
+                    showDBCreateModal();
+                } else if (!currentDBName) {
+                     document.getElementById('asset-data-output').innerHTML = '<p style="text-align: center; padding: 20px;">No Program Databases found. Create one using the entry app.</p>';
+                }
+
+            } catch (error) {
+                console.error("Error checking databases:", error);
+                if (forceModal) {
+                    showDBCreateModal();
+                }
+            }
+        }
+
+        // Step 3: Show Selection Modal
+        function showDBSelectModal(dbList) {
+            const container = document.getElementById('db-list-container');
+            container.innerHTML = '';
+            
+            dbList.forEach(dbName => {
+                const isCurrent = dbName === currentDBName;
+                const div = document.createElement('div');
+                div.className = 'radio-option';
+                div.innerHTML = `
+                    <input type="radio" id="radio-${dbName}" name="db_radio" value="${dbName}" ${isCurrent ? 'checked' : ''}>
+                    <label for="radio-${dbName}">${dbName} ${isCurrent ? '(Active)' : ''}</label>
+                `;
+                container.appendChild(div);
+            });
+            
+            // Function to check selection and update button disabled states
+            const updateButtons = () => {
+                const isSelected = document.querySelector('input[name=\'db_radio\']:checked');
+                document.getElementById('select-db-button').disabled = !isSelected;
+                document.getElementById('delete-db-button').disabled = !isSelected;
+            };
+
+            updateButtons(); // Initial check
+
+            container.addEventListener('change', updateButtons);
+
+            showModal('db-select-modal');
+        }
+
+        // Step 4: Show Creation Modal
+        function showDBCreateModal() {
+            hideModal('db-select-modal');
+            showModal('db-create-modal');
+        }
+
+        // Step 5: Create Database (for cases where no DB is found)
+        function createDatabaseAndSelect() {
+            const dbName = document.getElementById('new-db-name').value.trim();
+            if (!dbName) {
+                showStatusMessage("Please enter a Program Name.");
+                return;
+            }
+
+            const request = indexedDB.open(dbName, DB_VERSION); 
+
+            request.onupgradeneeded = function(event) {
+                const db = event.target.result;
+                
+                if (!db.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+                    const store = db.createObjectStore(OBJECT_STORE_NAME, { 
+                        keyPath: 'id',
+                        autoIncrement: true 
+                    });
+                    store.createIndex('locationIndex', 'location', { unique: false });
+                }
+            };
+
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                db.close(); 
+                selectDatabase(dbName);
+                showStatusMessage(`Program Database '${dbName}' created and selected successfully.`);
+            };
+
+            request.onerror = function(event) {
+                console.error("Database creation error:", event.target.error);
+                showStatusMessage("Error creating database. Check console for details.", true);
+            };
+        }
+        
+        // Step 6: Select Database (Finalize Setup)
+        function selectDatabase(dbName) {
+            currentDBName = dbName;
+            hideModal('db-select-modal');
+            hideModal('db-create-modal');
+            
+            updateDBDisplay();
+            showStatusMessage(`Program Database '${currentDBName}' selected. Loading assets...`);
+            
+            displayAssets();
+        }
+
+        // --- CUSTOM CONFIRMATION LOGIC ---
+        function showDeleteConfirmation() {
+            const selectedRadio = document.querySelector('input[name=\'db_radio\']:checked');
+            if (!selectedRadio) return; 
+            
+            dbToDelete = selectedRadio.value;
+            
+            // Populate modal text
+            document.getElementById('db-to-delete-name').textContent = dbToDelete;
+
+            // Hide the selection modal and show the confirmation modal
+            hideModal('db-select-modal');
+            showModal('confirm-delete-modal');
+        }
+
+        function executeDeleteDatabase() {
+            if (!dbToDelete) return; 
+
+            hideModal('confirm-delete-modal'); 
+
+            const dbName = dbToDelete;
+            dbToDelete = null; 
+            
+            const deleteRequest = indexedDB.deleteDatabase(dbName);
+
+            deleteRequest.onsuccess = function() {
+                showStatusMessage(`Database "${dbName}" deleted successfully.`, false);
+                
+                if (currentDBName === dbName) {
+                    currentDBName = null;
+                    document.getElementById('asset-data-output').innerHTML = '<p style="text-align: center; padding: 20px;">Please select an Asset Program Database to view records.</p>';
+                }
+                updateDBDisplay();
+                
+                // Refresh list of available databases and show modal again
+                checkExistingDatabases(true);
+            };
+
+            deleteRequest.onerror = function(e) {
+                console.error("Error deleting database:", e.target.error);
+                showStatusMessage(`Error deleting "${dbName}": ${e.target.error.name}`, true);
+            };
+        }
+        
+        // Step 7: Fetch and Display Last 10 Assets
+        function displayAssets() {
+            if (!currentDBName) {
+                document.getElementById('asset-data-output').innerHTML = '<p style="text-align: center; padding: 20px; color: red;">Error: No active database selected.</p>';
+                return;
+            }
+            
+            document.getElementById('asset-data-output').innerHTML = '<p style="text-align: center; padding: 20px;">Loading...</p>';
+
+            const request = indexedDB.open(currentDBName);
+
+            request.onsuccess = function(event) {
+                const db = event.target.result;
+                
+                if (!db.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+                    db.close();
+                    showStatusMessage(`Error: Store '${OBJECT_STORE_NAME}' not found in DB.`, true);
+                    document.getElementById('asset-data-output').innerHTML = '<p style="text-align: center; padding: 20px; color: red;">Selected database is invalid (missing "assets" store).</p>';
+                    return;
+                }
+
+                const transaction = db.transaction(OBJECT_STORE_NAME, 'readonly');
+                const store = transaction.objectStore(OBJECT_STORE_NAME);
+                
+                // Open cursor in reverse order ('prev') to get the last items
+                const cursorRequest = store.openCursor(null, 'prev'); 
+                
+                let assets = [];
+                let count = 0;
+                const maxRows = 10;
+                
+                cursorRequest.onsuccess = function(event) {
+                    const cursor = event.target.result;
+                    if (cursor && count < maxRows) {
+                        // Assuming the entry app saves the data structure flatly (location, device1, device2, device3, status, timestamp)
+                        assets.push(cursor.value);
+                        count++;
+                        cursor.continue(); 
+                    } else {
+                        // Reverse array to display in ascending order (oldest first, newest at bottom of list)
+                        renderAssetTable(assets.reverse()); 
+                    }
+                };
+
+                cursorRequest.onerror = function(e) {
+                    console.error("Cursor error:", e.target.error);
+                    showStatusMessage("Error reading assets.", true);
+                };
+
+                transaction.oncomplete = () => db.close();
+                transaction.onerror = () => db.close();
+            };
+
+            request.onerror = function(event) {
+                console.error("Database connection error:", event.target.error);
+                showStatusMessage("Failed to connect to the selected database.", true);
+            };
+        }
+    </script>
+</body>
+</html>
+

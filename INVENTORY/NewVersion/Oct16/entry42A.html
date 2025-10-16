@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Inventory Tracker</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <script src="static/assets/js/html5-qrcode.min.js"></script> 
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* --- EXISTING 4SCAN.HTML STYLES (Adjusted for Header) --- */
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      /* Removed 'display: flex', 'justify-content: center', 'align-items: flex-start' 
+         to allow the header to be full width */
+      min-height: 100vh;
+      margin: 0;
+      padding: 0; 
+    }
+
+    .frosted-glass {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 450px;
+      margin: 20px auto; /* Centered content below header */
+    }
+
+    .status-box {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+    }
+
+    .status-text {
+      font-weight: bold;
+      color: #ffc107;
+    }
+
+    .scanner-overlay {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 250px; /* Adjust height as needed */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #121212; /* Fallback background */
+      border-radius: 5px;
+    }
+
+    #reader canvas, #reader video {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 5px;
+    }
+
+    .pause-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none; /* Initially hidden */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .pause-message {
+      color: white;
+      font-size: 1.2rem;
+    }
+    
+    /* --- NEW HEADER STYLES FROM ENTRY42.HTML --- */
+    header {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    header h1 {
+        font-size: 1.5rem; 
+        margin: 0;
+        flex-grow: 1;
+        text-align: left;
+    }
+    .header-db-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #current-db-display {
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-top: 2px;
+        color: #b3d9ff;
+        white-space: nowrap;
+    }
+    /* Icon Button Styling */
+    .icon-button {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        color: white;
+        height: 30px;
+        width: 30px;
+        margin-bottom: 2px;
+    }
+    .icon-button svg {
+        fill: currentColor;
+        height: 24px;
+        width: 24px;
+    }
+    /* Simple Message Box */
+    #message-box {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 10px;
+        border-radius: 4px;
+        color: white;
+        font-size: 0.9rem;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body onload="init()">
+
+    <div id="message-box"></div>
+    
+    <header>
+        <h1>Asset Inventory Tracker</h1>
+        
+        <div class="header-db-controls">
+            <button class="icon-button" onclick="checkExistingDatabases(true)" title="Select Database">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M4 4c0-.552.448-1 1-1h14c.552 0 1 .448 1 1v1h-16v-1zm16 4h-16v13c0 .552.448 1 1 1h14c.552 0 1-.448 1-1v-13zm-10 4h4v-1h-4v1zm-4 4h12v-1h-12v1z"/>
+                </svg>
+            </button>
+            <span id="current-db-display">Not Selected</span>
+        </div>
+    </header>
+
+    <div class="frosted-glass">
+        <h2 class="text-center mb-4">4-Step Paused Batch Scanner</h2>
+        <div class="status-box text-center p-3 mb-3">
+          <p id="scannerInstruction">Press 'Start Scan' to begin batch asset entry.</p>
+          <p id="currentStatus" class="status-text"></p>
+        </div>
+
+        <div class="mb-4">
+          <div id="reader" style="width: 100%"></div> 
+          
+          <div id="scannerOverlay" class="scanner-overlay">
+            <div id="pauseOverlay" class="pause-overlay">
+              <p id="pauseMessage" class="pause-message">SCAN PAUSED: Scan next asset.</p>
+              <button id="resumeScanBtn" class="btn btn-warning mt-3">Continue Scan</button>
+            </div>
+            <button id="searchBtn" class="btn btn-primary btn-lg mt-3">Start Batch Scan</button>
+          </div>
+        </div>
+
+        <div id="resultsOutput" style="display: none;">
+          <h4 class="mb-3">Batch Scan Status</h4>
+          <div id="duplicateMessageBox" class="alert alert-danger" style="display: none;">
+            Duplicate code scanned. Please scan a unique asset.
+          </div>
+          <div id="asset-form" class="mb-3">
+            <div class="input-group mb-2">
+              <span class="input-group-text">Location</span>
+              <input type="text" class="form-control" id="location" readonly />
+            </div>
+            <div class="input-group mb-2">
+              <span class="input-group-text">Asset 1</span>
+              <input type="text" class="form-control" id="val1" readonly />
+            </div>
+            <div class="input-group mb-2">
+              <span class="input-group-text">Asset 2</span>
+              <input type="text" class="form-control" id="val2" readonly />
+            </div>
+            <div class="input-group mb-2">
+              <span class="input-group-text">Asset 3</span>
+              <input type="text" class="form-control" id="val3" readonly />
+            </div>
+            <button id="stopScanBtn" class="btn btn-success w-100 mt-2" style="display: none;">Complete & Save Batch</button>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary w-100 mt-3"
+          id="closeScannerBtn"
+        >
+          Cancel Scan
+        </button>
+      </div>
+    </div>
+    
+  <script>
+    // --- DB CONTROL STUBS FOR HEADER (ADDED) ---
+    // Use a default name since the scanner is a dedicated tool
+    let currentDBName = 'Scanner-Program';
+    
+    // Stub function to show a message instead of opening a modal
+    function checkExistingDatabases(forceModal) { 
+        showStatusMessage("Database selection is disabled in the Batch Scanner mode.", true);
+    }
+    
+    // Function to update the header display
+    function updateDBDisplay() {
+        const display = document.getElementById('current-db-display');
+        display.textContent = currentDBName;
+    }
+    
+    // Simple, non-blocking message box (from entry42.html)
+    function showStatusMessage(message, isError = false) {
+        const box = document.getElementById('message-box');
+        if (!box) return; 
+        box.textContent = message;
+        box.style.backgroundColor = isError ? '#dc3545' : '#28a745';
+        box.style.display = 'block';
+
+        setTimeout(() => {
+            box.style.display = 'none';
+        }, 3000);
+    }
+
+    // --- EXISTING SCANNER VARIABLES AND FUNCTIONS ---
+    const searchBtn = document.getElementById("searchBtn");
+    const stopScanBtn = document.getElementById("stopScanBtn");
+    const closeScannerBtn = document.getElementById("closeScannerBtn");
+    const resumeScanBtn = document.getElementById("resumeScanBtn");
+    const scannerInstruction = document.getElementById("scannerInstruction");
+    const currentStatus = document.getElementById("currentStatus");
+    const pauseOverlay = document.getElementById("pauseOverlay");
+    const scannerOverlay = document.getElementById("scannerOverlay");
+    const duplicateMessageBox = document.getElementById("duplicateMessageBox");
+    const readerDiv = document.getElementById("reader");
+    
+    // Array with the comma fix applied
+    const tempOutputs = [
+        document.getElementById("location"),
+        document.getElementById("val1"),
+        document.getElementById("val2"),
+        document.getElementById("val3"),
+    ];
+    
+    let isScanning = false;
+    let currentStep = 0;
+    let html5QrCode = null;
+    let capturedCodes = [];
+
+    // --- Core Scanner Logic ---
+
+    // Success callback for html5QrCode
+    function onScanSuccess(decodedText, decodedResult) {
+        if (!isScanning) return;
+        
+        // 1. Check for duplicates (Location is the first scan)
+        if (capturedCodes.includes(decodedText)) {
+            duplicateMessageBox.style.display = 'block';
+            showStatusMessage("Duplicate code scanned. Try again.", true);
+            return;
+        }
+
+        duplicateMessageBox.style.display = 'none';
+        
+        // 2. Add to captured codes and update the corresponding output field
+        capturedCodes.push(decodedText);
+        tempOutputs[currentStep].value = decodedText;
+
+        // 3. Pause and prepare for the next step
+        currentStep++;
+
+        if (currentStep < tempOutputs.length) {
+            updateScanStatus(true, `SUCCESS! Code saved. Scan Asset ${currentStep} (${currentStep + 1} of 4)`);
+        } else {
+            // 4. Batch complete
+            stopBatchScan(false);
+        }
+    }
+
+    // Failure callback for html5QrCode (used for parsing errors, usually ignored)
+    function onScanFailure(errorMessage) {
+        // console.warn(`Code scan error = ${errorMessage}`); 
+        // We typically ignore minor frame-by-frame errors
+    }
+
+    // Function to start the camera stream
+    function startScanner() {
+        if (isScanning) return;
+
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        // Attempt to start the scanner, preferring the environment (back) camera
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            onScanSuccess, 
+            onScanFailure
+        )
+        .then(() => {
+            isScanning = true;
+            scannerOverlay.style.display = 'none';
+            readerDiv.style.display = 'block';
+            stopScanBtn.style.display = 'block';
+            showStatusMessage("Scanner started. Scan Location code.");
+        })
+        .catch((err) => {
+            isScanning = false;
+            console.error("Failed to start scanner:", err);
+            updateScanStatus(false, "ERROR: Failed to start scanner. Check camera permissions (HTTPS required).");
+            scannerOverlay.style.display = 'flex';
+            readerDiv.style.display = 'none';
+        });
+    }
+
+    // Function to stop the camera stream and clean up
+    function stopScanner(isCancellation) {
+        if (!isScanning && !html5QrCode) return;
+        
+        html5QrCode.stop().then((ignore) => {
+            isScanning = false;
+            html5QrCode = null;
+            readerDiv.style.display = 'none';
+            if (isCancellation) {
+                showStatusMessage("Scan cancelled.");
+            } else {
+                showStatusMessage("Scanner stopped.");
+            }
+        }).catch((err) => {
+            console.error("Stop failed:", err);
+            isScanning = false;
+            html5QrCode = null;
+            readerDiv.style.display = 'none';
+        });
+    }
+
+    // Function to update UI status
+    function updateScanStatus(isPaused, message = "") {
+        if (message) {
+            scannerInstruction.textContent = message;
+        } else {
+            scannerInstruction.textContent = `Scan Asset ${currentStep} (${currentStep + 1} of 4)`;
+        }
+        
+        if (isPaused) {
+            pauseOverlay.style.display = 'flex';
+            currentStatus.textContent = 'PAUSED';
+        } else {
+            pauseOverlay.style.display = 'none';
+            currentStatus.textContent = 'SCANNING...';
+        }
+    }
+
+    // Function to reset all variables and UI elements
+    function resetState() {
+        capturedCodes = [];
+        currentStep = 0;
+        isScanning = false;
+        
+        tempOutputs.forEach(input => input.value = '');
+        
+        scannerInstruction.textContent = "Press 'Start Scan' to begin batch asset entry.";
+        currentStatus.textContent = '';
+        scannerOverlay.style.display = 'flex';
+        pauseOverlay.style.display = 'none';
+        stopScanBtn.style.display = 'none';
+        duplicateMessageBox.style.display = 'none'; 
+        
+        if (html5QrCode) {
+            stopScanner(true);
+        }
+    }
+
+    // Final function to stop the process and potentially save data
+    function stopBatchScan(isCancelled) {
+        stopScanner(isCancelled);
+        
+        scannerInstruction.textContent = isCancelled 
+            ? "Scan Cancelled. Press 'Start Scan' to begin a new batch."
+            : "Batch Complete! Press 'Complete & Save Batch' or cancel.";
+
+        currentStatus.textContent = isCancelled ? 'IDLE' : 'READY TO SAVE';
+        
+        searchBtn.style.display = 'block';
+        stopScanBtn.style.display = 'none';
+        
+        if (!isCancelled) {
+            // Logic to handle saving the entry (e.g., using IndexedDB from entry42.html)
+            // For now, this calls a placeholder function
+            saveBatchEntry(); 
+        }
+    }
+
+    // Placeholder for actual save logic (e.g., storing to IndexedDB)
+    function saveBatchEntry() {
+        // In a real application, this would use the capturedCodes array and the currentDBName
+        const location = capturedCodes[0] || 'N/A';
+        const asset1 = capturedCodes[1] || '';
+        const asset2 = capturedCodes[2] || '';
+        const asset3 = capturedCodes[3] || '';
+        
+        if (location === 'N/A' || capturedCodes.length === 0) {
+            showStatusMessage("No valid codes captured. Cannot save.", true);
+            return;
+        }
+
+        // TODO: Implement IndexedDB save logic here, similar to the one in entry42.html
+        // For demonstration, we just show a success message
+        showStatusMessage(`Successfully captured and saved batch for Location: ${location}. (Placeholder)`);
+        
+        // After showing the save button for a moment, reset the state
+        setTimeout(() => resetState(), 2000); 
+    }
+    
+    // --- EVENT LISTENERS (MODIFIED) ---
+
+    // 1. Initial Setup on Load
+    window.onload = function() {
+        resetState(); 
+        document.getElementById("resultsOutput").style.display = 'none'; 
+        updateDBDisplay(); // Initialize header display
+    };
+
+    // 2. Start Batch Scan Button
+    searchBtn.addEventListener("click", () => {
+        resetState(); 
+        document.getElementById("resultsOutput").style.display = 'block';
+        searchBtn.style.display = 'none'; // Hide start button once scanning begins
+        updateScanStatus(false, "Scan Location Code (1 of 4)");
+        startScanner();
+    });
+    
+    // 3. Stop Batch Scan Button (Manual Completion/Early Exit)
+    stopScanBtn.addEventListener("click", () => {
+        stopBatchScan(false); // Manually stop and accept captured scans
+    });
+
+    // 4. Cancel Scan Button (Manual Cancellation)
+    closeScannerBtn.addEventListener("click", () => {
+        stopBatchScan(true); 
+    });
+
+    // 5. Resume Scan Button
+    resumeScanBtn.addEventListener("click", () => {
+        updateScanStatus(false);
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Inventory Manager - Dashboard</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --background-main: #f5f5f5;
+      --background-header: rgba(18, 18, 18, 0.95);
+      --background-modal: #fff;
+      --text-main: #222;
+      --text-header: #fff;
+      --accent: #0d6efd;
+      --accent-success: #35fd0d;
+      --input-bg: #fff;
+      --input-text: #222;
+      --label-color: #333;
+      --db-label-color: #0d6efd;
+      --db-list-color: #0d6efd;
+      --shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background-main: #121212;
+        --background-header: rgba(18, 18, 18, 0.95);
+        --background-modal: #222;
+        --text-main: #fff;
+        --text-header: #fff;
+        --accent: #0d6efd;
+        --accent-success: #35fd0d;
+        --input-bg: #333;
+        --input-text: #fff;
+        --label-color: #bbbbbb;
+        --db-label-color: #35fd0d;
+        --db-list-color: #35fd0d;
+        --shadow: 0 2px 5px rgba(0,0,0,0.5);
+      }
+    }
+
+    html, body {
+      background-color: var(--background-main);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      padding-top: 70px;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .app-navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--background-header);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      padding: 10px 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .app-navbar h5 {
+      color: var(--text-header);
+      margin: 0;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .frosted-glass {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+      width: 100%;
+      max-width: 450px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .container {
+      padding: 0;
+      margin-bottom: 20px;
+    }
+
+    .db-list {
+      background-color: var(--input-bg);
+      color: var(--input-text);
+      border: 1px solid #555;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.85em;
+      font-weight: 500;
+      width: 100%;
+      box-sizing: border-box;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+
+    .db-list option {
+      padding: 5px;
+      color: var(--db-list-color);
+      font-weight: bold;
+    }
+
+    .btn-primary, .btn-info {
+      background-color: var(--accent);
+      border: none;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+      color: #fff;
+    }
+    .btn-primary:hover:not(:disabled), .btn-info:hover:not(:disabled) {
+      background-color: var(--accent-success);
+      color: #222;
+    }
+    .btn-primary:disabled, .btn-info:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-success, .btn-danger {
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .modal-content {
+      background-color: var(--background-modal);
+      border: none;
+      border-radius: 12px;
+      color: var(--text-main);
+    }
+    .modal-header {
+      border-bottom: 1px solid #333;
+    }
+    .modal-title {
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.9em;
+      font-weight: 600;
+      color: var(--label-color);
+    }
+
+    input[type="text"] {
+      background-color: var(--input-bg);
+      color: var(--input-text);
+      border: 1px solid #555;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.85em;
+      font-weight: 500;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .current-db-indicator {
+      color: var(--db-label-color);
+      font-size: 1em;
+      margin-bottom: 10px;
+      font-weight: bold;
+      text-shadow: 0 1px 4px #00000044;
+      word-break: break-all;
+      text-align: center;
+    }
+
+    .records-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85em;
+    }
+
+    .records-table th, .records-table td {
+      border: 1px solid #555;
+      padding: 8px;
+      text-align: left;
+      color: var(--text-main);
+    }
+
+    .records-table th {
+      background-color: var(--input-bg);
+      font-weight: bold;
+    }
+
+    .records-table tr:nth-child(even) {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 600px) {
+      .frosted-glass {
+        max-width: 98vw;
+        padding: 10px;
+      }
+      .app-navbar {
+        padding: 8px 5px;
+        font-size: 0.95em;
+      }
+      .container {
+        padding: 0;
+      }
+      .records-table {
+        font-size: 0.75em;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="app-navbar">
+    <h5 class="app-title">Asset Inventory Manager - Dashboard</h5>
+    <a href="4scan.html" class="btn btn-primary" title="Go to Scanner">
+      <i class="fas fa-arrow-left"></i> Scanner
+    </a>
+  </header>
+
+  <div class="frosted-glass">
+    <div class="container">
+      <h5>Asset Databases</h5>
+      <select id="dbList" class="db-list" size="5"></select>
+      <span id="currentDbIndicator" class="current-db-indicator"></span>
+      <div class="d-flex gap-2 w-100 flex-wrap">
+        <button class="btn btn-primary flex-grow-1" id="dbSelectBtn" disabled>
+          <i class="fas fa-check"></i> Select
+        </button>
+        <button class="btn btn-info flex-grow-1" id="dbShowRecordsBtn" disabled>
+          <i class="fas fa-table"></i> Show Records
+        </button>
+        <button class="btn btn-success flex-grow-1" id="dbCreateBtn">
+          <i class="fas fa-plus"></i> Create New
+        </button>
+        <button class="btn btn-danger flex-grow-1" id="dbDeleteBtn" disabled>
+          <i class="fas fa-trash"></i> Delete
+        </button>
+        <button class="btn btn-primary flex-grow-1" id="dbExportCsvBtn" disabled>
+          <i class="fas fa-download"></i> Export to CSV
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Create Database -->
+  <div class="modal fade" id="dbCreateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content text-dark">
+        <div class="modal-header">
+          <h5 class="modal-title">Create New Asset Database</h5>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="newDbName" class="form-label">Database Name:</label>
+            <input type="text" id="newDbName" class="form-control" placeholder="Enter database name">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="dbCreateConfirmBtn">Create</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Confirm Delete -->
+  <div class="modal fade" id="dbDeleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content text-dark">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Database Deletion</h5>
+        </div>
+        <div class="modal-body" id="dbDeleteConfirmBody">
+          <!-- Confirmation text injected here -->
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger" id="dbDeleteFinalBtn">Yes, Delete</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Show Records -->
+  <div class="modal fade" id="dbRecordsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content text-dark">
+        <div class="modal-header">
+          <h5 class="modal-title">Last 10 Records</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>Location</th>
+                <th>Asset ID1</th>
+                <th>Asset ID2</th>
+                <th>Asset ID3</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody"></tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const OBJECT_STORE_NAME = "assets";
+    let selectedDbName = null;
+
+    // Utility: Show status message (simple toast)
+    function showStatusMessage(message, isError = false) {
+      let box = document.getElementById('message-box');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'message-box';
+        box.style.position = 'fixed';
+        box.style.top = '80px';
+        box.style.left = '50%';
+        box.style.transform = 'translateX(-50%)';
+        box.style.zIndex = '9999';
+        box.style.padding = '12px 24px';
+        box.style.borderRadius = '8px';
+        box.style.color = '#fff';
+        box.style.fontWeight = 'bold';
+        box.style.display = 'none';
+        document.body.appendChild(box);
+      }
+      box.textContent = message;
+      box.style.backgroundColor = isError ? '#dc3545' : '#28a745';
+      box.style.display = 'block';
+      setTimeout(() => { box.style.display = 'none'; }, 3000);
+    }
+
+    // Update current database indicator
+    function updateCurrentDbIndicator() {
+      const currentDb = localStorage.getItem('selectedAssetDB') || 'None';
+      document.getElementById('currentDbIndicator').textContent = `Current Database: ${currentDb}`;
+    }
+
+    // Load database list
+    function loadDatabaseList() {
+      const dbList = document.getElementById('dbList');
+      dbList.innerHTML = '';
+      indexedDB.databases().then(databases => {
+        const validDbs = [];
+        const promises = databases.map(db => new Promise((resolve) => {
+          const request = indexedDB.open(db.name);
+          request.onsuccess = function(event) {
+            const db = event.target.result;
+            if (db.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+              validDbs.push(db.name);
+            }
+            db.close();
+            resolve();
+          };
+          request.onerror = function() {
+            resolve();
+          };
+        }));
+        Promise.all(promises).then(() => {
+          validDbs.sort().forEach(dbName => {
+            const option = document.createElement('option');
+            option.value = dbName;
+            option.textContent = dbName;
+            dbList.appendChild(option);
+          });
+          updateButtonStates();
+          updateCurrentDbIndicator();
+        });
+      }).catch(() => {
+        showStatusMessage("Error loading databases.", true);
+      });
+    }
+
+    // Update button states based on selection
+    function updateButtonStates() {
+      const dbList = document.getElementById('dbList');
+      const dbSelectBtn = document.getElementById('dbSelectBtn');
+      const dbShowRecordsBtn = document.getElementById('dbShowRecordsBtn');
+      const dbDeleteBtn = document.getElementById('dbDeleteBtn');
+      const dbExportCsvBtn = document.getElementById('dbExportCsvBtn');
+      selectedDbName = dbList.value;
+      dbSelectBtn.disabled = !selectedDbName;
+      dbShowRecordsBtn.disabled = !selectedDbName;
+      dbDeleteBtn.disabled = !selectedDbName;
+      dbExportCsvBtn.disabled = !selectedDbName;
+    }
+
+    // Select database
+    function selectDatabase() {
+      if (!selectedDbName) {
+        showStatusMessage("No database selected.", true);
+        return;
+      }
+      localStorage.setItem('selectedAssetDB', selectedDbName);
+      showStatusMessage(`Database "${selectedDbName}" selected.`);
+      updateCurrentDbIndicator();
+    }
+
+    // Create new database
+    function createDatabase() {
+      const dbName = document.getElementById('newDbName').value.trim();
+      if (!dbName) {
+        showStatusMessage("Please enter a database name.", true);
+        return;
+      }
+      const request = indexedDB.open(dbName, 1);
+      request.onupgradeneeded = function(event) {
+        const db = event.target.result;
+        db.createObjectStore(OBJECT_STORE_NAME, { autoIncrement: true })
+          .createIndex('locationIndex', 'location', { unique: false });
+      };
+      request.onsuccess = function(event) {
+        event.target.result.close();
+        showStatusMessage(`Database "${dbName}" created successfully.`);
+        loadDatabaseList();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('dbCreateModal'));
+        modal.hide();
+        document.getElementById('newDbName').value = '';
+      };
+      request.onerror = function() {
+        showStatusMessage("Error creating database.", true);
+      };
+    }
+
+    // Delete database
+    function deleteDatabase() {
+      if (!selectedDbName) {
+        showStatusMessage("No database selected.", true);
+        return;
+      }
+      const request = indexedDB.deleteDatabase(selectedDbName);
+      request.onsuccess = function() {
+        showStatusMessage(`Database "${selectedDbName}" deleted successfully.`);
+        if (localStorage.getItem('selectedAssetDB') === selectedDbName) {
+          localStorage.removeItem('selectedAssetDB');
+        }
+        loadDatabaseList();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('dbDeleteConfirmModal'));
+        modal.hide();
+      };
+      request.onerror = function() {
+        showStatusMessage("Error deleting database.", true);
+      };
+    }
+
+    // Show last 10 records
+    function showRecords() {
+      if (!selectedDbName) {
+        showStatusMessage("No database selected.", true);
+        return;
+      }
+      const request = indexedDB.open(selectedDbName);
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(OBJECT_STORE_NAME, 'readonly');
+        const store = transaction.objectStore(OBJECT_STORE_NAME);
+        const records = [];
+        store.openCursor(null, 'prev').onsuccess = function(e) {
+          const cursor = e.target.result;
+          if (cursor && records.length < 10) {
+            records.push(cursor.value);
+            cursor.continue();
+          } else {
+            const tableBody = document.getElementById('recordsTableBody');
+            tableBody.innerHTML = '';
+            if (records.length === 0) {
+              tableBody.innerHTML = '<tr><td colspan="6">No records found.</td></tr>';
+            } else {
+              records.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td>${record.location || ''}</td>
+                  <td>${record.device1 || ''}</td>
+                  <td>${record.device2 || ''}</td>
+                  <td>${record.device3 || ''}</td>
+                  <td>${record.status || ''}</td>
+                  <td>${record.timestamp || ''}</td>
+                `;
+                tableBody.appendChild(row);
+              });
+            }
+            const modal = new bootstrap.Modal(document.getElementById('dbRecordsModal'));
+            modal.show();
+            db.close();
+          }
+        };
+        transaction.onerror = function() {
+          db.close();
+          showStatusMessage("Error fetching records.", true);
+        };
+      };
+      request.onerror = function() {
+        showStatusMessage("Failed to open database.", true);
+      };
+    }
+
+    // Export records to CSV
+    function exportToCsv() {
+      if (!selectedDbName) {
+        showStatusMessage("No database selected.", true);
+        return;
+      }
+      const request = indexedDB.open(selectedDbName);
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(OBJECT_STORE_NAME, 'readonly');
+        const store = transaction.objectStore(OBJECT_STORE_NAME);
+        const records = [];
+        store.openCursor().onsuccess = function(e) {
+          const cursor = e.target.result;
+          if (cursor) {
+            records.push(cursor.value);
+            cursor.continue();
+          } else {
+            if (records.length === 0) {
+              showStatusMessage("No records to export.", true);
+              db.close();
+              return;
+            }
+            const headers = ['Location', 'Asset ID1', 'Asset ID2', 'Asset ID3', 'Status', 'Timestamp'];
+            const csvRows = [headers.join(',')];
+            records.forEach(record => {
+              const values = [
+                `"${(record.location || '').replace(/"/g, '""')}"`,
+                `"${(record.device1 || '').replace(/"/g, '""')}"`,
+                `"${(record.device2 || '').replace(/"/g, '""')}"`,
+                `"${(record.device3 || '').replace(/"/g, '""')}"`,
+                `"${(record.status || '').replace(/"/g, '""')}"`,
+                `"${(record.timestamp || '').replace(/"/g, '""')}"`
+              ];
+              csvRows.push(values.join(','));
+            });
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${selectedDbName}_assets.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showStatusMessage(`Exported ${records.length} records to CSV.`);
+            db.close();
+          }
+        };
+        transaction.onerror = function() {
+          db.close();
+          showStatusMessage("Error fetching records for export.", true);
+        };
+      };
+      request.onerror = function() {
+        showStatusMessage("Failed to open database.", true);
+      };
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDatabaseList();
+      const dbList = document.getElementById('dbList');
+      const dbSelectBtn = document.getElementById('dbSelectBtn');
+      const dbShowRecordsBtn = document.getElementById('dbShowRecordsBtn');
+      const dbCreateBtn = document.getElementById('dbCreateBtn');
+      const dbDeleteBtn = document.getElementById('dbDeleteBtn');
+      const dbExportCsvBtn = document.getElementById('dbExportCsvBtn');
+      const dbCreateConfirmBtn = document.getElementById('dbCreateConfirmBtn');
+      const dbDeleteFinalBtn = document.getElementById('dbDeleteFinalBtn');
+
+      dbList.addEventListener('change', updateButtonStates);
+      dbSelectBtn.addEventListener('click', selectDatabase);
+      dbShowRecordsBtn.addEventListener('click', showRecords);
+      dbCreateBtn.addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('dbCreateModal'));
+        modal.show();
+      });
+      dbDeleteBtn.addEventListener('click', () => {
+        if (selectedDbName) {
+          document.getElementById('dbDeleteConfirmBody').textContent = 
+            `Are you sure you want to delete the database "${selectedDbName}"? This action cannot be undone.`;
+          const modal = new bootstrap.Modal(document.getElementById('dbDeleteConfirmModal'));
+          modal.show();
+        }
+      });
+      dbExportCsvBtn.addEventListener('click', exportToCsv);
+      dbCreateConfirmBtn.addEventListener('click', createDatabase);
+      dbDeleteFinalBtn.addEventListener('click', deleteDatabase);
+
+      // Disable Create button when dbCreateModal is shown
+      const dbCreateModal = document.getElementById('dbCreateModal');
+      dbCreateModal.addEventListener('shown.bs.modal', () => {
+        dbCreateBtn.disabled = true;
+      });
+      dbCreateModal.addEventListener('hidden.bs.modal', () => {
+        dbCreateBtn.disabled = false;
+      });
+    });
+  </script>
+</body>
+</html>
