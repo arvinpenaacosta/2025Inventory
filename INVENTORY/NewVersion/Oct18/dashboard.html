@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Inventory Manager - Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0d6efd;
+      --primary-dark: #0b5ed7;
+      --success: #35fd0d;
+      --danger: #dc3545;
+      --warning: #ffc107;
+      --bg-main: #f8f9fa;
+      --bg-card: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6c757d;
+      --border-color: #e9ecef;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-main: #0f0f0f;
+        --bg-card: #1a1a1a;
+        --text-primary: #ffffff;
+        --text-secondary: #a0a0a0;
+        --border-color: #2a2a2a;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+    }
+
+    body {
+      padding-top: 80px;
+    }
+
+    /* iPhone-inspired header */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .app-header {
+        background: rgba(26, 26, 26, 0.95);
+      }
+    }
+
+    .app-header h5 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+
+    .app-header .btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .app-header .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 12px;
+      }
+    }
+
+    /* Card styling */
+    .card-section {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
+
+    .card-section:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-section h6 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-section h6 i {
+      font-size: 16px;
+      color: var(--primary);
+    }
+
+    /* Database selector */
+    .db-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #dbList {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 14px;
+      color: var(--text-primary);
+      transition: border-color 0.2s;
+    }
+
+    #dbList:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    #dbList option {
+      padding: 8px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .db-status {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .db-status.empty {
+      background: var(--bg-main);
+      color: var(--text-secondary);
+      border: 1px dashed var(--border-color);
+    }
+
+    /* Button grid */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .btn-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .btn-action {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-height: 60px;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .btn-action:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-action:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-action i {
+      font-size: 18px;
+    }
+
+    .btn-primary-action {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+    }
+
+    .btn-success-action {
+      background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+      color: white;
+    }
+
+    .btn-danger-action {
+      background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
+      color: white;
+    }
+
+    .btn-info-action {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      color: white;
+    }
+
+    /* Modal enhancements */
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+      border-bottom: 1px solid var(--border-color);
+      padding: 20px;
+    }
+
+    .modal-title {
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 20px;
+      font-size: 15px;
+    }
+
+    .modal-footer {
+      border-top: 1px solid var(--border-color);
+      padding: 16px 20px;
+      gap: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .form-control {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+
+    .form-control:focus {
+      background: var(--bg-main);
+      border-color: var(--primary);
+      color: var(--text-primary);
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    }
+
+    /* Records table */
+    .records-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .records-table th {
+      background: var(--bg-main);
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border-color);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+
+    .records-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .records-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .records-table tr:hover {
+      background: var(--bg-main);
+    }
+
+    /* Toast notification */
+    #message-box {
+      position: fixed;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      z-index: 9999;
+      box-shadow: var(--shadow-lg);
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    #message-box.success {
+      background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+      color: white;
+    }
+
+    #message-box.error {
+      background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
+      color: white;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .app-header h5 {
+        font-size: 16px;
+      }
+
+      .card-section {
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      .btn-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .app-header {
+        padding: 12px 16px;
+      }
+
+      .main-container {
+        padding: 10px;
+      }
+
+      .card-section {
+        padding: 12px;
+        border-radius: 12px;
+      }
+
+      .records-table {
+        font-size: 12px;
+      }
+
+      .records-table th, .records-table td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="app-header">
+    <h5>Dashboard</h5>
+    <a href="4scan.html" class="btn btn-primary-action">
+      <i class="fas fa-arrow-left"></i> Scanner
+    </a>
+  </header>
+
+  <div class="main-container">
+    <!-- Database Selection Card -->
+    <div class="card-section">
+      <h6><i class="fas fa-database"></i> Asset Databases</h6>
+      <div class="db-selector">
+        <select id="dbList" size="5"></select>
+        <div id="currentDbIndicator" class="db-status empty">No database selected</div>
+      </div>
+    </div>
+
+    <!-- Action Buttons Card -->
+    <div class="card-section">
+      <h6><i class="fas fa-cogs"></i> Actions</h6>
+      <div class="btn-grid">
+        <button class="btn-action btn-primary-action" id="dbSelectBtn" disabled title="Select database">
+          <i class="fas fa-check"></i>
+          <span>Select</span>
+        </button>
+        <button class="btn-action btn-info-action" id="dbShowRecordsBtn" disabled title="View records">
+          <i class="fas fa-table"></i>
+          <span>Records</span>
+        </button>
+        <button class="btn-action btn-success-action" id="dbCreateBtn" title="Create new database">
+          <i class="fas fa-plus"></i>
+          <span>Create</span>
+        </button>
+        <button class="btn-action btn-danger-action" id="dbDeleteBtn" disabled title="Delete database">
+          <i class="fas fa-trash"></i>
+          <span>Delete</span>
+        </button>
+        <button class="btn-action btn-primary-action" id="dbExportCsvBtn" disabled title="Export to CSV">
+          <i class="fas fa-download"></i>
+          <span>Export</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal fade" id="dbCreateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create New Database</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="newDbName">Database Name</label>
+            <input type="text" id="newDbName" class="form-control" placeholder="Enter a unique name">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary-action" id="dbCreateConfirmBtn">Create</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dbDeleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Deletion</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="dbDeleteConfirmBody"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger-action" id="dbDeleteFinalBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="dbRecordsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Last 20 Records</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>Location</th>
+                <th>Asset ID1</th>
+                <th>Asset ID2</th>
+                <th>Asset ID3</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody"></tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const OBJECT_STORE_NAME = "assets";
+    let selectedDbName = null;
+
+    function showStatusMessage(message, isError = false) {
+      let box = document.getElementById('message-box');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'message-box';
+        document.body.appendChild(box);
+      }
+      box.textContent = message;
+      box.className = isError ? 'error' : 'success';
+      box.style.display = 'block';
+      setTimeout(() => { box.style.display = 'none'; }, 3000);
+    }
+
+    function updateCurrentDbIndicator() {
+      const currentDb = localStorage.getItem('assetDBInUse') || null;
+      const indicator = document.getElementById('currentDbIndicator');
+      if (currentDb) {
+        indicator.textContent = `Current: ${currentDb}`;
+        indicator.classList.remove('empty');
+      } else {
+        indicator.textContent = 'No database selected';
+        indicator.classList.add('empty');
+      }
+    }
+
+    function loadDatabaseList() {
+      const dbList = document.getElementById('dbList');
+      dbList.innerHTML = '';
+      indexedDB.databases().then(databases => {
+        const validDbs = [];
+        const promises = databases.map(db => new Promise((resolve) => {
+          const request = indexedDB.open(db.name);
+          request.onsuccess = function(event) {
+            const dbInstance = event.target.result;
+            if (dbInstance.objectStoreNames.contains(OBJECT_STORE_NAME)) {
+              validDbs.push(db.name);
+            }
+            dbInstance.close();
+            resolve();
+          };
+          request.onerror = () => resolve();
+        }));
+        Promise.all(promises).then(() => {
+          validDbs.sort().forEach(dbName => {
+            const option = document.createElement('option');
+            option.value = dbName;
+            option.textContent = dbName;
+            dbList.appendChild(option);
+          });
+          updateButtonStates();
+          updateCurrentDbIndicator();
+        });
+      }).catch(() => showStatusMessage("Error loading databases.", true));
+    }
+
+    function updateButtonStates() {
+      const dbList = document.getElementById('dbList');
+      selectedDbName = dbList.value;
+      document.getElementById('dbSelectBtn').disabled = !selectedDbName;
+      document.getElementById('dbShowRecordsBtn').disabled = !selectedDbName;
+      document.getElementById('dbDeleteBtn').disabled = !selectedDbName;
+      document.getElementById('dbExportCsvBtn').disabled = !selectedDbName;
+    }
+
+    function selectDatabase() {
+      if (!selectedDbName) {
+        showStatusMessage("No database selected.", true);
+        return;
+      }
+      localStorage.setItem('assetDBInUse', selectedDbName);
+      showStatusMessage(`Database "${selectedDbName}" selected.`);
+      updateCurrentDbIndicator();
+    }
+
+    function createDatabase() {
+      const dbName = document.getElementById('newDbName').value.trim();
+      if (!dbName) {
+        showStatusMessage("Please enter a database name.", true);
+        return;
+      }
+      const request = indexedDB.open(dbName, 1);
+      request.onupgradeneeded = function(event) {
+        const db = event.target.result;
+        db.createObjectStore(OBJECT_STORE_NAME, { autoIncrement: true })
+          .createIndex('locationIndex', 'location', { unique: false });
+      };
+      request.onsuccess = function(event) {
+        event.target.result.close();
+        showStatusMessage(`Database "${dbName}" created successfully.`);
+        loadDatabaseList();
+        bootstrap.Modal.getInstance(document.getElementById('dbCreateModal')).hide();
+        document.getElementById('newDbName').value = '';
+      };
+      request.onerror = () => showStatusMessage("Error creating database.", true);
+    }
+
+    function deleteDatabase() {
+      if (!selectedDbName) return;
+      const request = indexedDB.deleteDatabase(selectedDbName);
+      request.onsuccess = function() {
+        showStatusMessage(`Database "${selectedDbName}" deleted successfully.`);
+        if (localStorage.getItem('assetDBInUse') === selectedDbName) {
+          localStorage.removeItem('assetDBInUse');
+        }
+        loadDatabaseList();
+        bootstrap.Modal.getInstance(document.getElementById('dbDeleteConfirmModal')).hide();
+      };
+      request.onerror = () => showStatusMessage("Error deleting database.", true);
+    }
+
+    function showRecords() {
+      if (!selectedDbName) {
+        showStatusMessage("No database selected.", true);
+        return;
+      }
+      const request = indexedDB.open(selectedDbName);
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(OBJECT_STORE_NAME, 'readonly');
+        const store = transaction.objectStore(OBJECT_STORE_NAME);
+        const records = [];
+        store.openCursor(null, 'prev').onsuccess = function(e) {
+          const cursor = e.target.result;
+          if (cursor && records.length < 20) {
+            records.push(cursor.value);
+            cursor.continue();
+          } else {
+            const tableBody = document.getElementById('recordsTableBody');
+            tableBody.innerHTML = '';
+            if (records.length === 0) {
+              tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No records found</td></tr>';
+            } else {
+              records.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                  <td>${record.location || ''}</td>
+                  <td>${record.device1 || ''}</td>
+                  <td>${record.device2 || ''}</td>
+                  <td>${record.device3 || ''}</td>
+                  <td>${record.status || ''}</td>
+                  <td>${record.timestamp || ''}</td>
+                `;
+                tableBody.appendChild(row);
+              });
+            }
+            new bootstrap.Modal(document.getElementById('dbRecordsModal')).show();
+            db.close();
+          }
+        };
+        transaction.onerror = () => {
+          db.close();
+          showStatusMessage("Error fetching records.", true);
+        };
+      };
+      request.onerror = () => showStatusMessage("Failed to open database.", true);
+    }
+
+    function exportToCsv() {
+      if (!selectedDbName) {
+        showStatusMessage("No database selected.", true);
+        return;
+      }
+      const request = indexedDB.open(selectedDbName);
+      request.onsuccess = function(event) {
+        const db = event.target.result;
+        const transaction = db.transaction(OBJECT_STORE_NAME, 'readonly');
+        const store = transaction.objectStore(OBJECT_STORE_NAME);
+        const records = [];
+        store.openCursor().onsuccess = function(e) {
+          const cursor = e.target.result;
+          if (cursor) {
+            records.push(cursor.value);
+            cursor.continue();
+          } else {
+            if (records.length === 0) {
+              showStatusMessage("No records to export.", true);
+              db.close();
+              return;
+            }
+            const headers = ['Location', 'Asset ID1', 'Asset ID2', 'Asset ID3', 'Status', 'Timestamp'];
+            const csvRows = [headers.join(',')];
+            records.forEach(record => {
+              const values = [
+                `"${(record.location || '').replace(/"/g, '""')}"`,
+                `"${(record.device1 || '').replace(/"/g, '""')}"`,
+                `"${(record.device2 || '').replace(/"/g, '""')}"`,
+                `"${(record.device3 || '').replace(/"/g, '""')}"`,
+                `"${(record.status || '').replace(/"/g, '""')}"`,
+                `"${(record.timestamp || '').replace(/"/g, '""')}"`
+              ];
+              csvRows.push(values.join(','));
+            });
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${selectedDbName}_assets.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showStatusMessage(`Exported ${records.length} records to CSV.`);
+            db.close();
+          }
+        };
+        transaction.onerror = () => {
+          db.close();
+          showStatusMessage("Error fetching records for export.", true);
+        };
+      };
+      request.onerror = () => showStatusMessage("Failed to open database.", true);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDatabaseList();
+      document.getElementById('dbList').addEventListener('change', updateButtonStates);
+      document.getElementById('dbSelectBtn').addEventListener('click', selectDatabase);
+      document.getElementById('dbShowRecordsBtn').addEventListener('click', showRecords);
+      document.getElementById('dbCreateBtn').addEventListener('click', () => {
+        new bootstrap.Modal(document.getElementById('dbCreateModal')).show();
+      });
+      document.getElementById('dbDeleteBtn').addEventListener('click', () => {
+        if (selectedDbName) {
+          document.getElementById('dbDeleteConfirmBody').textContent = 
+            `Are you sure you want to delete "${selectedDbName}"? This cannot be undone.`;
+          new bootstrap.Modal(document.getElementById('dbDeleteConfirmModal')).show();
+        }
+      });
+      document.getElementById('dbExportCsvBtn').addEventListener('click', exportToCsv);
+      document.getElementById('dbCreateConfirmBtn').addEventListener('click', createDatabase);
+      document.getElementById('dbDeleteFinalBtn').addEventListener('click', deleteDatabase);
+
+      const dbCreateModal = document.getElementById('dbCreateModal');
+      dbCreateModal.addEventListener('shown.bs.modal', () => {
+        document.getElementById('dbCreateBtn').disabled = true;
+      });
+      dbCreateModal.addEventListener('hidden.bs.modal', () => {
+        document.getElementById('dbCreateBtn').disabled = false;
+      });
+    });
+  </script>
+</body>
+</html>
